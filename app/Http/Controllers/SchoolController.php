@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\School;
 use Illuminate\Http\Request;
 
 class SchoolController extends Controller
@@ -17,8 +18,8 @@ class SchoolController extends Controller
     public function index()
     {
         $this->authorize('viewAny', School::class);
-        // Placeholder for listing school resources or settings
-        return view('school.index');
+        $schools = School::all();
+        return view('schools.index', compact('schools'));
     }
 
     /**
@@ -27,7 +28,7 @@ class SchoolController extends Controller
     public function create()
     {
         $this->authorize('create', School::class);
-        return view('school.create');
+        return view('schools.create');
     }
 
     /**
@@ -39,49 +40,47 @@ class SchoolController extends Controller
         // Placeholder for storing school resource
         // Validate and save data as needed
 
-        return redirect()->route('school.index')->with('success', 'School resource created successfully.');
+        return redirect()->route('schools.index')->with('success', 'School resource created successfully.');
     }
 
     /**
      * Display the specified school resource.
      */
-    public function show($id)
+    public function show(School $school)
     {
-        $this->authorize('view', School::class);
-        // Placeholder for showing a specific school resource
-        return view('school.show', compact('id'));
+        $this->authorize('view', $school);
+        return view('schools.show', compact('school'));
     }
 
     /**
      * Show the form for editing the specified school resource.
      */
-    public function edit($id)
+    public function edit(School $school)
     {
-        $this->authorize('update', School::class);
-        // Placeholder for editing a specific school resource
-        return view('school.edit', compact('id'));
+        $this->authorize('update', $school);
+        return view('schools.edit', compact('school'));
     }
 
     /**
      * Update the specified school resource in storage.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, School $school)
     {
-        $this->authorize('update', School::class);
+        $this->authorize('update', $school);
         // Placeholder for updating school resource
         // Validate and update data as needed
 
-        return redirect()->route('school.index')->with('success', 'School resource updated successfully.');
+        return redirect()->route('schools.index')->with('success', 'School resource updated successfully.');
     }
 
     /**
      * Remove the specified school resource from storage.
      */
-    public function destroy($id)
+    public function destroy(School $school)
     {
-        $this->authorize('delete', School::class);
+        $this->authorize('delete', $school);
         // Placeholder for deleting school resource
 
-        return redirect()->route('school.index')->with('success', 'School resource deleted successfully.');
+        return redirect()->route('schools.index')->with('success', 'School resource deleted successfully.');
     }
 }
