@@ -17,7 +17,7 @@ export default function Dashboard({ auth, laravelVersion, phpVersion }) {
                         </p>
                     </header>
 
-                    <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <Link href={route('teachers.index')} className="block">
                             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 flex flex-col items-center text-center hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                                 <img src="https://cdn-icons-png.flaticon.com/512/1995/1995523.png" alt="Teacher" className="w-24 h-24 mb-4" />
@@ -54,11 +54,29 @@ export default function Dashboard({ auth, laravelVersion, phpVersion }) {
                                 </p>
                             </div>
                         </Link>
+                        <Link href={route('schools.index')} className="block">
+                            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 flex flex-col items-center text-center hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                                <img src="https://cdn-icons-png.flaticon.com/512/1995/1995525.png" alt="School" className="w-24 h-24 mb-4" />
+                                <h2 className="text-2xl font-semibold mb-2">Schools</h2>
+                                <p className="text-gray-600 dark:text-gray-400">
+                                    Manage school information and administrative tasks.
+                                </p>
+                            </div>
+                        </Link>
+                        <Link href={route('calendars.index')} className="block">
+                            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 flex flex-col items-center text-center hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                                <img src="https://cdn-icons-png.flaticon.com/512/1995/1995527.png" alt="Calendar" className="w-24 h-24 mb-4" />
+                                <h2 className="text-2xl font-semibold mb-2">Calendar</h2>
+                                <p className="text-gray-600 dark:text-gray-400">
+                                    View and manage school events and schedules.
+                                </p>
+                            </div>
+                        </Link>
                     </section>
 
                     <section className="mt-10 text-center">
                         <Link
-                            href={route('profile.edit')}
+                            href="/profile"
                             className="inline-block rounded bg-[#FF2D20] px-6 py-3 text-white font-semibold hover:bg-[#e0261c] transition"
                         >
                             Edit Profile

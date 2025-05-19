@@ -28,7 +28,21 @@ export default function Authenticated({ auth, header, children }) {
                                 <NavLink href={route('teachers.index')} active={route().current('teachers.*')}>
                                     Teachers
                                 </NavLink>
-                                {/* Add more navigation links as needed */}
+                                <NavLink href={route('parents.index')} active={route().current('parents.*')}>
+                                    Parents
+                                </NavLink>
+                                <NavLink href={route('students.index')} active={route().current('students.*')}>
+                                    Students
+                                </NavLink>
+                                <NavLink href={route('class_rooms.index')} active={route().current('class_rooms.*')}>
+                                    Class Rooms
+                                </NavLink>
+                                <NavLink href={route('schools.index')} active={route().current('schools.*')}>
+                                    Schools
+                                </NavLink>
+                                <NavLink href={route('calendars.index')} active={route().current('calendars.*')}>
+                                    Calendar
+                                </NavLink>
                             </div>
                         </div>
 
@@ -60,7 +74,7 @@ export default function Authenticated({ auth, header, children }) {
                                     </Dropdown.Trigger>
 
                                     <Dropdown.Content>
-                                        <Dropdown.Link href={route('profile.edit')}>Profile</Dropdown.Link>
+                                    <Dropdown.Link href="/profile">Profile</Dropdown.Link>
                                         <Dropdown.Link href={route('logout')} method="post" as="button">
                                             Log Out
                                         </Dropdown.Link>
@@ -103,6 +117,21 @@ export default function Authenticated({ auth, header, children }) {
                         <ResponsiveNavLink href={route('teachers.index')} active={route().current('teachers.*')}>
                             Teachers
                         </ResponsiveNavLink>
+                        <ResponsiveNavLink href={route('parents.index')} active={route().current('parents.*')}>
+                            Parents
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink href={route('students.index')} active={route().current('students.*')}>
+                            Students
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink href={route('class_rooms.index')} active={route().current('class_rooms.*')}>
+                            Class Rooms
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink href={route('schools.index')} active={route().current('schools.*')}>
+                            Schools
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink href={route('calendars.index')} active={route().current('calendars.*')}>
+                            Calendar
+                        </ResponsiveNavLink>
                     </div>
 
                     <div className="pt-4 pb-1 border-t border-gray-200">
@@ -112,7 +141,7 @@ export default function Authenticated({ auth, header, children }) {
                         </div>
 
                         <div className="mt-3 space-y-1">
-                            <ResponsiveNavLink href={route('profile.edit')}>Profile</ResponsiveNavLink>
+                            <ResponsiveNavLink href="/profile">Profile</ResponsiveNavLink>
                             <ResponsiveNavLink method="post" href={route('logout')} as="button">
                                 Log Out
                             </ResponsiveNavLink>

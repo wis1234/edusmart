@@ -13,7 +13,21 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('teachers.index') }}">Teachers</a>
                 </li>
-                <!-- Add more menu items as needed -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('parents.index') }}">Parents</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('students.index') }}">Students</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('class_rooms.index') }}">Class Rooms</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('schools.index') }}">Schools</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('calendars.index') }}">Calendar</a>
+                </li>
             </ul>
 
             <!-- Right Side Of Navbar -->
