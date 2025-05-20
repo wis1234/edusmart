@@ -2,217 +2,261 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use App\Models\Teacher;
+use App\Models\Subject;
+use App\Models\ClassRoom;
+use App\Http\Requests\TeacherRequest;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rules\Password;
-use Illuminate\Database\QueryException;
-use Inertia\Inertia;
+use Illuminate\Support\Facades\Storage;
 
 class TeacherController extends Controller
 {
     /**
      * Create a new controller instance.
-     *
-     * @return void
      */
     public function __construct()
     {
-        // Authorization is handled at the method level
-        // for more granular control
+        $this->authorizeResource(Teacher::class, 'teacher');
     }
 
     /**
      * Display a listing of the teachers.
-     *
-     * @return \Illuminate\View\View
      */
     public function index()
     {
-        $this->authorize('viewAny', User::class);
-
-        $teachers = User::role('enseignant')
-            ->orderBy('name')
+        $teachers = Teacher::with(['subjects', 'classRooms', 'school'])
+            ->orderBy('teacher_firstname')
             ->paginate(15);
 
-        return view('teachers.index', [
-            'teachers' => $teachers,
-            'can' => [
-                'create' => $this->authorize('create', User::class, [], true),
-            ],
-            'flash' => [
-                'success' => session('success'),
-                'error' => session('error'),
-            ],
-        ]);
+        return view('teachers.index', compact('teachers'));
     }
 
     /**
      * Show the form for creating a new teacher.
-     *
-     * @return \Illuminate\View\View
      */
     public function create()
     {
-        $this->authorize('create', User::class);
-        return view('teachers.create');
+        $subjects = Subject::orderBy('name')->get();
+        $classRooms = ClassRoom::orderBy('name')->get();
+
+        return view('teachers.create', compact('subjects', 'classRooms'));
     }
 
     /**
      * Store a newly created teacher in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(Request $request)
+    public function store(TeacherRequest $request)
     {
-        $this->authorize('create', User::class);
+        DB::beginTransaction();
 
-        try {
-            $validated = $request->validate([
-                'name' => ['required', 'string', 'max:255'],
-                'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-                'password' => ['required', 'confirmed', Password::defaults()],
-            ]);
+        $validated = $request->validated();
 
-            $teacher = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-            ]);
-
-            $teacher->assignRole('enseignant');
-            
-            Log::info('Teacher created', ['id' => $teacher->id, 'email' => $teacher->email]);
-
-            return redirect()
-                ->route('teachers.index')
-                ->with('success', 'Teacher created successfully.');
-                
-        } catch (QueryException $e) {
-            Log::error('Failed to create teacher', [
-                'error' => $e->getMessage(),
-                'input' => $request->except('password')
-            ]);
-            
-            return back()
-                ->withInput($request->except('password'))
-                ->with('error', 'An error occurred while creating the teacher.');
+        // Handle profile photo upload
+        if ($request->hasFile('profile_photo')) {
+            $validated['profile_photo'] = $request->file('profile_photo')->store('teacher-photos', 'public');
         }
+
+        // Create associated user
+        $userData = [
+            'first_name' => $validated['first_name'],
+            'last_name' => $validated['last_name'] ?? null,
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'date_of_birth' => $validated['date_of_birth'],
+            'gender' => $validated['gender'],
+            'address' => $validated['address'],
+            'status' => $validated['status'],
+            'password' => bcrypt($validated['password']),
+            'profile_photo' => $validated['profile_photo'] ?? null,
+        ];
+        $user = \App\Models\User::create($userData);
+
+        // Create teacher record linked to user
+        $teacher = Teacher::create([
+            'teacher_firstname' => $validated['first_name'],
+            'teacher_lastname' => $validated['last_name'] ?? null,
+            'teacher_email' => $validated['email'],
+            'teacher_phone' => $validated['phone'],
+            'date_of_birth' => $validated['date_of_birth'],
+            'gender' => $validated['gender'],
+            'address' => $validated['address'],
+            'grade' => $validated['grade'],
+            'speciality' => $validated['speciality'],
+            'subject_title' => $validated['subject_title'],
+            'status' => $validated['status'],
+            'profile_photo' => $validated['profile_photo'] ?? null,
+            'school_id' => $validated['school_id'] ?? null,
+            'user_id' => $user->id,
+        ]);
+
+        // Attach subjects with years
+        foreach ($validated['subjects'] as $index => $subjectId) {
+            $teacher->subjects()->attach($subjectId, [
+                'year' => $validated['years'][$index]
+            ]);
+        }
+
+        // Attach classrooms with subjects and years
+        foreach ($validated['class_rooms'] as $index => $classRoomId) {
+            $teacher->classRooms()->attach($classRoomId, [
+                'subject_id' => $validated['subjects'][$index],
+                'year' => $validated['years'][$index]
+            ]);
+        }
+
+        DB::commit();
+
+        return redirect()
+            ->route('teachers.show', $teacher)
+            ->with('success', 'Teacher created successfully.');
     }
 
     /**
      * Display the specified teacher.
-     *
-     * @param  \App\Models\User  $teacher
-     * @return \Illuminate\View\View
      */
-    public function show(User $teacher)
+    public function show(Teacher $teacher)
     {
-        $this->authorize('view', $teacher);
-        
-        // Eager load relevant relationships if needed
-        $teacher->load(['roles', 'permissions']);
-        
+        $teacher->load([
+            'school',
+            'subjects',
+            'classRooms',
+            'conductedEvaluations.subject',
+            'conductedEvaluations.classRoom',
+            'conductedEvaluations.evaluationType',
+            'conductedEvaluations.studentGrades.student.user',
+            'givenGrades.student.user',
+            'givenGrades.evaluation.subject',
+            'givenGrades.evaluation.evaluationType'
+        ]);
+
         return view('teachers.show', compact('teacher'));
     }
 
     /**
      * Show the form for editing the specified teacher.
-     *
-     * @param  \App\Models\User  $teacher
-     * @return \Illuminate\View\View
      */
-    public function edit(User $teacher)
+    public function edit(Teacher $teacher)
     {
-        $this->authorize('update', $teacher);
-        return view('teachers.edit', compact('teacher'));
+        $subjects = Subject::orderBy('name')->get();
+        $classRooms = ClassRoom::orderBy('name')->get();
+        
+        $teacher->load(['subjects', 'classRooms', 'school']);
+
+        return view('teachers.edit', compact('teacher', 'subjects', 'classRooms'));
     }
 
     /**
      * Update the specified teacher in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\User  $teacher
-     * @return \Illuminate\Http\RedirectResponse
      */
-    public function update(Request $request, User $teacher)
+    public function update(TeacherRequest $request, Teacher $teacher)
     {
-        $this->authorize('update', $teacher);
-
         try {
-            $rules = [
-                'name' => ['required', 'string', 'max:255'],
-                'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $teacher->id],
-            ];
-            
-            // Only validate password if it's provided
-            if ($request->filled('password')) {
-                $rules['password'] = ['confirmed', Password::defaults()];
-            }
-            
-            $validated = $request->validate($rules);
+            DB::beginTransaction();
 
-            // Update only what has changed
-            $teacher->fill([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-            ]);
-            
-            if ($request->filled('password')) {
-                $teacher->password = Hash::make($validated['password']);
-            }
-            
-            $teacher->save();
+            $validated = $request->validated();
 
-            Log::info('Teacher updated', ['id' => $teacher->id]);
-            
-            return redirect()
-                ->route('teachers.index')
-                ->with('success', 'Teacher updated successfully.');
+            // Handle profile photo upload
+            if ($request->hasFile('profile_photo')) {
+                // Delete old photo if exists
+                $teacher->deleteProfilePhoto();
                 
-        } catch (QueryException $e) {
+                // Store new photo
+                $validated['profile_photo'] = $request->file('profile_photo')->store('teacher-photos', 'public');
+            }
+
+            // Update teacher record
+            $teacher->update([
+                'teacher_firstname' => $validated['first_name'],
+                'teacher_lastname' => $validated['last_name'] ?? null,
+                'teacher_email' => $validated['email'],
+                'teacher_phone' => $validated['phone'],
+                'date_of_birth' => $validated['date_of_birth'],
+                'gender' => $validated['gender'],
+                'address' => $validated['address'],
+                'grade' => $validated['grade'],
+                'speciality' => $validated['speciality'],
+                'subject_title' => $validated['subject_title'],
+                'status' => $validated['status'],
+                'school_id' => $validated['school_id'] ?? null,
+            ]);
+
+            if (isset($validated['profile_photo'])) {
+                $teacher->profile_photo = $validated['profile_photo'];
+                $teacher->save();
+            }
+
+            // Sync subjects with years
+            $subjectSync = [];
+            foreach ($validated['subjects'] as $index => $subjectId) {
+                $subjectSync[$subjectId] = ['year' => $validated['years'][$index]];
+            }
+            $teacher->subjects()->sync($subjectSync);
+
+            // Sync classrooms with subjects and years
+            $classRoomSync = [];
+            foreach ($validated['class_rooms'] as $index => $classRoomId) {
+                $classRoomSync[$classRoomId] = [
+                    'subject_id' => $validated['subjects'][$index],
+                    'year' => $validated['years'][$index]
+                ];
+            }
+            $teacher->classRooms()->sync($classRoomSync);
+
+            DB::commit();
+
+            return redirect()
+                ->route('teachers.show', $teacher)
+                ->with('success', 'Teacher updated successfully.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            if (isset($validated['profile_photo'])) {
+                Storage::disk('public')->delete($validated['profile_photo']);
+            }
+
             Log::error('Failed to update teacher', [
                 'id' => $teacher->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
-            
+
             return back()
-                ->withInput($request->except('password'))
+                ->withInput()
                 ->with('error', 'An error occurred while updating the teacher.');
         }
     }
 
     /**
      * Remove the specified teacher from storage.
-     *
-     * @param  \App\Models\User  $teacher
-     * @return \Illuminate\Http\RedirectResponse
      */
-    public function destroy(User $teacher)
+    public function destroy(Teacher $teacher)
     {
-        $this->authorize('delete', $teacher);
-
         try {
-            // Store teacher info for logging before deletion
-            $teacherId = $teacher->id;
-            $teacherEmail = $teacher->email;
-            
+            DB::beginTransaction();
+
+            // Delete profile photo if exists
+            $teacher->deleteProfilePhoto();
+
+            // Delete teacher and related records
             $teacher->delete();
-            
-            Log::info('Teacher deleted', ['id' => $teacherId, 'email' => $teacherEmail]);
-            
+
+            DB::commit();
+
             return redirect()
                 ->route('teachers.index')
                 ->with('success', 'Teacher deleted successfully.');
-                
-        } catch (QueryException $e) {
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
             Log::error('Failed to delete teacher', [
                 'id' => $teacher->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
-            
+
             return back()->with('error', 'An error occurred while deleting the teacher.');
         }
     }

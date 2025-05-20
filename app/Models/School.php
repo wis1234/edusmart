@@ -25,8 +25,26 @@ class School extends Model
         'principal_name',
         'type',
         'capacity',
-        'status'
+        'status',
+        'created_by',
+        'updated_by'
     ];
+
+    /**
+     * Get the user who created the school.
+     */
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Get the user who last updated the school.
+     */
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
 
     /**
      * Get the classrooms for the school.
@@ -41,7 +59,7 @@ class School extends Model
      */
     public function teachers()
     {
-        return $this->hasMany(User::class)->role('enseignant');
+        return $this->hasMany(User::class)->role('teacher');
     }
 
     /**

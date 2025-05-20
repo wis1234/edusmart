@@ -2,21 +2,80 @@
 
 @section('content')
 <div class="container mx-auto px-4">
-    <h1 class="text-2xl font-bold mb-4">Class Room Details</h1>
-
-    <div class="mb-4">
-        <strong>Name:</strong> {{ $class_room->name }}
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">Classroom Details</h1>
+        <div class="space-x-2">
+            @can('update', $classRoom)
+            <a href="{{ route('class_rooms.edit', $classRoom) }}" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">Edit Classroom</a>
+            @endcan
+            <a href="{{ route('class_rooms.index') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Back to Classrooms</a>
+        </div>
     </div>
 
-    <div class="mb-4">
-        <strong>Grade:</strong> {{ $class_room->grade }}
-    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Basic Information -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 pb-2 border-b">Basic Information</h2>
+            <div class="space-y-3">
+                <p><strong>Name:</strong> {{ $classRoom->name }}</p>
+                <p><strong>School:</strong> {{ $classRoom->school->name ?? 'N/A' }}</p>
+                <p><strong>Grade Level:</strong> {{ $classRoom->grade_level }}</p>
+                <p><strong>Section:</strong> {{ $classRoom->section }}</p>
+                <p><strong>Academic Year:</strong> {{ $classRoom->academic_year }}</p>
+                <p><strong>Capacity:</strong> {{ $classRoom->capacity }}</p>
+                <p><strong>Room Number:</strong> {{ $classRoom->room_number }}</p>
+                <p><strong>Building:</strong> {{ $classRoom->building }}</p>
+                <p><strong>Floor:</strong> {{ $classRoom->floor }}</p>
+                <p><strong>Active:</strong> {{ $classRoom->is_active ? 'Yes' : 'No' }}</p>
+                <p><strong>Days of Week:</strong> {{ implode(', ', array_map('ucfirst', $classRoom->days_of_week ?? [])) }}</p>
+                <p><strong>Start Time:</strong> {{ $classRoom->start_time ? $classRoom->start_time->format('H:i') : 'N/A' }}</p>
+                <p><strong>End Time:</strong> {{ $classRoom->end_time ? $classRoom->end_time->format('H:i') : 'N/A' }}</p>
+            </div>
+        </div>
 
-    <div class="mb-4">
-        <strong>Teacher:</strong> {{ $class_room->teacher->name ?? 'N/A' }}
-    </div>
+        <!-- Related Information -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 pb-2 border-b">Related Information</h2>
+            <div class="space-y-3">
+                <p><strong>Teachers:</strong></p>
+                <ul class="list-disc list-inside">
+                    @forelse($classRoom->teachers as $teacher)
+                        <li>{{ $teacher->first_name }} {{ $teacher->last_name }}</li>
+                    @empty
+                        <li>No teachers assigned.</li>
+                    @endforelse
+                </ul>
 
-    <a href="{{ route('class_rooms.edit', $class_room) }}" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">Edit</a>
-    <a href="{{ route('class_rooms.index') }}" class="ml-2 bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Back to List</a>
+                <p><strong>Students:</strong></p>
+                <ul class="list-disc list-inside">
+                    @forelse($classRoom->students as $student)
+                        <li>{{ $student->first_name }} {{ $student->last_name }}</li>
+                    @empty
+                        <li>No students enrolled.</li>
+                    @endforelse
+                </ul>
+
+                <p><strong>Evaluations:</strong></p>
+                <ul class="list-disc list-inside">
+                    @forelse($classRoom->evaluations as $evaluation)
+                        <li>{{ $evaluation->name }} ({{ $evaluation->date->format('Y-m-d') }})</li>
+                    @empty
+                        <li>No evaluations scheduled.</li>
+                    @endforelse
+                </ul>
+            </div>
+        </div>
+
+        <!-- User Tracking -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 pb-2 border-b">User Tracking</h2>
+            <div class="space-y-3">
+                <p><strong>Created By:</strong> {{ $classRoom->createdBy ? $classRoom->createdBy->first_name . ' ' . $classRoom->createdBy->last_name : 'N/A' }}</p>
+                <p><strong>Updated By:</strong> {{ $classRoom->updatedBy ? $classRoom->updatedBy->first_name . ' ' . $classRoom->updatedBy->last_name : 'N/A' }}</p>
+                <p><strong>Created At:</strong> {{ $classRoom->created_at->format('Y-m-d H:i') }}</p>
+                <p><strong>Updated At:</strong> {{ $classRoom->updated_at->format('Y-m-d H:i') }}</p>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection

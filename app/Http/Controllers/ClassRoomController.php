@@ -3,97 +3,104 @@
 namespace App\Http\Controllers;
 
 use App\Models\ClassRoom;
+use App\Http\Requests\ClassRoomRequest;
 use Illuminate\Http\Request;
 
 class ClassRoomController extends Controller
 {
     public function __construct()
     {
-        $this->authorizeResource(ClassRoom::class, 'classRoom');
+        $this->authorizeResource(ClassRoom::class, 'class_room');
     }
 
     /**
-     * Display a listing of the resource.
+     * Display a listing of the classroom resources.
      */
     public function index()
     {
-        $this->authorize('viewAny', ClassRoom::class);
-        $classRooms = ClassRoom::with('teacher', 'students')->get();
+        $classRooms = ClassRoom::with(['school', 'createdBy:id,first_name,last_name', 'updatedBy:id,first_name,last_name'])
+            ->orderBy('name')
+            ->get();
         return view('class_rooms.index', compact('classRooms'));
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Show the form for creating a new classroom resource.
      */
     public function create()
     {
-        $this->authorize('create', ClassRoom::class);
         return view('class_rooms.create');
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created classroom resource in storage.
      */
-    public function store(Request $request)
+    public function store(ClassRoomRequest $request)
     {
-        $this->authorize('create', ClassRoom::class);
+        $validated = $request->validated();
+        $validated['created_by'] = auth()->id();
+        $validated['updated_by'] = auth()->id();
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'level' => 'required|string|max:255',
-            'teacher_id' => 'nullable|exists:users,id',
-        ]);
+        $classRoom = ClassRoom::create($validated);
 
-        ClassRoom::create($validated);
-
-        return redirect()->route('class_rooms.index')->with('success', 'Class room created successfully.');
+        return redirect()
+            ->route('class_rooms.show', $classRoom)
+            ->with('success', 'Classroom created successfully.');
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified classroom resource.
      */
     public function show(ClassRoom $classRoom)
     {
-        $this->authorize('view', $classRoom);
-        $classRoom->load('teacher', 'students');
+        $classRoom->load([
+            'school',
+            'teachers',
+            'students',
+            'evaluations',
+            'createdBy:id,first_name,last_name',
+            'updatedBy:id,first_name,last_name',
+        ]);
+        
         return view('class_rooms.show', compact('classRoom'));
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Show the form for editing the specified classroom resource.
      */
     public function edit(ClassRoom $classRoom)
     {
-        $this->authorize('update', $classRoom);
         return view('class_rooms.edit', compact('classRoom'));
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified classroom resource in storage.
      */
-    public function update(Request $request, ClassRoom $classRoom)
+    public function update(ClassRoomRequest $request, ClassRoom $classRoom)
     {
-        $this->authorize('update', $classRoom);
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'level' => 'required|string|max:255',
-            'teacher_id' => 'nullable|exists:users,id',
-        ]);
+        $validated = $request->validated();
+        $validated['updated_by'] = auth()->id();
 
         $classRoom->update($validated);
 
-        return redirect()->route('class_rooms.index')->with('success', 'Class room updated successfully.');
+        return redirect()
+            ->route('class_rooms.show', $classRoom)
+            ->with('success', 'Classroom updated successfully.');
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified classroom resource from storage.
      */
     public function destroy(ClassRoom $classRoom)
     {
-        $this->authorize('delete', $classRoom);
+        if ($classRoom->students()->exists()) {
+            return back()->with('error', 'Cannot delete classroom because it has associated students.');
+        }
 
         $classRoom->delete();
-        return redirect()->route('class_rooms.index')->with('success', 'Class room deleted successfully.');
+
+        return redirect()
+            ->route('class_rooms.index')
+            ->with('success', 'Classroom deleted successfully.');
     }
 }

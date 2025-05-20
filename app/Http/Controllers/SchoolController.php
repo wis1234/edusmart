@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\School;
+use App\Http\Requests\SchoolRequest;
 use Illuminate\Http\Request;
 
 class SchoolController extends Controller
@@ -17,8 +18,9 @@ class SchoolController extends Controller
      */
     public function index()
     {
-        $this->authorize('viewAny', School::class);
-        $schools = School::all();
+        $schools = School::with(['createdBy:id,first_name,last_name', 'updatedBy:id,first_name,last_name'])
+            ->orderBy('name')
+            ->get();
         return view('schools.index', compact('schools'));
     }
 
@@ -27,20 +29,23 @@ class SchoolController extends Controller
      */
     public function create()
     {
-        $this->authorize('create', School::class);
         return view('schools.create');
     }
 
     /**
      * Store a newly created school resource in storage.
      */
-    public function store(Request $request)
+    public function store(SchoolRequest $request)
     {
-        $this->authorize('create', School::class);
-        // Placeholder for storing school resource
-        // Validate and save data as needed
+        $validated = $request->validated();
+        $validated['created_by'] = auth()->id();
+        $validated['updated_by'] = auth()->id();
 
-        return redirect()->route('schools.index')->with('success', 'School resource created successfully.');
+        $school = School::create($validated);
+
+        return redirect()
+            ->route('schools.show', $school)
+            ->with('success', 'School created successfully.');
     }
 
     /**
@@ -48,7 +53,14 @@ class SchoolController extends Controller
      */
     public function show(School $school)
     {
-        $this->authorize('view', $school);
+        $school->load([
+            'createdBy:id,first_name,last_name',
+            'updatedBy:id,first_name,last_name',
+            'teachers',
+            'students',
+            'classRooms'
+        ]);
+        
         return view('schools.show', compact('school'));
     }
 
@@ -57,20 +69,22 @@ class SchoolController extends Controller
      */
     public function edit(School $school)
     {
-        $this->authorize('update', $school);
         return view('schools.edit', compact('school'));
     }
 
     /**
      * Update the specified school resource in storage.
      */
-    public function update(Request $request, School $school)
+    public function update(SchoolRequest $request, School $school)
     {
-        $this->authorize('update', $school);
-        // Placeholder for updating school resource
-        // Validate and update data as needed
+        $validated = $request->validated();
+        $validated['updated_by'] = auth()->id();
 
-        return redirect()->route('schools.index')->with('success', 'School resource updated successfully.');
+        $school->update($validated);
+
+        return redirect()
+            ->route('schools.show', $school)
+            ->with('success', 'School updated successfully.');
     }
 
     /**
@@ -78,9 +92,14 @@ class SchoolController extends Controller
      */
     public function destroy(School $school)
     {
-        $this->authorize('delete', $school);
-        // Placeholder for deleting school resource
+        if ($school->students()->exists() || $school->teachers()->exists() || $school->classRooms()->exists()) {
+            return back()->with('error', 'Cannot delete school because it has associated students, teachers, or classrooms.');
+        }
 
-        return redirect()->route('schools.index')->with('success', 'School resource deleted successfully.');
+        $school->delete();
+
+        return redirect()
+            ->route('schools.index')
+            ->with('success', 'School deleted successfully.');
     }
 }

@@ -18,6 +18,8 @@
             <tr>
                 <th class="py-2 px-4 border-b">Name</th>
                 <th class="py-2 px-4 border-b">Email</th>
+                <th class="py-2 px-4 border-b">Phone</th>
+                <th class="py-2 px-4 border-b">Status</th>
                 <th class="py-2 px-4 border-b">Actions</th>
             </tr>
         </thead>
@@ -26,6 +28,8 @@
             <tr>
                 <td class="py-2 px-4 border-b">{{ $teacher->name }}</td>
                 <td class="py-2 px-4 border-b">{{ $teacher->email }}</td>
+                <td class="py-2 px-4 border-b">{{ $teacher->phone }}</td>
+                <td class="py-2 px-4 border-b capitalize">{{ $teacher->status }}</td>
                 <td class="py-2 px-4 border-b">
                     <a href="{{ route('teachers.show', $teacher) }}" class="text-blue-600 hover:underline mr-2">View</a>
                     @can('update', $teacher)
@@ -42,7 +46,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="3" class="py-4 px-4 text-center">No teachers found.</td>
+                <td colspan="5" class="py-4 px-4 text-center">No teachers found.</td>
             </tr>
             @endforelse
         </tbody>
