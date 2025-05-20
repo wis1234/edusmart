@@ -49,7 +49,7 @@ class ClassRoom extends Model
     public function subjects()
     {
         return $this->belongsToMany(Subject::class, 'class_room_subject')
-            ->withPivot('teacher_id', 'year', 'hours_per_week', 'is_mandatory')
+            ->withPivot('academic_year', 'hours_per_week', 'is_mandatory')
             ->withTimestamps();
     }
 
@@ -93,5 +93,13 @@ class ClassRoom extends Model
     public function updatedBy()
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    /**
+     * Get the detailed teacher assignments for the classroom.
+     */
+    public function classRoomTeachers()
+    {
+        return $this->hasMany(\App\Models\ClassRoomTeacher::class);
     }
 }

@@ -28,7 +28,7 @@
             <tr>
                 <td class="py-2 px-4 border-b">{{ $student->first_name }}</td>
                 <td class="py-2 px-4 border-b">{{ $student->last_name }}</td>
-                <td class="py-2 px-4 border-b">{{ $student->birth_date->format('Y-m-d') }}</td>
+                <td class="py-2 px-4 border-b">{{ $student->date_of_birth->format('Y-m-d') }}</td>
                 <td class="py-2 px-4 border-b">{{ $student->gender }}</td>
                 <td class="py-2 px-4 border-b">{{ $student->classRoom->name ?? 'N/A' }}</td>
                 <td class="py-2 px-4 border-b">{{ $student->parent->name ?? 'N/A' }}</td>

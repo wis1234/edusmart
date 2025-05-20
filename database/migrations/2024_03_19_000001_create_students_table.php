@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('school_id')->constrained()->onDelete('cascade');
             $table->foreignId('parent_id')->nullable()->constrained('users')->onDelete('set null');
             $table->string('admission_number')->unique();
-            $table->string('roll_number');
+            $table->string('roll_number')->nullable();
             $table->date('admission_date');
             $table->date('date_of_birth');
             $table->string('gender');

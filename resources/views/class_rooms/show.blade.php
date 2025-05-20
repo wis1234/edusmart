@@ -39,8 +39,24 @@
             <div class="space-y-3">
                 <p><strong>Teachers:</strong></p>
                 <ul class="list-disc list-inside">
-                    @forelse($classRoom->teachers as $teacher)
-                        <li>{{ $teacher->first_name }} {{ $teacher->last_name }}</li>
+                    @forelse($classRoom->classRoomTeachers as $assignment)
+                        <li>
+                            @if($assignment->teacher)
+                                {{ $assignment->teacher->first_name }} {{ $assignment->teacher->last_name }}
+                            @else
+                                <em>Teacher data not available</em>
+                            @endif
+                            @if($assignment->subject)
+                                - <em>{{ $assignment->subject->name }}</em>
+                            @endif
+                            <br>
+                            <small>
+                                Year: {{ $assignment->year }}<br>
+                                Start Time: {{ $assignment->start_time ? $assignment->start_time->format('H:i') : 'N/A' }}<br>
+                                End Time: {{ $assignment->end_time ? $assignment->end_time->format('H:i') : 'N/A' }}<br>
+                                Days of Week: {{ $assignment->days_of_week ? implode(', ', array_map('ucfirst', $assignment->days_of_week)) : 'N/A' }}
+                            </small>
+                        </li>
                     @empty
                         <li>No teachers assigned.</li>
                     @endforelse
@@ -49,7 +65,9 @@
                 <p><strong>Students:</strong></p>
                 <ul class="list-disc list-inside">
                     @forelse($classRoom->students as $student)
-                        <li>{{ $student->first_name }} {{ $student->last_name }}</li>
+                        <li>
+                            {{ $student->first_name }} {{ $student->last_name }}
+                        </li>
                     @empty
                         <li>No students enrolled.</li>
                     @endforelse

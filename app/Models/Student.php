@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class Student extends Model
 {
@@ -12,6 +13,9 @@ class Student extends Model
 
     protected $fillable = [
         'user_id',
+        'first_name',
+        'last_name',
+        'name',
         'class_room_id',
         'school_id',
         'admission_number',
@@ -25,7 +29,8 @@ class Student extends Model
         'emergency_contact',
         'medical_conditions',
         'academic_year',
-        'status'
+        'status',
+        'profile_photo'
     ];
 
     protected $casts = [
@@ -132,5 +137,16 @@ class Student extends Model
         }
 
         return $totalWeight > 0 ? $totalWeightedScore / $totalWeight : 0;
+    }
+
+    /**
+     * Get the URL for the profile photo or default image
+     */
+    public function getProfilePhotoUrlAttribute()
+    {
+        if ($this->profile_photo && Storage::disk('public')->exists($this->profile_photo)) {
+            return Storage::url($this->profile_photo);
+        }
+        return asset('images/default-profile.png');
     }
 }

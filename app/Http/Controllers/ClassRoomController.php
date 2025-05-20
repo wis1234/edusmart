@@ -58,6 +58,8 @@ class ClassRoomController extends Controller
             'teachers',
             'students',
             'evaluations',
+            'subjects',
+            'classRoomTeachers',
             'createdBy:id,first_name,last_name',
             'updatedBy:id,first_name,last_name',
         ]);
