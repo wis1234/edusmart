@@ -3,6 +3,7 @@
 @section('content')
 <div class="container mx-auto px-4">
     <h1 class="text-2xl font-bold mb-4">Evaluations</h1>
+            <a href="{{ route('dashboard') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Back to Dashboard</a>
 
     @can('create', App\Models\Evaluation::class)
         <a href="{{ route('evaluations.create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4 inline-block">Create Evaluation</a>

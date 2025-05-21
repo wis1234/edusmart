@@ -98,6 +98,7 @@
                                         @endforeach
                                     </div>
                                 </td>
+                                
                                 <td class="px-4 py-2">{{ $classRoom->students->count() }}</td>
                             </tr>
                             @endforeach
@@ -138,7 +139,7 @@
                 <tbody class="divide-y divide-gray-200">
                     @foreach($teacher->conductedEvaluations->take(5) as $evaluation)
                     <tr>
-                        <td class="px-4 py-2">{{ $evaluation->date->format('M d, Y') }}</td>
+<td class="px-4 py-2">{{ $evaluation->evaluation_date?->format('M d, Y') }}</td>
                         <td class="px-4 py-2">{{ $evaluation->subject->name }}</td>
                         <td class="px-4 py-2">
                             <a href="{{ route('class_rooms.show', $evaluation->classRoom) }}" class="text-blue-600 hover:text-blue-900">
