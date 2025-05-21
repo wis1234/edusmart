@@ -2,23 +2,22 @@
 
 @section('content')
 <div class="container mx-auto px-4">
-    <div class="flex justify-between items-center mb-4">
+    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <h1 class="text-2xl font-bold">Add New Student</h1>
         <a href="{{ route('students.index') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Back to Students</a>
     </div>
 
+    {{-- Alerts --}}
     @if (session('success'))
         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
             {{ session('success') }}
         </div>
     @endif
-
     @if (session('error'))
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {{ session('error') }}
         </div>
     @endif
-
     @if ($errors->any())
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             <ul class="list-disc pl-5">
@@ -29,37 +28,36 @@
         </div>
     @endif
 
-    <form action="{{ route('students.store') }}" method="POST" enctype="multipart/form-data" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+    {{-- Form --}}
+    <form action="{{ route('students.store') }}" method="POST" enctype="multipart/form-data" class="bg-white shadow-md rounded px-6 pt-6 pb-8 mb-8">
         @csrf
-
         <input type="hidden" name="user_id" value="{{ auth()->id() }}">
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Basic Information -->
-            <div class="col-span-2">
-                <h2 class="text-xl font-semibold mb-3 pb-2 border-b">Basic Information</h2>
-            </div>
+        {{-- Section Title --}}
+        <h2 class="text-xl font-semibold mb-4 pb-2 border-b">Basic Information</h2>
 
-            <div class="mb-4">
+        {{-- Grid Layout --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {{-- First Column --}}
+            <div>
                 <label for="first_name" class="block font-semibold mb-1">First Name*</label>
-                <input type="text" name="first_name" id="first_name" value="{{ old('first_name') }}" 
+                <input type="text" name="first_name" id="first_name" value="{{ old('first_name') }}"
                     class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
             </div>
-            <div class="mb-4">
+            <div>
                 <label for="last_name" class="block font-semibold mb-1">Last Name*</label>
-                <input type="text" name="last_name" id="last_name" value="{{ old('last_name') }}" 
+                <input type="text" name="last_name" id="last_name" value="{{ old('last_name') }}"
                     class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
             </div>
-
-            <div class="mb-4">
+            <div>
                 <label for="date_of_birth" class="block font-semibold mb-1">Date of Birth*</label>
-                <input type="date" name="date_of_birth" id="date_of_birth" value="{{ old('date_of_birth') }}" 
+                <input type="date" name="date_of_birth" id="date_of_birth" value="{{ old('date_of_birth') }}"
                     class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
             </div>
-
-            <div class="mb-4">
+            <div>
                 <label for="gender" class="block font-semibold mb-1">Gender*</label>
-                <select name="gender" id="gender" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                <select name="gender" id="gender"
+                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
                     <option value="">Select Gender</option>
                     <option value="male" {{ old('gender') == 'male' ? 'selected' : '' }}>Male</option>
                     <option value="female" {{ old('gender') == 'female' ? 'selected' : '' }}>Female</option>
@@ -68,8 +66,23 @@
             </div>
 
             <div class="mb-4">
+    <label for="selected_parent_id" class="block font-semibold mb-1">Parent</label>
+    <select name="selected_parent_id" id="selected_parent_id" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
+        <option value="">Select Parent</option>
+        @foreach($users as $parent)
+            @if($parent->role === 'parent')
+                <option value="{{ $parent->id }}" {{ old('selected_parent_id') == $parent->id ? 'selected' : '' }}>
+                    {{ $parent->first_name }} {{ $parent->last_name }}
+                </option>
+            @endif
+        @endforeach
+    </select>
+</div>
+
+            <div>
                 <label for="school_id" class="block font-semibold mb-1">School*</label>
-                <select name="school_id" id="school_id" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                <select name="school_id" id="school_id"
+                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
                     <option value="">Select School</option>
                     @foreach($schools as $school)
                         <option value="{{ $school->id }}" {{ old('school_id') == $school->id ? 'selected' : '' }}>
@@ -78,10 +91,10 @@
                     @endforeach
                 </select>
             </div>
-
-            <div class="mb-4">
+            <div>
                 <label for="class_room_id" class="block font-semibold mb-1">Class Room</label>
-                <select name="class_room_id" id="class_room_id" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
+                <select name="class_room_id" id="class_room_id"
+                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
                     <option value="">Select Class Room</option>
                     @foreach($classRooms as $classRoom)
                         <option value="{{ $classRoom->id }}" {{ old('class_room_id') == $classRoom->id ? 'selected' : '' }}>
@@ -90,62 +103,50 @@
                     @endforeach
                 </select>
             </div>
-
-            <div class="mb-4">
-                <label for="parent_id" class="block font-semibold mb-1">Parent</label>
-                <select name="parent_id" id="parent_id" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
-                    <option value="">Select Parent</option>
-                    @foreach($parents as $parent)
-                        <option value="{{ $parent->id }}" {{ old('parent_id') == $parent->id ? 'selected' : '' }}>
-                            {{ $parent->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="mb-4">
+            <div>
                 <label for="admission_number" class="block font-semibold mb-1">Admission Number*</label>
-                <input type="text" name="admission_number" id="admission_number" value="{{ old('admission_number') }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                <input type="text" name="admission_number" id="admission_number" value="{{ old('admission_number') }}"
+                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
             </div>
-
-            <div class="mb-4">
+            <div>
                 <label for="roll_number" class="block font-semibold mb-1">Roll Number</label>
-                <input type="text" name="roll_number" id="roll_number" value="{{ old('roll_number', '') }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
+                <input type="text" name="roll_number" id="roll_number" value="{{ old('roll_number') }}"
+                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
             </div>
-
-            <div class="mb-4">
+            <div>
                 <label for="admission_date" class="block font-semibold mb-1">Admission Date*</label>
-                <input type="date" name="admission_date" id="admission_date" value="{{ old('admission_date') }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                <input type="date" name="admission_date" id="admission_date" value="{{ old('admission_date') }}"
+                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
             </div>
-
-            <div class="mb-4">
+            <div>
                 <label for="blood_group" class="block font-semibold mb-1">Blood Group</label>
-                <input type="text" name="blood_group" id="blood_group" value="{{ old('blood_group') }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
+                <input type="text" name="blood_group" id="blood_group" value="{{ old('blood_group') }}"
+                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
             </div>
-
-            <div class="mb-4">
+            <div class="md:col-span-2">
                 <label for="address" class="block font-semibold mb-1">Address</label>
-                <textarea name="address" id="address" rows="3" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">{{ old('address') }}</textarea>
+                <textarea name="address" id="address" rows="3"
+                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">{{ old('address') }}</textarea>
             </div>
-
-            <div class="mb-4">
+            <div>
                 <label for="emergency_contact" class="block font-semibold mb-1">Emergency Contact</label>
-                <input type="text" name="emergency_contact" id="emergency_contact" value="{{ old('emergency_contact') }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
+                <input type="text" name="emergency_contact" id="emergency_contact" value="{{ old('emergency_contact') }}"
+                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
             </div>
-
-            <div class="mb-4">
+            <div>
                 <label for="medical_conditions" class="block font-semibold mb-1">Medical Conditions</label>
-                <textarea name="medical_conditions" id="medical_conditions" rows="3" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">{{ old('medical_conditions') }}</textarea>
+                <textarea name="medical_conditions" id="medical_conditions" rows="3"
+                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">{{ old('medical_conditions') }}</textarea>
             </div>
-
-            <div class="mb-4">
+            <div>
                 <label for="academic_year" class="block font-semibold mb-1">Academic Year*</label>
-                <input type="text" name="academic_year" id="academic_year" value="{{ old('academic_year') }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                <input type="text" name="academic_year" id="academic_year" value="{{ old('academic_year') }}"
+                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
             </div>
-
-            <div class="mb-4">
+            <div>
                 <label for="status" class="block font-semibold mb-1">Status*</label>
-                <select name="status" id="status" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                <select name="status" id="status"
+                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
                     <option value="">Select Status</option>
                     <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>Active</option>
                     <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
@@ -153,18 +154,20 @@
                     <option value="transferred" {{ old('status') == 'transferred' ? 'selected' : '' }}>Transferred</option>
                 </select>
             </div>
-
-            <div class="mb-4">
+            <div class="md:col-span-2">
                 <label for="profile_photo" class="block font-semibold mb-1">Profile Photo</label>
-                <input type="file" name="profile_photo" id="profile_photo" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
+                <input type="file" name="profile_photo" id="profile_photo"
+                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
                 @error('profile_photo')
                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                 @enderror
             </div>
         </div>
 
-        <div class="flex items-center justify-between mt-6">
-            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+        {{-- Submit --}}
+        <div class="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4">
+            <button type="submit"
+                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline">
                 Create Student
             </button>
             <p class="text-sm text-gray-600">* Required fields</p>

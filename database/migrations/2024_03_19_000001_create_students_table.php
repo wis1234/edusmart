@@ -19,6 +19,7 @@ return new class extends Migration
             $table->foreignId('parent_id')->nullable()->constrained('users')->onDelete('set null');
             $table->string('admission_number')->unique();
             $table->string('roll_number')->nullable();
+            $table->string('selected_parent_id')->nullable();
             $table->date('admission_date');
             $table->date('date_of_birth');
             $table->string('gender');

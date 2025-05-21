@@ -63,10 +63,14 @@
                 <label class="font-semibold">Class Room:</label>
                 <p>{{ $student->classRoom?->name ?? 'N/A' }}</p>
             </div>
-            <div>
-                <label class="font-semibold">Parent:</label>
-                <p>{{ $student->parent?->name ?? 'N/A' }}</p>
-            </div>
+<div>
+    <label class="font-semibold">Parent:</label>
+    <p>
+        {{ $users->firstWhere('id', $student->selected_parent_id)?->first_name }} 
+        {{ $users->firstWhere('id', $student->selected_parent_id)?->last_name ?? 'N/A' }}
+    </p>
+</div>
+
             <div>
                 <label class="font-semibold">Address:</label>
                 <p>{{ $student->address ?? 'N/A' }}</p>

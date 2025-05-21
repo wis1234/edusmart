@@ -5,7 +5,7 @@
     <h1 class="text-2xl font-bold mb-4">Evaluations</h1>
 
     @can('create', App\Models\Evaluation::class)
-    <a href="{{ route('evaluations.create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4 inline-block">Create Evaluation</a>
+        <a href="{{ route('evaluations.create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4 inline-block">Create Evaluation</a>
     @endcan
 
     @if(session('success'))
@@ -13,6 +13,12 @@
             {{ session('success') }}
         </div>
     @endif
+
+    <!-- Search form -->
+    <form method="GET" action="{{ route('evaluations.index') }}" class="mb-4">
+        <input type="text" name="search" value="{{ request('search') }}" placeholder="Search..." class="border border-gray-300 rounded px-3 py-2 mr-2">
+        <button type="submit" class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-900">Search</button>
+    </form>
 
     <table class="min-w-full bg-white border border-gray-200">
         <thead>
@@ -63,6 +69,9 @@
         </tbody>
     </table>
 
-    {{ $evaluations->links() }}
+    <!-- Pagination -->
+    <div class="mt-4">
+        {{ $evaluations->appends(['search' => request('search')])->links() }}
+    </div>
 </div>
 @endsection

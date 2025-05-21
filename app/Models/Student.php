@@ -18,6 +18,7 @@ class Student extends Model
         'name',
         'class_room_id',
         'school_id',
+        'selected_parent_id',
         'admission_number',
         'roll_number',
         'admission_date',

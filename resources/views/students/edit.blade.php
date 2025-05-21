@@ -92,17 +92,19 @@
                 </select>
             </div>
 
-            <div class="mb-4">
-                <label for="parent_id" class="block font-semibold mb-1">Parent</label>
-                <select name="parent_id" id="parent_id" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
-                    <option value="">Select Parent</option>
-                    @foreach($parents as $parent)
-                        <option value="{{ $parent->id }}" {{ old('parent_id', $student->parent_id) == $parent->id ? 'selected' : '' }}>
-                            {{ $parent->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
+<div class="mb-4">
+    <label for="selected_parent_id" class="block font-semibold mb-1">Parent</label>
+    <select name="selected_parent_id" id="selected_parent_id" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
+        <option value="">Select Parent</option>
+        @foreach($users as $parent)
+            @if($parent->role === 'parent')
+                <option value="{{ $parent->id }}" {{ old('selected_parent_id') == $parent->id ? 'selected' : '' }}>
+                    {{ $parent->first_name }} {{ $parent->last_name }}
+                </option>
+            @endif
+        @endforeach
+    </select>
+</div>
 
             <div class="mb-4">
                 <label for="admission_number" class="block font-semibold mb-1">Admission Number*</label>

@@ -60,7 +60,7 @@
 
             <div class="pt-4 border-t border-gray-200">
                 <p class="text-sm text-gray-500">
-                Created by {{ Auth::user()->firstname }} {{ Auth::user()->lastname }}
+                Created by {{ Auth::user()->first_name }} {{ Auth::user()->last_name }}
                 on {{ $evaluation->created_at->format('M d, Y H:i') }}
                 </p>
             </div>

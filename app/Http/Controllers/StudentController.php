@@ -23,8 +23,8 @@ class StudentController extends Controller
         $students = Student::with(['user', 'classRoom', 'school', 'parent'])
             ->orderBy('admission_number')
             ->get();
-
-        return view('students.index', compact('students'));
+            $users = User::all(); 
+        return view('students.index', compact('students', 'users'));
     }
 
     public function create()
@@ -46,6 +46,7 @@ class StudentController extends Controller
             'class_room_id' => ['nullable', 'exists:class_rooms,id'],
             'school_id' => ['required', 'exists:schools,id'],
             'parent_id' => ['nullable', 'exists:users,id'],
+            'selected_parent_id' => ['nullable'],
             'admission_number' => ['required', 'string', 'max:255', 'unique:students,admission_number'],
             'roll_number' => ['nullable', 'string', 'max:255', 'sometimes'],
             'admission_date' => ['required', 'date'],
@@ -75,11 +76,14 @@ class StudentController extends Controller
         return redirect()->route('students.show', $student)->with('success', 'Student created successfully.');
     }
 
-    public function show(Student $student)
-    {
-        $student->load(['user', 'classRoom', 'school', 'parent']);
-        return view('students.show', compact('student'));
-    }
+public function show(Student $student)
+{
+    $student->load(['user', 'classRoom', 'school', 'parent']);
+    $users = User::all(); // ou User::where('role', 'parent')->get(); selon ce que tu veux
+
+    return view('students.show', compact('student', 'users'));
+}
+
 
     public function edit(Student $student)
     {
@@ -99,6 +103,7 @@ class StudentController extends Controller
             'user_id' => ['nullable', 'exists:users,id'],
             'class_room_id' => ['nullable', 'exists:class_rooms,id'],
             'school_id' => ['required', 'exists:schools,id'],
+            'selected_parent_id' => ['nullable'],
             'parent_id' => ['nullable', 'exists:users,id'],
             'admission_number' => ['required', 'string', 'max:255', Rule::unique('students', 'admission_number')->ignore($student->id)],
             'roll_number' => ['nullable', 'string', 'max:255'],

@@ -24,7 +24,8 @@ class User extends Authenticatable
         'gender',
         'profile_photo',
         'status',
-        'school_id'
+        'school_id',
+        'selected_parent_id',
     ];
 
     protected $hidden = [
@@ -178,14 +179,10 @@ public function scopeForTeacher($query, $teacherId)
     return $query->where('teacher_id', $teacherId);
 }
 
-    public function teacher()
-    {
-        return $this->belongsTo(Teacher::class);
-    }
-
-    public function creator()
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
+// Relationship for teacher
+public function teacher()
+{
+    return $this->belongsTo(User::class, 'teacher_id');
+}
 
 }

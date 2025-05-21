@@ -19,17 +19,33 @@ class EvaluationController extends Controller
         $this->authorizeResource(Evaluation::class, 'evaluation');
     }
 
-    public function index()
-    {
-        $evaluations = Evaluation::with(['subject', 'classRoom', 'evaluationType', 'teacher'])
-            ->when(Auth::user()->isTeacher(), function ($query) {
-                return $query->where('teacher_id', $this->getTeacherId());
-            })
-            ->latest()
-            ->paginate(10);
+    // public function index()
+    // {
+    //     $evaluations = Evaluation::with(['subject', 'classRoom', 'evaluationType', 'teacher'])
+    //         ->when(Auth::user()->isTeacher(), function ($query) {
+    //             return $query->where('teacher_id', $this->getTeacherId());
+    //         })
+    //         ->latest()
+    //         ->paginate(10);
 
-        return view('evaluations.index', compact('evaluations'));
+    //     return view('evaluations.index', compact('evaluations'));
+    // }
+
+    public function index(Request $request)
+{
+    $query = Evaluation::with(['subject', 'classRoom', 'evaluationType', 'teacher']);
+
+    if ($search = $request->input('search')) {
+        $query->whereHas('subject', fn($q) => $q->where('name', 'like', "%$search%"))
+              ->orWhereHas('classRoom', fn($q) => $q->where('name', 'like', "%$search%"))
+              ->orWhereHas('evaluationType', fn($q) => $q->where('name', 'like', "%$search%"))
+              ->orWhere('academic_year', 'like', "%$search%")
+              ->orWhere('term', 'like', "%$search%");
     }
+
+    $evaluations = $query->orderBy('evaluation_date', 'desc')->paginate(10);
+    return view('evaluations.index', compact('evaluations'));
+}
 
     public function create()
     {

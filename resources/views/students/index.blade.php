@@ -31,7 +31,10 @@
                 <td class="py-2 px-4 border-b">{{ $student->date_of_birth->format('Y-m-d') }}</td>
                 <td class="py-2 px-4 border-b">{{ $student->gender }}</td>
                 <td class="py-2 px-4 border-b">{{ $student->classRoom->name ?? 'N/A' }}</td>
-                <td class="py-2 px-4 border-b">{{ $student->parent->name ?? 'N/A' }}</td>
+                <td class="py-2 px-4 border-b">
+                  {{ $users->firstWhere('id', $student->selected_parent_id)?->first_name }} 
+                  {{ $users->firstWhere('id', $student->selected_parent_id)?->last_name ?? 'N/A' }}
+                </td>
                 <td class="py-2 px-4 border-b">
                     <a href="{{ route('students.show', $student) }}" class="text-blue-600 hover:underline mr-2">View</a>
                     <a href="{{ route('students.edit', $student) }}" class="text-yellow-600 hover:underline mr-2">Edit</a>
