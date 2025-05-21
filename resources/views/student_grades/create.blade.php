@@ -12,7 +12,7 @@
             <select name="student_id" id="student_id" class="w-full border border-gray-300 rounded px-3 py-2">
                 @foreach($students as $student)
                     <option value="{{ $student->id }}" {{ old('student_id') == $student->id ? 'selected' : '' }}>
-                        {{ $student->user->name }} ({{ $student->admission_number }})
+                        {{ $student->first_name }} {{ $student->last_name }} ({{ $student->admission_number }})
                     </option>
                 @endforeach
             </select>
