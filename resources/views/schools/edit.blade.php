@@ -3,10 +3,8 @@
 @section('content')
 <div class="container mx-auto px-4">
     <div class="flex justify-between items-center mb-6">
+        <a href="{{ route('schools.index') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">← Back to Schools</a>
         <h1 class="text-2xl font-bold">Edit School</h1>
-        <div class="space-x-2">
-            <a href="{{ route('schools.show', $school) }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Back to School</a>
-        </div>
     </div>
 
     <div class="bg-white rounded-lg shadow-md p-6">

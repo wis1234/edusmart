@@ -3,8 +3,8 @@
 @section('content')
 <div class="container mx-auto px-4">
     <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        <a href="{{ route('students.index') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">← Back to Students</a>
         <h1 class="text-2xl font-bold">Add New Student</h1>
-        <a href="{{ route('students.index') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Back to Students</a>
     </div>
 
     {{-- Alerts --}}

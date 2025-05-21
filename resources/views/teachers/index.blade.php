@@ -2,6 +2,7 @@
 
 @section('content')
 <div class="container mx-auto px-4">
+    <a href="{{ route('dashboard') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded mb-4 inline-block">← Back to Dashboard</a>
     <h1 class="text-2xl font-bold mb-4">Teachers</h1>
     @can('create', App\Models\User::class)
     <a href="{{ route('teachers.create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4 inline-block">Add New Teacher</a>

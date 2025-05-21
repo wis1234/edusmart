@@ -2,6 +2,7 @@
 
 @section('content')
 <div class="container mx-auto px-4">
+    <a href="{{ route('dashboard') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded mb-4 inline-block">← Back to Dashboard</a>
     <h1 class="text-2xl font-bold mb-4">Edit Parent</h1>
 
     @if ($errors->any())

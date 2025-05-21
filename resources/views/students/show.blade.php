@@ -3,12 +3,12 @@
 @section('content')
 <div class="container mx-auto px-4">
     <div class="flex justify-between items-center mb-6">
+        <a href="{{ route('students.index') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">← Back to Students</a>
         <h1 class="text-2xl font-bold">Student Details</h1>
         <div class="space-x-2">
             @can('update', $student)
             <a href="{{ route('students.edit', $student) }}" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">Edit Student</a>
             @endcan
-            <a href="{{ route('students.index') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Back to Students</a>
         </div>
     </div>
 
