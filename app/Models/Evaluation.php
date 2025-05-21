@@ -78,4 +78,10 @@ class Evaluation extends Model
             ->withPivot('marks_obtained', 'remarks')
             ->withTimestamps();
     }
+
+    public function creator()
+{
+    return $this->belongsTo(User::class, 'created_by');
+}
+
 }

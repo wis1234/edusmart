@@ -19,6 +19,7 @@ class User extends Authenticatable
         'password',
         'phone',
         'address',
+        'profession',
         'date_of_birth',
         'gender',
         'profile_photo',
@@ -163,4 +164,28 @@ class User extends Authenticatable
             $user->deleteProfilePhoto();
         });
     }
+
+    public function canManageEvaluations()
+{
+    return $this->email === 'ronaldoagbohou@gmail.com' || 
+           $this->hasRole('enseignant') || 
+           $this->teacher()->exists();
+}
+
+// Scope for teacher filtering
+public function scopeForTeacher($query, $teacherId)
+{
+    return $query->where('teacher_id', $teacherId);
+}
+
+    public function teacher()
+    {
+        return $this->belongsTo(Teacher::class);
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
 }

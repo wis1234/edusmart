@@ -74,17 +74,17 @@ export default function Dashboard({ auth, laravelVersion, phpVersion }) {
                         </Link>
                     </section>
 
-                    <section className="mt-10 text-center">
+                    {/* <section className="mt-10 text-center">
                         <Link
                             href="/profile"
                             className="inline-block rounded bg-[#FF2D20] px-6 py-3 text-white font-semibold hover:bg-[#e0261c] transition"
                         >
-                            Edit Profile
+                            Log out
                         </Link>
-                    </section>
+                    </section> */}
 
                     <footer className="text-center text-sm text-gray-500 dark:text-gray-400 mt-12">
-                        Laravel v{laravelVersion} (PHP v{phpVersion})
+                        EduSmart v1.2.0
                     </footer>
                 </div>
             </div>

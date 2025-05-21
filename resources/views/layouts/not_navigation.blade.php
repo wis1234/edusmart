@@ -1,8 +1,12 @@
 <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
     <div class="container">
-        <a class="navbar-brand" href="{{ url('/') }}">
-            {{ config('app.name', 'Laravel') }}
+        <a class="navbar-brand flex items-center text-2xl font-bold text-[#FF2D20] hover:text-[#e0261c] transition" href="{{ url('/dashboard') }}">
+              <!-- Optional logo image (hide it if unavailable)  -->
+        <!-- <img src="{{ asset('logo.jpeg') }}" alt="EduSmart Logo" class="h-8 w-auto mr-2"> -->
+
+         Edu<span class="text-gray-900">Smart</span>
         </a>
+
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -68,3 +72,4 @@
         </div>
     </div>
 </nav>
+

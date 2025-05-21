@@ -4,6 +4,8 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\EvaluationController;
+
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -39,3 +41,4 @@ Route::resource('students', StudentController::class)->middleware('auth');
 Route::resource('schools', SchoolController::class)->middleware('auth');
 Route::resource('class_rooms', ClassRoomController::class)->middleware('auth');
 Route::resource('calendars', CalendarController::class)->middleware('auth');
+Route::resource('evaluations', EvaluationController::class)->middleware('auth');

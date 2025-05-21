@@ -16,6 +16,8 @@
             <tr>
                 <th class="py-2 px-4 border-b">Name</th>
                 <th class="py-2 px-4 border-b">Email</th>
+                <th class="py-2 px-4 border-b">Phone</th>
+                <th class="py-2 px-4 border-b">Status</th>
                 <th class="py-2 px-4 border-b">Actions</th>
             </tr>
         </thead>
@@ -24,6 +26,8 @@
             <tr>
                 <td class="py-2 px-4 border-b">{{ $parent->name }}</td>
                 <td class="py-2 px-4 border-b">{{ $parent->email }}</td>
+                <td class="py-2 px-4 border-b">{{ $parent->phone }}</td>
+                <td class="py-2 px-4 border-b capitalize">{{ $parent->status }}</td>
                 <td class="py-2 px-4 border-b">
                     <a href="{{ route('parents.show', $parent) }}" class="text-blue-600 hover:underline mr-2">View</a>
                     <a href="{{ route('parents.edit', $parent) }}" class="text-yellow-600 hover:underline mr-2">Edit</a>

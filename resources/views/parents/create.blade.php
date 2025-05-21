@@ -18,8 +18,28 @@
         @csrf
 
         <div class="mb-4">
-            <label for="name" class="block font-semibold mb-1">Name</label>
-            <input type="text" name="name" id="name" value="{{ old('name') }}" class="w-full border border-gray-300 rounded px-3 py-2" required>
+            <label for="first_name" class="block font-semibold mb-1">First Name</label>
+            <input type="text" name="first_name" id="first_name" value="{{ old('first_name') }}" class="w-full border border-gray-300 rounded px-3 py-2" required>
+        </div>
+
+        <div class="mb-4">
+            <label for="last_name" class="block font-semibold mb-1">Last Name</label>
+            <input type="text" name="last_name" id="last_name" value="{{ old('last_name') }}" class="w-full border border-gray-300 rounded px-3 py-2">
+        </div>
+
+        <div class="mb-4">
+            <label for="phone" class="block font-semibold mb-1">Phone</label>
+            <input type="text" name="phone" id="phone" value="{{ old('phone') }}" class="w-full border border-gray-300 rounded px-3 py-2">
+        </div>
+
+        <div class="mb-4">
+            <label for="profession" class="block font-semibold mb-1">Profession</label>
+            <input type="text" name="profession" id="profession" value="{{ old('profession') }}" class="w-full border border-gray-300 rounded px-3 py-2">
+        </div>
+
+        <div class="mb-4">
+            <label for="address" class="block font-semibold mb-1">Address</label>
+            <textarea name="address" id="address" class="w-full border border-gray-300 rounded px-3 py-2">{{ old('address') }}</textarea>
         </div>
 
         <div class="mb-4">

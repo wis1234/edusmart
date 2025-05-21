@@ -34,6 +34,12 @@
                 @yield('content')
             </main>
         </div>
+<!-- <footer class="fixed bottom-0 left-0 w-full bg-white items-center py-2">
+    <div class="container mx-auto text-center text-gray-600 text-sm pt-4">
+        EduSmart V1.2.0 from eRequest — All rights reserved © {{ date('Y') }}
+    </div>
+</footer> -->
+
 
         <!-- Bootstrap JS -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>

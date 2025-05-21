@@ -7,6 +7,11 @@
     <a href="{{ route('teachers.create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4 inline-block">Add New Teacher</a>
     @endcan
 
+    @can('create', App\Models\Evaluation::class)
+    <a href="{{ route('evaluations.create') }}" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-4 inline-block">Create Evaluation</a>
+    <a href="{{ route('evaluations.index') }}" class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded mb-4 inline-block ml-2">View Evaluations</a>
+    @endcan
+
     @if(session('success'))
         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
             {{ session('success') }}

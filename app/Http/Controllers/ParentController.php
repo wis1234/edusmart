@@ -39,13 +39,21 @@ class ParentController extends Controller
         $this->authorize('create', User::class);
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string',
+            'profession' => 'nullable|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
         $parent = User::create([
-            'name' => $validated['name'],
+            'first_name' => $validated['first_name'],
+            'last_name' => $validated['last_name'] ?? null,
+            'phone' => $validated['phone'] ?? null,
+            'address' => $validated['address'] ?? null,
+            'profession' => $validated['profession'] ?? null,
             'email' => $validated['email'],
             'password' => bcrypt($validated['password']),
         ]);
@@ -81,12 +89,20 @@ class ParentController extends Controller
         $this->authorize('update', $parent);
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string',
+            'profession' => 'nullable|string|max:255',
             'email' => 'required|email|unique:users,email,' . $parent->id,
             'password' => 'nullable|string|min:8|confirmed',
         ]);
 
-        $parent->name = $validated['name'];
+        $parent->first_name = $validated['first_name'];
+        $parent->last_name = $validated['last_name'] ?? null;
+        $parent->phone = $validated['phone'] ?? null;
+        $parent->address = $validated['address'] ?? null;
+        $parent->profession = $validated['profession'] ?? null;
         $parent->email = $validated['email'];
         if (!empty($validated['password'])) {
             $parent->password = bcrypt($validated['password']);

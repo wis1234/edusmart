@@ -51,7 +51,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                             <>
                                 <Link
                                     href={route('login')}
-                                    className="inline-block rounded bg-[#FF2D20] px-6 py-3 text-white font-semibold hover:bg-[#e0261c] transition"
+                                    className="inline-block rounded bg-[gray] px-6 py-3 text-white font-semibold hover:bg-[black] transition"
                                 >
                                     Log In
                                 </Link>
@@ -73,7 +73,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     </section>
 
                     <footer className="text-center text-sm text-gray-500 dark:text-gray-400 mt-12">
-                        Laravel v{laravelVersion} (PHP v{phpVersion})
+                        EduSmart v1.2.0
                     </footer>
                 </div>
             </div>
