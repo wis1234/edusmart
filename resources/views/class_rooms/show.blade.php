@@ -52,9 +52,6 @@
                             <br>
                             <small>
                                 Year: {{ $assignment->year }}<br>
-                                Start Time: {{ $assignment->start_time ? $assignment->start_time->format('H:i') : 'N/A' }}<br>
-                                End Time: {{ $assignment->end_time ? $assignment->end_time->format('H:i') : 'N/A' }}<br>
-                                Days of Week: {{ $assignment->days_of_week ? implode(', ', array_map('ucfirst', $assignment->days_of_week)) : 'N/A' }}
                             </small>
                         </li>
                     @empty
@@ -75,11 +72,11 @@
 
                 <p><strong>Evaluations:</strong></p>
                 <ul class="list-disc list-inside">
-                    @forelse($classRoom->evaluations as $evaluation)
-                        <li>{{ $evaluation->name }} ({{ $evaluation->date->format('Y-m-d') }})</li>
-                    @empty
-                        <li>No evaluations scheduled.</li>
-                    @endforelse
+@forelse($classRoom->evaluations as $evaluation)
+    <li>{{ $evaluation->term }} ({{ $evaluation->evaluation_date ? $evaluation->evaluation_date->format('Y-m-d') : 'N/A' }})</li>
+@empty
+    <li>No evaluations scheduled.</li>
+@endforelse
                 </ul>
             </div>
         </div>
