@@ -13,7 +13,7 @@
             </a>
         </div>
 
-        <div class="space-y-4">
+<div class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Subject</label>
@@ -29,7 +29,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Teacher</label>
-                    <p class="mt-1">{{ $evaluation->evaluationType?->name ?? 'N/A' }}</p>
+                    <p class="mt-1">{{ $evaluation->teacher->name ?? '' }}</p>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Academic Year</label>
@@ -53,9 +53,13 @@
                 </div>
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Notes</label>
-                <p class="mt-1 whitespace-pre-wrap">{{ $evaluation->notes }}</p>
+            <div class="mt-4">
+                <a href="{{ route('evaluations.student_grades.index', $evaluation) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    View Grades
+                </a>
+                <a href="{{ route('evaluations.student_grades.create', $evaluation) }}" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-2">
+                    Grade a Student
+                </a>
             </div>
 
             <div class="pt-4 border-t border-gray-200">

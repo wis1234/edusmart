@@ -12,6 +12,8 @@ use App\Policies\StudentPolicy;
 use App\Policies\SchoolPolicy;
 use App\Policies\ClassRoomPolicy;
 use App\Policies\CalendarPolicy;
+use App\Policies\StudentGradePolicy;
+use App\Models\StudentGrade;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -27,6 +29,7 @@ class AuthServiceProvider extends ServiceProvider
         School::class => SchoolPolicy::class,
         ClassRoom::class => ClassRoomPolicy::class,
         Calendar::class => CalendarPolicy::class,
+        StudentGrade::class => StudentGradePolicy::class,
     ];
 
     /**
