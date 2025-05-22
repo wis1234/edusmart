@@ -59,7 +59,7 @@ class School extends Model
      */
     public function teachers()
     {
-        return $this->hasMany(User::class)->role('teacher');
+        return $this->hasMany(Teacher::class);
     }
 
     /**

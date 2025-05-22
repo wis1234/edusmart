@@ -41,7 +41,7 @@ export default function Authenticated({ auth, header, children }) {
                                     Schools
                                 </NavLink>
                                 <NavLink href={route('calendars.index')} active={route().current('calendars.*')}>
-                                    Calendar
+                                    {/* Calendar */}
                                 </NavLink>
                             </div>
                         </div>

@@ -25,9 +25,14 @@ class TeacherController extends Controller
      */
     public function index()
     {
-        $teachers = Teacher::with(['subjects', 'classRooms', 'school'])
-            ->orderBy('teacher_firstname')
-            ->paginate(15);
+        $query = Teacher::with(['subjects', 'classRooms', 'school'])
+            ->orderBy('teacher_firstname');
+
+        if (request()->has('school_id') && request('school_id') != '') {
+            $query->where('school_id', request('school_id'));
+        }
+
+        $teachers = $query->paginate(15);
 
         return view('teachers.index', compact('teachers'));
     }
