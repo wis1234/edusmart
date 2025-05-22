@@ -71,6 +71,19 @@ class StudentController extends Controller
             $validated['profile_photo'] = $path;
         }
 
+        // Fill parent_email and parent_id based on selected_parent_id
+        if (!empty($validated['selected_parent_id'])) {
+            $parentUserId = $validated['selected_parent_id'];
+            $parentUser = \App\Models\User::find($parentUserId);
+            if ($parentUser) {
+                $validated['parent_email'] = $parentUser->email;
+            }
+            $parentModel = \App\Models\ParentModel::where('user_id', $parentUserId)->first();
+            if ($parentModel) {
+                $validated['parent_id'] = $parentModel->id;
+            }
+        }
+
         $student = Student::create($validated);
 
         return redirect()->route('students.show', $student)->with('success', 'Student created successfully.');
@@ -78,7 +91,7 @@ class StudentController extends Controller
 
 public function show(Student $student)
 {
-    $student->load(['user', 'classRoom', 'school', 'parent']);
+    $student->load(['user', 'classRoom', 'school', 'parent', 'grades.evaluation.evaluationType']);
     $users = User::all(); // ou User::where('role', 'parent')->get(); selon ce que tu veux
 
     return view('students.show', compact('student', 'users'));

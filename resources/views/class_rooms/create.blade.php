@@ -18,7 +18,7 @@
                     
                     <div>
                         <label for="name" class="block text-sm font-medium text-gray-700">Classroom Name</label>
-                        <input type="text" name="name" id="name" value="{{ old('name') }}" required
+                        <input type="text" name="name" id="name" value="{{ old('name') }}" required placeholder=' Ex: Maternelle 1'
                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         @error('name')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -41,32 +41,69 @@
                         @enderror
                     </div>
 
-                    <div>
-                        <label for="grade_level" class="block text-sm font-medium text-gray-700">Grade Level</label>
-                        <input type="text" name="grade_level" id="grade_level" value="{{ old('grade_level') }}" required
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        @error('grade_level')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+<div>
+    <label for="grade_level" class="block text-sm font-medium text-gray-700">Grade Level</label>
+    <select name="grade_level" id="grade_level" required
+        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+        <option value="">Select Grade Level </option>
+        <option value="Maternelle" {{ old('grade_level') == 'Maternelle' ? 'selected' : '' }}>Maternelle</option>
+        <option value="Primaire" {{ old('grade_level') == 'Primaire' ? 'selected' : '' }}>Primaire</option>
+        <option value="Secondaire" {{ old('grade_level') == 'Secondaire' ? 'selected' : '' }}>Secondaire</option>
+        <option value="Lycée" {{ old('grade_level') == 'Lycée' ? 'selected' : '' }}>Lycée</option>
+        <option value="Université" {{ old('grade_level') == 'Université' ? 'selected' : '' }}>Université</option>
+    </select>
+    
+    @error('grade_level')
+        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+    @enderror
+</div>
 
-                    <div>
-                        <label for="section" class="block text-sm font-medium text-gray-700">Section</label>
-                        <input type="text" name="section" id="section" value="{{ old('section') }}" required
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        @error('section')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
 
-                    <div>
-                        <label for="academic_year" class="block text-sm font-medium text-gray-700">Academic Year</label>
-                        <input type="text" name="academic_year" id="academic_year" value="{{ old('academic_year') }}" required
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        @error('academic_year')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+<div>
+    <label for="section" class="block text-sm font-medium text-gray-700">Section</label>
+    <select name="section" id="section" required
+        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+        <option value=""> Select Section</</option>
+        <option value="Commun" {{ old('section') == 'A' ? 'selected' : '' }}>TC (Tronc Commun)</option>
+        <option value="A" {{ old('section') == 'A' ? 'selected' : '' }}>Section A (Littéraire)</option>
+        <option value="B" {{ old('section') == 'B' ? 'selected' : '' }}>Section B (Économique)</option>
+        <option value="C" {{ old('section') == 'C' ? 'selected' : '' }}>Section C (Scientifique - Maths/Physique)</option>
+        <option value="D" {{ old('section') == 'D' ? 'selected' : '' }}>Section D (Scientifique - Bio/Physique)</option>
+        <option value="E" {{ old('section') == 'E' ? 'selected' : '' }}>Section E (Technique Industrielle)</option>
+        <option value="F" {{ old('section') == 'F' ? 'selected' : '' }}>Section F (Technique Commerciale)</option>
+        <option value="G" {{ old('section') == 'G' ? 'selected' : '' }}>Section G (Gestion)</option>
+    </select>
+
+    @error('section')
+        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+    @enderror
+</div>
+
+
+@php
+    $currentYear = date('Y');
+    $startYear = $currentYear  - 2;
+    $endYear = $currentYear + 8;
+@endphp
+
+<div>
+    <label for="academic_year" class="block text-sm font-medium text-gray-700">Academic Year</label>
+    <select name="academic_year" id="academic_year" required
+        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+        <option value=""> Select Academic Year</option>
+        @for ($year = $startYear; $year <= $endYear; $year++)
+            @php $academic = $year . '-' . ($year + 1); @endphp
+            <option value="{{ $academic }}" {{ old('academic_year') == $academic ? 'selected' : '' }}>
+                {{ $academic }}
+            </option>
+        @endfor
+    </select>
+
+    @error('academic_year')
+        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+    @enderror
+</div>
+
 
                     <div>
                         <label for="capacity" class="block text-sm font-medium text-gray-700">Capacity</label>
@@ -133,14 +170,37 @@
                         @enderror
                     </div>
 
-                    <div>
-                        <label for="floor" class="block text-sm font-medium text-gray-700">Floor</label>
-                        <input type="text" name="floor" id="floor" value="{{ old('floor') }}" required
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        @error('floor')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+ @php
+    $floors = [
+        
+        0 => 'Rez-de-chaussée',
+        1 => 'Batiment',
+        2 => '1er étage',
+        3 => '2e étage',        
+        4 => '3e étage',
+        5 => '4e étage',
+        6 => '5e étage',
+        7 => '6e étage',
+    ];
+@endphp
+
+<div>
+    <label for="floor" class="block text-sm font-medium text-gray-700">Floor</label>
+    <select name="floor" id="floor" required
+        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+        <option value="">Select a floor</option>
+        @foreach($floors as $key => $label)
+            <option value="{{ $key }}" {{ old('floor') == $key ? 'selected' : '' }}>
+                {{ $label }}
+            </option>
+        @endforeach
+    </select>
+
+    @error('floor')
+        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+    @enderror
+</div>
+
 
                     <div>
                         <label for="is_active" class="block text-sm font-medium text-gray-700">Active</label>

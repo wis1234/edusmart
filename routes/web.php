@@ -43,3 +43,9 @@ Route::resource('class_rooms', ClassRoomController::class)->middleware('auth');
 Route::resource('calendars', CalendarController::class)->middleware('auth');
 Route::resource('evaluations', EvaluationController::class)->middleware('auth');
 Route::resource('evaluations.student_grades', StudentGradeController::class)->shallow()->middleware('auth');
+
+use App\Http\Controllers\SubjectController;
+
+Route::middleware(['auth'])->group(function () {
+    Route::resource('subjects', SubjectController::class);
+});

@@ -138,11 +138,28 @@
                 <textarea name="medical_conditions" id="medical_conditions" rows="3"
                     class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">{{ old('medical_conditions') }}</textarea>
             </div>
-            <div>
-                <label for="academic_year" class="block font-semibold mb-1">Academic Year*</label>
-                <input type="text" name="academic_year" id="academic_year" value="{{ old('academic_year') }}"
-                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
-            </div>
+
+    <div>
+        <label for="academic_year" class="block text-sm font-medium text-gray-700">Academic Year</label>
+        <select name="academic_year" id="academic_year" required
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            <option value=""> Select Academic Year</option>
+            @php
+                $startYear = date('Y') - 5;
+                $endYear = date('Y') + 5;
+            @endphp
+            @for ($year = $startYear; $year <= $endYear; $year++)
+                @php $academic = $year . '-' . ($year + 1); @endphp
+                <option value="{{ $academic }}" {{ old('academic_year') == $academic ? 'selected' : '' }}>
+                    {{ $academic }}
+            </option>
+        @endfor
+    </select>
+
+    @error('academic_year')
+        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+    @enderror
+</div>
             <div>
                 <label for="status" class="block font-semibold mb-1">Status*</label>
                 <select name="status" id="status"

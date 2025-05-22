@@ -31,7 +31,8 @@ class Student extends Model
         'medical_conditions',
         'academic_year',
         'status',
-        'profile_photo'
+        'profile_photo',
+        'parent_email'
     ];
 
     protected $casts = [

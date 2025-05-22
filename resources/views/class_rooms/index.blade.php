@@ -9,6 +9,10 @@
            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
             Add Classroom
         </a>
+        <a href="{{ route('subjects.index') }}" 
+           class="bg-green-600 hover:bg-green-800 text-white font-bold py-2 px-4 rounded ml-4 shadow-lg transform hover:scale-105 transition-transform duration-300">
+            Add Subject
+        </a>
         @endcan
     </div>
 

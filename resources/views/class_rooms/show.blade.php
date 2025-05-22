@@ -18,7 +18,7 @@
             <h2 class="text-xl font-semibold mb-4 pb-2 border-b">Basic Information</h2>
             <div class="space-y-3">
                 <p><strong>Name:</strong> {{ $classRoom->name }}</p>
-                <p><strong>School:</strong> {{ $classRoom->school->name ?? 'N/A' }}</p>
+                <p><strong>School:</strong> <a href="{{ route('schools.show', $classRoom->school) }}" class="text-blue-600 hover:underline">{{ $classRoom->school->name ?? 'N/A' }}</a></p>
                 <p><strong>Grade Level:</strong> {{ $classRoom->grade_level }}</p>
                 <p><strong>Section:</strong> {{ $classRoom->section }}</p>
                 <p><strong>Academic Year:</strong> {{ $classRoom->academic_year }}</p>
@@ -42,7 +42,7 @@
                     @forelse($classRoom->classRoomTeachers as $assignment)
                         <li>
                             @if($assignment->teacher)
-                                {{ $assignment->teacher->first_name }} {{ $assignment->teacher->last_name }}
+                                {{ $assignment->teacher->first_name ?? $assignment->teacher->teacher_firstname }} {{ $assignment->teacher->last_name ?? $assignment->teacher->teacher_lastname }}
                             @else
                                 <em>Teacher data not available</em>
                             @endif
@@ -63,7 +63,9 @@
                 <ul class="list-disc list-inside">
                     @forelse($classRoom->students as $student)
                         <li>
-                            {{ $student->first_name }} {{ $student->last_name }}
+                            <a href="{{ route('students.show', $student) }}" class="text-blue-600 hover:underline">
+                                {{ $student->first_name }} {{ $student->last_name }}
+                            </a>
                         </li>
                     @empty
                         <li>No students enrolled.</li>
@@ -73,7 +75,11 @@
                 <p><strong>Evaluations:</strong></p>
                 <ul class="list-disc list-inside">
 @forelse($classRoom->evaluations as $evaluation)
-    <li>{{ $evaluation->term }} ({{ $evaluation->evaluation_date ? $evaluation->evaluation_date->format('Y-m-d') : 'N/A' }})</li>
+    <li>
+        <a href="{{ route('evaluations.show', $evaluation) }}" class="text-blue-600 hover:underline">
+            {{ $evaluation->term }} ({{ $evaluation->evaluation_date ? $evaluation->evaluation_date->format('Y-m-d') : 'N/A' }})
+        </a>
+    </li>
 @empty
     <li>No evaluations scheduled.</li>
 @endforelse

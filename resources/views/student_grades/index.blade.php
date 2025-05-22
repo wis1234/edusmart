@@ -23,7 +23,7 @@
             <tbody>
                 @foreach($grades as $grade)
                 <tr>
-                    <td class="py-2 px-4 border-b">{{ $grade->student->user->name }}</td>
+                    <td class="py-2 px-4 border-b">{{ $grade->student->first_name . ' ' . $grade->student->last_name }}</td>
                     <td class="py-2 px-4 border-b">{{ $grade->marks_obtained }} / {{ $evaluation->total_marks }}</td>
                     <td class="py-2 px-4 border-b">{{ $grade->remarks }}</td>
                     <td class="py-2 px-4 border-b">
