@@ -132,12 +132,21 @@
                             </div>
                             <div>
                                 <label class="block font-semibold mb-1">Subject*</label>
-                                <select name="subjects[]" class="w-full border border-gray-300 rounded px-3 py-2" required>
+                                <!-- <select name="subjects[]" class="w-full border border-gray-300 rounded px-3 py-2" required>
                                     <option value="">Select Subject</option>
                                     @foreach($subjects as $subject)
                                         <option value="{{ $subject->id }}">{{ $subject->name }}</option>
                                     @endforeach
-                                </select>
+                                </select> -->
+
+                            <select name="subjects[]" class="w-full border border-gray-300 rounded px-3 py-2" required>
+                             <option value="">Select Subject</option>
+                             @foreach($subjects as $subject)
+                              @if($subject->is_active==1)
+                             <option value="{{ $subject->id }}">{{ $subject->name }}</option>
+                              @endif
+                              @endforeach
+                            </select>
                             </div>
                             <div>
                                 <label class="block font-semibold mb-1">Class Room*</label>

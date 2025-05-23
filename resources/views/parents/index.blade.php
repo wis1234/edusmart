@@ -2,49 +2,64 @@
 
 @section('content')
 <div class="container mx-auto px-4">
-    <a href="{{ route('dashboard') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded mb-4 inline-block">← Back to Dashboard</a>
-    <h1 class="text-2xl font-bold mb-4">Parents</h1>
-    <a href="{{ route('parents.create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4 inline-block">Add New Parent</a>
+    <a href="{{ route('dashboard') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded mb-6 inline-block shadow-sm">
+        ← Back to Dashboard
+    </a>
+
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Parents</h1>
+
+    <a href="{{ route('parents.create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6 inline-flex items-center gap-2 shadow-md transition">
+        ➕ Add New Parent
+    </a>
 
     @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6 shadow-sm">
             {{ session('success') }}
         </div>
     @endif
 
-    <table class="min-w-full bg-white border border-gray-200">
-        <thead>
-            <tr>
-                <th class="py-2 px-4 border-b">Name</th>
-                <th class="py-2 px-4 border-b">Email</th>
-                <th class="py-2 px-4 border-b">Phone</th>
-                <th class="py-2 px-4 border-b">Status</th>
-                <th class="py-2 px-4 border-b">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($parents as $parent)
-            <tr>
-                <td class="py-2 px-4 border-b">{{ $parent->name }}</td>
-                <td class="py-2 px-4 border-b">{{ $parent->email }}</td>
-                <td class="py-2 px-4 border-b">{{ $parent->phone }}</td>
-                <td class="py-2 px-4 border-b capitalize">{{ $parent->status }}</td>
-                <td class="py-2 px-4 border-b">
-                    <a href="{{ route('parents.show', $parent) }}" class="text-blue-600 hover:underline mr-2">View</a>
-                    <a href="{{ route('parents.edit', $parent) }}" class="text-yellow-600 hover:underline mr-2">Edit</a>
-                    <form action="{{ route('parents.destroy', $parent) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this parent?');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="text-red-600 hover:underline">Delete</button>
-                    </form>
-                </td>
-            </tr>
-            @empty
-            <tr>
-                <td colspan="3" class="py-4 px-4 text-center">No parents found.</td>
-            </tr>
-            @endforelse
-        </tbody>
-    </table>
+    <div class="overflow-x-auto rounded-lg shadow-md">
+        <table class="min-w-full bg-white rounded-xl overflow-hidden">
+            <thead class="bg-gradient-to-r from-gray-100 to-gray-200">
+                <tr>
+                    <th class="py-4 px-6 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Name</th>
+                    <th class="py-4 px-6 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Email</th>
+                    <th class="py-4 px-6 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Phone</th>
+                    <th class="py-4 px-6 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Status</th>
+                    <th class="py-4 px-6 text-center text-sm font-bold text-gray-700 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                @forelse($parents as $parent)
+                <tr class="hover:bg-blue-50 transition duration-200 ease-in-out">
+                    <td class="py-4 px-6 text-sm text-gray-800">{{ $parent->name }}</td>
+                    <td class="py-4 px-6 text-sm text-gray-800">{{ $parent->email }}</td>
+                    <td class="py-4 px-6 text-sm text-gray-800">{{ $parent->phone }}</td>
+                    <td class="py-4 px-6 text-sm text-gray-800 capitalize">
+                        {{ str_replace('_', ' ', $parent->status) }}
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        @php
+                            $canEdit = auth()->user()->can('update', $parent);
+                            $canDelete = auth()->user()->can('delete', $parent);
+                        @endphp
+                        @include('components.action-icons', [
+                            'viewRoute' => route('parents.show', $parent),
+                            'editRoute' => $canEdit ? route('parents.edit', $parent) : null,
+                            'deleteRoute' => $canDelete ? route('parents.destroy', $parent) : null,
+                            'canEdit' => $canEdit,
+                            'canDelete' => $canDelete,
+                            'deleteConfirmMessage' => 'Are you sure you want to delete this parent?'
+                        ])
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="5" class="py-6 px-6 text-center text-gray-500">No parents found.</td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
 </div>
 @endsection

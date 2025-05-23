@@ -2,6 +2,13 @@
 
 @section('content')
 <div class="container mx-auto px-4">
+
+     {{-- Navigation --}}
+    <div class="mb-6 flex items-center space-x-4">
+        <a href="{{ route('subjects.index') }}" class="inline-flex items-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-4 py-2 rounded-lg shadow-sm transition duration-200">
+            ← Back to Subjects
+        </a>
+    </div>
     <div class="bg-white rounded-lg shadow-md p-6">
         <h1 class="text-3xl font-bold mb-6 border-b pb-2">Add New Subject</h1>
 

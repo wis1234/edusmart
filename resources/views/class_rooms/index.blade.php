@@ -2,18 +2,28 @@
 
 @section('content')
 <div class="container mx-auto px-4">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold">Classrooms</h1>
-        @can('create', App\Models\ClassRoom::class)
-        <a href="{{ route('class_rooms.create') }}" 
-           class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Add Classroom
+        <div class="mb-6 flex items-center space-x-4">
+        <a href="{{ route('dashboard') }}" class="inline-flex items-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-4 py-2 rounded-lg shadow-sm transition duration-200">
+            ← Back to Dashboard
         </a>
-        <a href="{{ route('subjects.index') }}" 
-           class="bg-green-600 hover:bg-green-800 text-white font-bold py-2 px-4 rounded ml-4 shadow-lg transform hover:scale-105 transition-transform duration-300">
-            Add Subject
+    </div>
+
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-extrabold text-gray-900">🏫 Classrooms</h1>
+        <div class="flex space-x-3">
+    @can('create', App\Models\ClassRoom::class)
+        <a href="{{ route('class_rooms.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg shadow-md transition duration-150">
+            ➕ Add Classroom
         </a>
-        @endcan
+        <a href="{{ route('subjects.create') }}" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-lg shadow-md transition duration-150">
+            📚 Add Subject
+        </a>
+        <a href="{{ route('subjects.index') }}" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-2 rounded-lg shadow-md transition duration-150">
+            👀 View Subjects
+        </a>
+    @endcan
+</div>
+
     </div>
 
     @if(session('success'))
@@ -54,14 +64,14 @@
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Active
                         </th>
-                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Actions
                         </th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     @forelse($classRooms as $classRoom)
-                    <tr>
+                    <tr class="hover:bg-gray-100 transition-colors duration-200">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             <a href="{{ route('class_rooms.show', $classRoom) }}" class="text-blue-600 hover:text-blue-900">
                                 {{ $classRoom->name }}
@@ -93,18 +103,19 @@
                                 </span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                            <a href="{{ route('class_rooms.show', $classRoom) }}" class="text-blue-600 hover:text-blue-900">View</a>
-                            @can('update', $classRoom)
-                            <a href="{{ route('class_rooms.edit', $classRoom) }}" class="text-yellow-600 hover:text-yellow-900">Edit</a>
-                            @endcan
-                            @can('delete', $classRoom)
-                            <form action="{{ route('class_rooms.destroy', $classRoom) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this classroom?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
-                            </form>
-                            @endcan
+                        <td class="px-6 py-4 text-center">
+                            @php
+                                $canEdit = auth()->user()->can('update', $classRoom);
+                                $canDelete = auth()->user()->can('delete', $classRoom);
+                            @endphp
+                            @include('components.action-icons', [
+                                'viewRoute' => route('class_rooms.show', $classRoom),
+                                'editRoute' => $canEdit ? route('class_rooms.edit', $classRoom) : null,
+                                'deleteRoute' => $canDelete ? route('class_rooms.destroy', $classRoom) : null,
+                                'canEdit' => $canEdit,
+                                'canDelete' => $canDelete,
+                                'deleteConfirmMessage' => 'Are you sure you want to delete this classroom?'
+                            ])
                         </td>
                     </tr>
                     @empty

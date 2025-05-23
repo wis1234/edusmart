@@ -126,15 +126,20 @@
         <!-- Teachers -->
         <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-xl font-semibold mb-4">Teachers</h2>
-            @if($school->teachers->count() > 0)
-            <ul class="divide-y divide-gray-200">
-                @foreach($school->teachers as $teacher)
-                <li class="py-2">
-                    <div class="text-sm text-gray-900">{{ $teacher->teacher_firstname }} {{ $teacher->teacher_lastname }}</div>
-                    <div class="text-sm text-gray-500">{{ $teacher->phone }}</div>
-                </li>
-                @endforeach
-            </ul>
+@if($school->teachers->count() > 0)
+<ul class="divide-y divide-gray-200">
+    @foreach($school->teachers as $teacher)
+    <li class="py-2">
+        <div class="text-sm text-blue-600 hover:underline">
+            <a href="{{ route('teachers.show', $teacher->id) }}">
+                {{ $teacher->teacher_firstname }} {{ $teacher->teacher_lastname }}
+            </a>
+        </div>
+        <div class="text-sm text-gray-500">{{ $teacher->phone }}</div>
+    </li>
+    @endforeach
+</ul>
+
             @else
             <p class="text-sm text-gray-500">No teachers assigned yet.</p>
             @endif
@@ -143,16 +148,21 @@
         <!-- Classrooms -->
         <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-xl font-semibold mb-4">Classrooms</h2>
-            @if($school->classRooms->count() > 0)
-            <ul class="divide-y divide-gray-200">
-                @foreach($school->classRooms as $classroom)
-                <li class="py-2">
-                    <div class="text-sm text-gray-900">{{ $classroom->name }}</div>
-                    <div class="text-sm text-gray-500">Capacity: {{ $classroom->capacity }}</div>
-                </li>
-                @endforeach
-            </ul>
-            @else
+           @if($school->classRooms->count() > 0)
+<ul class="divide-y divide-gray-200">
+    @foreach($school->classRooms as $classroom)
+    <li class="py-2">
+        <div class="text-sm text-blue-600 hover:underline">
+            <a href="{{ route('class_rooms.show', $classroom->id) }}">
+                {{ $classroom->name }}
+            </a>
+        </div>
+        <div class="text-sm text-gray-500">Capacity: {{ $classroom->capacity }}</div>
+    </li>
+    @endforeach
+</ul>
+@else
+
             <p class="text-sm text-gray-500">No classrooms created yet.</p>
             @endif
         </div>

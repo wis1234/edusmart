@@ -157,84 +157,109 @@ class TeacherController extends Controller
     /**
      * Update the specified teacher in storage.
      */
-    public function update(TeacherRequest $request, Teacher $teacher)
-    {
-        try {
-            DB::beginTransaction();
+  public function update(TeacherRequest $request, Teacher $teacher)
+{
+    try {
+        DB::beginTransaction();
 
-            $validated = $request->validated();
+        $validated = $request->validated();
 
-            // Handle profile photo upload
-            if ($request->hasFile('profile_photo')) {
-                // Delete old photo if exists
-                $teacher->deleteProfilePhoto();
-                
-                // Store new photo
-                $validated['profile_photo'] = $request->file('profile_photo')->store('teacher-photos', 'public');
-            }
-
-            // Update teacher record
-            $teacher->update([
-                'teacher_firstname' => $validated['first_name'],
-                'teacher_lastname' => $validated['last_name'] ?? null,
-                'teacher_email' => $validated['email'],
-                'teacher_phone' => $validated['phone'],
-                'date_of_birth' => $validated['date_of_birth'],
-                'gender' => $validated['gender'],
-                'address' => $validated['address'],
-                'grade' => $validated['grade'],
-                'speciality' => $validated['speciality'],
-                'subject_title' => $validated['subject_title'],
-                'status' => $validated['status'],
-                'school_id' => $validated['schools'][0] ?? null,
-            ]);
-
-            if (isset($validated['profile_photo'])) {
-                $teacher->profile_photo = $validated['profile_photo'];
-                $teacher->save();
-            }
-
-            // Sync subjects with years
-            $subjectSync = [];
-            foreach ($validated['subjects'] as $index => $subjectId) {
-                $subjectSync[$subjectId] = ['year' => $validated['years'][$index]];
-            }
-            $teacher->subjects()->sync($subjectSync);
-
-            // Sync classrooms with subjects and years
-            $classRoomSync = [];
-            foreach ($validated['class_rooms'] as $index => $classRoomId) {
-                $classRoomSync[$classRoomId] = [
-                    'subject_id' => $validated['subjects'][$index],
-                    'year' => $validated['years'][$index]
-                ];
-            }
-            $teacher->classRooms()->sync($classRoomSync);
-
-            DB::commit();
-
-            return redirect()
-                ->route('teachers.show', $teacher)
-                ->with('success', 'Teacher updated successfully.');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            if (isset($validated['profile_photo'])) {
-                Storage::disk('public')->delete($validated['profile_photo']);
-            }
-
-            Log::error('Failed to update teacher', [
-                'id' => $teacher->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return back()
-                ->withInput()
-                ->with('error', 'An error occurred while updating the teacher.');
+        // Handle profile photo upload
+        if ($request->hasFile('profile_photo')) {
+            // Delete old photo if exists
+            $teacher->deleteProfilePhoto();
+            
+            // Store new photo
+            $validated['profile_photo'] = $request->file('profile_photo')->store('teacher-photos', 'public');
         }
+
+        // Update teacher record
+        $teacher->update([
+            'teacher_firstname' => $validated['first_name'],
+            'teacher_lastname' => $validated['last_name'] ?? null,
+            'teacher_email' => $validated['email'],
+            'teacher_phone' => $validated['phone'],
+            'date_of_birth' => $validated['date_of_birth'],
+            'gender' => $validated['gender'],
+            'address' => $validated['address'],
+            'grade' => $validated['grade'],
+            'speciality' => $validated['speciality'],
+            'subject_title' => $validated['subject_title'],
+            'status' => $validated['status'],
+            'school_id' => $validated['schools'][0] ?? null,
+        ]);
+
+        if (isset($validated['profile_photo'])) {
+            $teacher->profile_photo = $validated['profile_photo'];
+            $teacher->save();
+        }
+
+        // Update related user
+        $user = $teacher->user; // Assuming Teacher model has a user() relation
+        if ($user) {
+            $user->first_name = $validated['first_name'];
+            $user->last_name = $validated['last_name'] ?? null;
+            $user->email = $validated['email'];
+            $user->phone = $validated['phone'];
+            $user->date_of_birth = $validated['date_of_birth'];
+            $user->gender = $validated['gender'];
+            $user->address = $validated['address'];
+            $user->status = $validated['status'];
+
+            if (isset($validated['profile_photo'])) {
+                $user->profile_photo = $validated['profile_photo'];
+            }
+
+            // If password is present and not empty, update password
+            if (!empty($validated['password'])) {
+                $user->password = bcrypt($validated['password']);
+            }
+
+            $user->save();
+        }
+
+        // Sync subjects with years
+        $subjectSync = [];
+        foreach ($validated['subjects'] as $index => $subjectId) {
+            $subjectSync[$subjectId] = ['year' => $validated['years'][$index]];
+        }
+        $teacher->subjects()->sync($subjectSync);
+
+        // Sync classrooms with subjects and years
+        $classRoomSync = [];
+        foreach ($validated['class_rooms'] as $index => $classRoomId) {
+            $classRoomSync[$classRoomId] = [
+                'subject_id' => $validated['subjects'][$index],
+                'year' => $validated['years'][$index]
+            ];
+        }
+        $teacher->classRooms()->sync($classRoomSync);
+
+        DB::commit();
+
+        return redirect()
+            ->route('teachers.show', $teacher)
+            ->with('success', 'Teacher and user updated successfully.');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+
+        if (isset($validated['profile_photo'])) {
+            Storage::disk('public')->delete($validated['profile_photo']);
+        }
+
+        Log::error('Failed to update teacher', [
+            'id' => $teacher->id,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return back()
+            ->withInput()
+            ->with('error', 'An error occurred while updating the teacher.');
     }
+}
+
 
     /**
      * Remove the specified teacher from storage.

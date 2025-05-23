@@ -122,13 +122,23 @@
     <!-- Recent Evaluations -->
     <div class="mt-6 bg-white rounded-lg shadow-md p-6">
         <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold">Recent Evaluations</h2>
+            <!-- <h2 class="text-xl font-semibold">Recent Evaluations</h2>
             @can('create', App\Models\Evaluation::class)
             <a href="{{ route('evaluations.create', ['teacher_id' => $teacher->id]) }}" 
                class="bg-blue-500 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded">
                 Add Evaluation
             </a>
+            @endcan -->
+
+            @can('create', App\Models\Evaluation::class)
+             @if($teacher->status === 'active')
+             <a href="{{ route('evaluations.create', ['teacher_id' => $teacher->id]) }}" 
+             class="bg-blue-500 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded">
+            Add Evaluation
+            </a>
+             @endif
             @endcan
+
         </div>
         @if($teacher->conductedEvaluations->count() > 0)
         <div class="overflow-x-auto">
@@ -146,7 +156,7 @@
                 <tbody class="divide-y divide-gray-200">
                     @foreach($teacher->conductedEvaluations->take(5) as $evaluation)
                     <tr>
-<td class="px-4 py-2">{{ $evaluation->evaluation_date?->format('M d, Y') }}</td>
+                <td class="px-4 py-2">{{ $evaluation->evaluation_date?->format('M d, Y') }}</td>
                         <td class="px-4 py-2">{{ $evaluation->subject->name }}</td>
                         <td class="px-4 py-2">
                             <a href="{{ route('class_rooms.show', $evaluation->classRoom) }}" class="text-blue-600 hover:text-blue-900">
@@ -155,18 +165,28 @@
                         </td>
                         <td class="px-4 py-2">{{ $evaluation->evaluationType->name }}</td>
                         <td class="px-4 py-2">{{ $evaluation->studentGrades->count() }}</td>
-                        <td class="px-4 py-2 text-right">
-                            <a href="{{ route('evaluations.show', $evaluation) }}" class="text-blue-600 hover:text-blue-900">View</a>
+                          <td class="px-4 py-3 text-right">
+                         <x-action-icons 
+                         :viewRoute="route('evaluations.show', $evaluation)" 
+                         :canEdit="false" 
+                          :canDelete="false" 
+                          />
                         </td>
+
                     </tr>
                     @endforeach
                 </tbody>
             </table>
-            @if($teacher->conductedEvaluations->count() > 5)
-            <div class="mt-4 text-right">
-                <a href="{{ route('evaluations.index', ['teacher_id' => $teacher->id]) }}" 
-                   class="text-blue-600 hover:text-blue-900">View All Evaluations</a>
-            </div>
+            @if($teacher->conductedEvaluations->count() > 20)
+<div class="mt-4 text-right">
+    <a href="{{ route('evaluations.index', ['teacher_id' => $teacher->id]) }}" 
+       class="text-blue-600 hover:text-blue-900 flex items-center justify-end gap-1">
+        All ...
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+        </svg>
+    </a>
+</div>
             @endif
         </div>
         @else

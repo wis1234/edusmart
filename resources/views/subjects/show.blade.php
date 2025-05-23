@@ -2,7 +2,9 @@
 
 @section('content')
 <div class="container mx-auto px-4">
+    
     <div class="bg-white rounded-lg shadow-md p-6">
+        
         <h1 class="text-3xl font-bold mb-6 border-b pb-2">Subject Details</h1>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
