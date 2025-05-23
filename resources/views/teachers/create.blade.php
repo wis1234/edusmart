@@ -31,7 +31,6 @@
 
     <form action="{{ route('teachers.store') }}" method="POST" enctype="multipart/form-data" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
         @csrf
-        <input type="hidden" name="school_id" value="{{ request('school_id', old('school_id')) }}">
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Basic Information -->
@@ -121,7 +120,16 @@
             <div class="col-span-2 mb-4">
                 <div class="border rounded-lg p-4">
                     <div id="assignments-container">
-                        <div class="assignment-entry grid grid-cols-3 gap-4 mb-4">
+                        <div class="assignment-entry grid grid-cols-4 gap-4 mb-4">
+                            <div>
+                                <label class="block font-semibold mb-1">School*</label>
+                                <select name="schools[]" class="w-full border border-gray-300 rounded px-3 py-2" required>
+                                    <option value="">Select School</option>
+                                    @foreach($schools as $school)
+                                        <option value="{{ $school->id }}">{{ $school->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                             <div>
                                 <label class="block font-semibold mb-1">Subject*</label>
                                 <select name="subjects[]" class="w-full border border-gray-300 rounded px-3 py-2" required>
@@ -213,10 +221,20 @@
         }
     }
 
-    function createAssignmentEntry(subjects, classRooms) {
+    function createAssignmentEntry(schools, subjects, classRooms) {
         const div = document.createElement('div');
-        div.className = 'assignment-entry grid grid-cols-3 gap-4 mb-4';
+        div.className = 'assignment-entry grid grid-cols-4 gap-4 mb-4';
         
+        // School select
+        const schoolDiv = document.createElement('div');
+        schoolDiv.innerHTML = `
+            <label class="block font-semibold mb-1">School*</label>
+            <select name="schools[]" class="w-full border border-gray-300 rounded px-3 py-2" required>
+                <option value="">Select School</option>
+                ${schools.map(s => `<option value="${s.value}">${s.text}</option>`).join('')}
+            </select>
+        `;
+
         // Subject select
         const subjectDiv = document.createElement('div');
         subjectDiv.innerHTML = `
@@ -255,6 +273,7 @@
         };
         yearDiv.appendChild(removeBtn);
         
+        div.appendChild(schoolDiv);
         div.appendChild(subjectDiv);
         div.appendChild(classRoomDiv);
         div.appendChild(yearDiv);
@@ -262,7 +281,7 @@
         return div;
     }
 
-    // Get subjects and classrooms data from the select elements
+    // Get options data from the select elements
     const getOptionsData = (selector) => {
         return Array.from(document.querySelector(selector).options).map(opt => ({
             value: opt.value,
@@ -271,12 +290,13 @@
     };
 
     document.addEventListener('DOMContentLoaded', function() {
+        const schools = getOptionsData('select[name="schools[]"]');
         const subjects = getOptionsData('select[name="subjects[]"]');
         const classRooms = getOptionsData('select[name="class_rooms[]"]');
 
         document.getElementById('add-assignment').addEventListener('click', function() {
             const container = document.getElementById('assignments-container');
-            const newEntry = createAssignmentEntry(subjects, classRooms);
+            const newEntry = createAssignmentEntry(schools, subjects, classRooms);
             container.appendChild(newEntry);
         });
     });

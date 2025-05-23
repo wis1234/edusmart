@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Teacher;
 use App\Models\Subject;
 use App\Models\ClassRoom;
+use App\Models\School;
 use App\Http\Requests\TeacherRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -44,8 +45,9 @@ class TeacherController extends Controller
     {
         $subjects = Subject::orderBy('name')->get();
         $classRooms = ClassRoom::orderBy('name')->get();
+        $schools = School::orderBy('name')->get();
 
-        return view('teachers.create', compact('subjects', 'classRooms'));
+        return view('teachers.create', compact('subjects', 'classRooms', 'schools'));
     }
 
     /**
@@ -91,7 +93,7 @@ class TeacherController extends Controller
             'subject_title' => $validated['subject_title'],
             'status' => $validated['status'],
             'profile_photo' => $validated['profile_photo'] ?? null,
-            'school_id' => $validated['school_id'] ?? null,
+            'school_id' => $validated['schools'][0] ?? null,
             'user_id' => $user->id,
         ]);
 
@@ -145,10 +147,11 @@ class TeacherController extends Controller
     {
         $subjects = Subject::orderBy('name')->get();
         $classRooms = ClassRoom::orderBy('name')->get();
-        
+        $schools = School::orderBy('name')->get();
+
         $teacher->load(['subjects', 'classRooms', 'school']);
 
-        return view('teachers.edit', compact('teacher', 'subjects', 'classRooms'));
+        return view('teachers.edit', compact('teacher', 'subjects', 'classRooms', 'schools'));
     }
 
     /**
@@ -183,7 +186,7 @@ class TeacherController extends Controller
                 'speciality' => $validated['speciality'],
                 'subject_title' => $validated['subject_title'],
                 'status' => $validated['status'],
-                'school_id' => $validated['school_id'] ?? null,
+                'school_id' => $validated['schools'][0] ?? null,
             ]);
 
             if (isset($validated['profile_photo'])) {

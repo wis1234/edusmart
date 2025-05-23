@@ -74,6 +74,7 @@
                         <tr>
                             <th class="px-4 py-2 text-left">Subject</th>
                             <th class="px-4 py-2 text-left">Class Room</th>
+                            <th class="px-4 py-2 text-left">School</th>
                             <th class="px-4 py-2 text-left">Schedule</th>
                             <th class="px-4 py-2 text-left">Students</th>
                         </tr>
@@ -88,6 +89,12 @@
                                         {{ $classRoom->name }} ({{ $classRoom->grade_level }})
                                     </a>
                                 </td>
+                                <td class="px-4 py-2">
+                                    <a href="{{ route('schools.show', $classRoom->school) }}" class="text-blue-600 hover:text-blue-900">
+                                        {{ $classRoom->school->name }}
+                                    </a>
+                             
+                                
                                 <td class="px-4 py-2">
                                     {{ $classRoom->start_time->format('g:i A') }} - {{ $classRoom->end_time->format('g:i A') }}
                                     <div class="flex flex-wrap gap-1 mt-1">

@@ -130,8 +130,8 @@
             <ul class="divide-y divide-gray-200">
                 @foreach($school->teachers as $teacher)
                 <li class="py-2">
-                    <div class="text-sm text-gray-900">{{ $teacher->first_name }} {{ $teacher->last_name }}</div>
-                    <div class="text-sm text-gray-500">{{ $teacher->email }}</div>
+                    <div class="text-sm text-gray-900">{{ $teacher->teacher_firstname }} {{ $teacher->teacher_lastname }}</div>
+                    <div class="text-sm text-gray-500">{{ $teacher->phone }}</div>
                 </li>
                 @endforeach
             </ul>
