@@ -72,16 +72,17 @@ export default function Dashboard({ auth, laravelVersion, phpVersion }) {
                                 </p>
                             </div>
                         </Link>
-                    </section>
-
-                    {/* <section className="mt-10 text-center">
-                        <Link
-                            href="/profile"
-                            className="inline-block rounded bg-[#FF2D20] px-6 py-3 text-white font-semibold hover:bg-[#e0261c] transition"
-                        >
-                            Log out
+                        {/* Ecommerce Link */}
+                        <Link href={route('ecommerce.index')} className="block">
+                            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 flex flex-col items-center text-center hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                                <img src="https://cdn-icons-png.flaticon.com/512/1170/1170576.png" alt="Ecommerce" className="w-24 h-24 mb-4" />
+                                <h2 className="text-2xl font-semibold mb-2">Ecommerce</h2>
+                                <p className="text-gray-600 dark:text-gray-400">
+                                    Browse and purchase products seamlessly.
+                                </p>
+                            </div>
                         </Link>
-                    </section> */}
+                    </section>
 
                     <footer className="text-center text-sm text-gray-500 dark:text-gray-400 mt-12">
                         EduSmart v1.2.0

@@ -19,16 +19,18 @@ class StudentGradeController extends Controller
 
     public function index(Evaluation $evaluation)
     {
-        $grades = StudentGrade::with('student.user')
+        $grades = StudentGrade::with(['student.user', 'evaluation'])
             ->where('evaluation_id', $evaluation->id)
             ->get();
 
-        return view('student_grades.index', compact('evaluation', 'grades'));
+        // Calculate performance metrics
+        $performanceMetrics = $this->calculatePerformanceMetrics($grades, $evaluation);
+
+        return view('student_grades.index', compact('evaluation', 'grades', 'performanceMetrics'));
     }
 
     public function create(Evaluation $evaluation)
     {
-        // Get students in the class who do not already have a grade for this evaluation
         $gradedStudentIds = StudentGrade::where('evaluation_id', $evaluation->id)
             ->pluck('student_id')
             ->toArray();
@@ -94,5 +96,62 @@ class StudentGradeController extends Controller
 
         return redirect()->route('evaluations.show', $evaluation)
             ->with('success', 'Grade deleted successfully.');
+    }
+
+    protected function calculatePerformanceMetrics($grades, $evaluation)
+    {
+        $metrics = [
+            'consistent_improvers' => 0,
+            'inconsistent_performers' => 0,
+            'declining_performers' => 0,
+            'top_improver' => ['name' => null, 'improvement' => 0],
+            'highest_score' => ['name' => null, 'score' => 0],
+            'needs_attention' => ['name' => null, 'decline' => 0],
+        ];
+
+        foreach ($grades as $grade) {
+            $performance = $grade->getPerformanceTrend();
+
+            // Categorize students
+            if ($performance['trend'] == 'improving') {
+                $metrics['consistent_improvers']++;
+
+                if ($performance['improvement_percentage'] > $metrics['top_improver']['improvement']) {
+                    $metrics['top_improver'] = [
+                        'name' => $grade->student->first_name . ' ' . $grade->student->last_name,
+                        'improvement' => $performance['improvement_percentage']
+                    ];
+                }
+            } elseif ($performance['trend'] == 'declining') {
+                $metrics['declining_performers']++;
+
+                if (abs($performance['improvement_percentage']) > abs($metrics['needs_attention']['decline'])) {
+                    $metrics['needs_attention'] = [
+                        'name' => $grade->student->first_name . ' ' . $grade->student->last_name,
+                        'decline' => $performance['improvement_percentage']
+                    ];
+                }
+            } elseif ($performance['trend'] == 'consistent') {
+                $metrics['inconsistent_performers']++;
+            }
+
+            $currentScore = ($grade->marks_obtained / $evaluation->total_marks) * 100;
+            if ($currentScore > $metrics['highest_score']['score']) {
+                $metrics['highest_score'] = [
+                    'name' => $grade->student->first_name . ' ' . $grade->student->last_name,
+                    'score' => $currentScore
+                ];
+            }
+        }
+
+        // Add chart data keys
+        $metrics['labels'] = ['Improving', 'Consistent', 'Declining'];
+        $metrics['data'] = [
+            $metrics['consistent_improvers'],
+            $metrics['inconsistent_performers'],
+            $metrics['declining_performers'],
+        ];
+
+        return $metrics;
     }
 }

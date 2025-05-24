@@ -49,3 +49,21 @@ use App\Http\Controllers\SubjectController;
 Route::middleware(['auth'])->group(function () {
     Route::resource('subjects', SubjectController::class);
 });
+
+use App\Http\Controllers\Ecommerce\ProductController;
+use App\Http\Controllers\Ecommerce\OrderController;
+
+// Ecommerce routes
+Route::prefix('ecommerce')->name('ecommerce.')->group(function () {
+    Route::get('/products', [ProductController::class, 'index'])->name('index');
+    Route::get('/products/create', [ProductController::class, 'create'])->name('create');
+    Route::post('/products', [ProductController::class, 'store'])->name('store');
+    Route::get('/products/{product}', [ProductController::class, 'show'])->name('show');
+    Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('edit');
+    Route::put('/products/{product}', [ProductController::class, 'update'])->name('update');
+    Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('destroy');
+
+    Route::post('/cart', [OrderController::class, 'addToCart'])->name('cart.add');
+    Route::get('/cart', [OrderController::class, 'viewCart'])->name('cart.view');
+    Route::post('/checkout', [OrderController::class, 'checkout'])->name('checkout');
+});

@@ -73,4 +73,81 @@ class StudentGrade extends Model
         }
         return false;
     }
+
+
+     /**
+     * Add this method to your StudentGrade model
+     */
+public function getPerformanceTrend()
+{
+    // Get previous grade for the same subject with evaluation date
+    $previousGrade = StudentGrade::where('student_id', $this->student_id)
+        ->whereHas('evaluation', function($q) {
+            $q->where('subject_id', $this->evaluation->subject_id)
+              ->where('evaluation_date', '<', $this->evaluation->evaluation_date);
+        })
+        ->with('evaluation') // Eager load the evaluation
+        ->join('evaluations', 'student_grades.evaluation_id', '=', 'evaluations.id')
+        ->orderBy('evaluations.evaluation_date', 'desc')
+        ->select('student_grades.*') // Select only student grade columns
+        ->first();
+
+    if (!$previousGrade) {
+        return [
+            'trend' => 'new',
+            'improvement_percentage' => 0,
+            'previous_grade' => null
+        ];
+    }
+
+    $currentPercentage = ($this->marks_obtained / $this->evaluation->total_marks) * 100;
+    $previousPercentage = ($previousGrade->marks_obtained / $previousGrade->evaluation->total_marks) * 100;
+    $improvement = $currentPercentage - $previousPercentage;
+
+    // Determine trend (5% threshold for significant change)
+    if ($improvement > 5) {
+        $trend = 'improving';
+    } elseif ($improvement < -5) {
+        $trend = 'declining';
+    } else {
+        $trend = 'consistent';
+    }
+
+    return [
+        'trend' => $trend,
+        'improvement_percentage' => round($improvement, 2),
+        'previous_grade' => $previousGrade->marks_obtained . '/' . $previousGrade->evaluation->total_marks
+    ];
+}
+
+public function getStudentPerformanceHistory()
+{
+    return Evaluation::where('subject_id', $this->evaluation->subject_id)
+        ->where('class_room_id', $this->evaluation->class_room_id)
+        ->where('evaluation_date', '<=', $this->evaluation->evaluation_date)
+        ->orderBy('evaluation_date')
+        ->with(['studentGrades' => function($query) {
+            $query->where('student_id', $this->student_id);
+        }])
+        ->get()
+        ->map(function($evaluation) {
+            $studentGrade = $evaluation->studentGrades->first();
+            $classAverage = $evaluation->studentGrades->avg(function($grade) use ($evaluation) {
+                return ($grade->marks_obtained / $evaluation->total_marks) * 100;
+            });
+
+            return [
+                'date' => $evaluation->evaluation_date->format('M d, Y'),
+                'score' => $studentGrade ? round(($studentGrade->marks_obtained / $evaluation->total_marks) * 100, 2) : null,
+                'class_average' => round($classAverage, 2),
+                'passing_threshold' => ($evaluation->passing_marks / $evaluation->total_marks) * 100
+            ];
+        })
+        ->filter(function($item) {
+            return !is_null($item['score']);
+        })
+        ->values()
+        ->toArray();
+}
+    
 }
