@@ -303,6 +303,7 @@
         font-weight: 500;
         letter-spacing: 0.025em;
         transition: all 0.3s ease;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
 
     .btn-primary:hover {
