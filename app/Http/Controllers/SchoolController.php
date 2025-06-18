@@ -5,11 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\School;
 use App\Http\Requests\SchoolRequest;
 use Illuminate\Http\Request;
+use App\Services\NotificationService;
+use Illuminate\Support\Facades\Auth;
 
 class SchoolController extends Controller
 {
-    public function __construct()
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
     {
+        $this->notificationService = $notificationService;
         $this->authorizeResource(School::class, 'school');
     }
 
@@ -43,8 +48,17 @@ class SchoolController extends Controller
 
         $school = School::create($validated);
 
+        // Notification de création d'école
+        $this->notificationService->sendToRole(
+            'admin',
+            'Nouvelle école créée',
+            "L'école {$school->name} a été créée avec succès.",
+            'success',
+            route('schools.show', $school)
+        );
+
         return redirect()
-            ->route('schools.show', $school)
+            ->route('schools.index')
             ->with('success', 'School created successfully.');
     }
 
@@ -80,10 +94,20 @@ class SchoolController extends Controller
         $validated = $request->validated();
         $validated['updated_by'] = auth()->id();
 
+        $oldName = $school->name;
         $school->update($validated);
 
+        // Notification de modification d'école
+        $this->notificationService->sendToRole(
+            'admin',
+            'École modifiée',
+            "L'école {$oldName} a été modifiée. Nouveau nom : {$school->name}",
+            'warning',
+            route('schools.show', $school)
+        );
+
         return redirect()
-            ->route('schools.show', $school)
+            ->route('schools.index')
             ->with('success', 'School updated successfully.');
     }
 
@@ -93,10 +117,21 @@ class SchoolController extends Controller
     public function destroy(School $school)
     {
         if ($school->students()->exists() || $school->teachers()->exists() || $school->classRooms()->exists()) {
-            return back()->with('error', 'Cannot delete school because it has associated students, teachers, or classrooms.');
+            return redirect()
+                ->route('schools.index')
+                ->with('error', 'Cannot delete school because it has associated students, teachers, or classrooms.');
         }
 
+        $schoolName = $school->name;
         $school->delete();
+
+        // Notification de suppression d'école
+        $this->notificationService->sendToRole(
+            'admin',
+            'École supprimée',
+            "L'école {$schoolName} a été supprimée du système.",
+            'error'
+        );
 
         return redirect()
             ->route('schools.index')

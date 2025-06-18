@@ -1,191 +1,346 @@
-@extends('layouts.app')
+<x-app-layout>
+    <div class="content-wrapper">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-university fa-2x text-primary me-3"></i>
+                        <div>
+                            <h4 class="mb-0">Edit School</h4>
+                            <small class="text-muted">Update school information</small>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('schools.show', $school) }}" class="btn btn-light">
+                            <i class="fas fa-eye me-2"></i>View Details
+                        </a>
+                        <a href="{{ route('schools.index') }}" class="btn btn-light">
+                            <i class="fas fa-arrow-left me-2"></i>Back to List
+                        </a>
+                    </div>
+                </div>
+            </div>
 
-@section('content')
-<div class="container mx-auto px-4">
-    <div class="flex justify-between items-center mb-6">
-        <a href="{{ route('schools.index') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">← Back to Schools</a>
-        <h1 class="text-2xl font-bold">Edit School</h1>
+            <div class="card-body">
+                <form action="{{ route('schools.update', $school) }}" method="POST" class="needs-validation" novalidate>
+                    @csrf
+                    @method('PUT')
+                    <div class="row g-4">
+                        <!-- Basic Information -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name" class="form-label">School Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('name') is-invalid @enderror" 
+                                    id="name" name="name" value="{{ old('name', $school->name) }}" required maxlength="255">
+                                @error('name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="code" class="form-label">School Code <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('code') is-invalid @enderror" 
+                                    id="code" name="code" value="{{ old('code', $school->code) }}" required maxlength="50">
+                                @error('code')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control @error('description') is-invalid @enderror" 
+                                    id="description" name="description" rows="3">{{ old('description', $school->description) }}</textarea>
+                                @error('description')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <!-- Contact Information -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="principal_name" class="form-label">Principal's Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('principal_name') is-invalid @enderror" 
+                                    id="principal_name" name="principal_name" value="{{ old('principal_name', $school->principal_name) }}" required maxlength="255">
+                                @error('principal_name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control @error('email') is-invalid @enderror" 
+                                    id="email" name="email" value="{{ old('email', $school->email) }}" required maxlength="255">
+                                @error('email')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control @error('phone') is-invalid @enderror" 
+                                    id="phone" name="phone" value="{{ old('phone', $school->phone) }}" required maxlength="20">
+                                @error('phone')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="website" class="form-label">Website</label>
+                                <input type="url" class="form-control @error('website') is-invalid @enderror" 
+                                    id="website" name="website" value="{{ old('website', $school->website) }}" maxlength="255">
+                                @error('website')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <!-- Address Information -->
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="address" class="form-label">Address <span class="text-danger">*</span></label>
+                                <textarea class="form-control @error('address') is-invalid @enderror" 
+                                    id="address" name="address" rows="2" required maxlength="255">{{ old('address', $school->address) }}</textarea>
+                                @error('address')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="city" class="form-label">City <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('city') is-invalid @enderror" 
+                                    id="city" name="city" value="{{ old('city', $school->city) }}" required maxlength="100">
+                                @error('city')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="state" class="form-label">State/Province <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('state') is-invalid @enderror" 
+                                    id="state" name="state" value="{{ old('state', $school->state) }}" required maxlength="100">
+                                @error('state')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="country" class="form-label">Country <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('country') is-invalid @enderror" 
+                                    id="country" name="country" value="{{ old('country', $school->country) }}" required maxlength="100">
+                                @error('country')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="postal_code" class="form-label">Postal/ZIP Code <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('postal_code') is-invalid @enderror" 
+                                    id="postal_code" name="postal_code" value="{{ old('postal_code', $school->postal_code) }}" required maxlength="20">
+                                @error('postal_code')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="type" class="form-label">School Type <span class="text-danger">*</span></label>
+                                <select class="form-select @error('type') is-invalid @enderror" 
+                                    id="type" name="type" required>
+                                    <option value="">Select Type</option>
+                                    <option value="public" {{ old('type', $school->type) == 'public' ? 'selected' : '' }}>Public</option>
+                                    <option value="private" {{ old('type', $school->type) == 'private' ? 'selected' : '' }}>Private</option>
+                                    <option value="charter" {{ old('type', $school->type) == 'charter' ? 'selected' : '' }}>Charter</option>
+                                </select>
+                                @error('type')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="capacity" class="form-label">Student Capacity <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control @error('capacity') is-invalid @enderror" 
+                                    id="capacity" name="capacity" value="{{ old('capacity', $school->capacity) }}" required min="1">
+                                @error('capacity')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                                <select class="form-select @error('status') is-invalid @enderror" 
+                                    id="status" name="status" required>
+                                    <option value="">Select Status</option>
+                                    <option value="active" {{ old('status', $school->status) == 'active' ? 'selected' : '' }}>Active</option>
+                                    <option value="inactive" {{ old('status', $school->status) == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                </select>
+                                @error('status')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <a href="{{ route('schools.show', $school) }}" class="btn btn-light me-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Update School
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <form action="{{ route('schools.update', $school) }}" method="POST">
-            @csrf
-            @method('PUT')
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Basic Information -->
-                <div class="space-y-4">
-                    <h2 class="text-xl font-semibold mb-4">Basic Information</h2>
-                    
-                    <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700">School Name</label>
-                        <input type="text" name="name" id="name" value="{{ old('name', $school->name) }}" required
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        @error('name')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+    @push('styles')
+    <style>
+        .content-wrapper {
+            padding: 0;
+            background: #f8fafc;
+        }
 
-                    <div>
-                        <label for="code" class="block text-sm font-medium text-gray-700">School Code</label>
-                        <input type="text" name="code" id="code" value="{{ old('code', $school->code) }}" required
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        @error('code')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+        .card {
+            border: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-radius: 0.75rem;
+            margin: 0;
+        }
 
-                    <div>
-                        <label for="type" class="block text-sm font-medium text-gray-700">School Type</label>
-                        <select name="type" id="type" required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            <option value="">Select Type</option>
-                            <option value="public" {{ old('type', $school->type) == 'public' ? 'selected' : '' }}>Public</option>
-                            <option value="private" {{ old('type', $school->type) == 'private' ? 'selected' : '' }}>Private</option>
-                            <option value="charter" {{ old('type', $school->type) == 'charter' ? 'selected' : '' }}>Charter</option>
-                        </select>
-                        @error('type')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+        .card-header {
+            background: linear-gradient(to right, #ffffff, #f8fafc);
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1.5rem;
+        }
 
-                    <div>
-                        <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-                        <select name="status" id="status" required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            <option value="active" {{ old('status', $school->status) == 'active' ? 'selected' : '' }}>Active</option>
-                            <option value="inactive" {{ old('status', $school->status) == 'inactive' ? 'selected' : '' }}>Inactive</option>
-                        </select>
-                        @error('status')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+        .card-header h4 {
+            color: #1e293b;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+        }
 
-                    <div>
-                        <label for="capacity" class="block text-sm font-medium text-gray-700">Student Capacity</label>
-                        <input type="number" name="capacity" id="capacity" value="{{ old('capacity', $school->capacity) }}" required min="1"
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        @error('capacity')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-                </div>
+        .card-header small {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
 
-                <!-- Contact Information -->
-                <div class="space-y-4">
-                    <h2 class="text-xl font-semibold mb-4">Contact Information</h2>
-                    
-                    <div>
-                        <label for="principal_name" class="block text-sm font-medium text-gray-700">Principal Name</label>
-                        <input type="text" name="principal_name" id="principal_name" value="{{ old('principal_name', $school->principal_name) }}" required
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        @error('principal_name')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+        .form-label {
+            color: #475569;
+            font-weight: 500;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
 
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                        <input type="email" name="email" id="email" value="{{ old('email', $school->email) }}" required
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        @error('email')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+        .form-control, .form-select {
+            border: 1px solid #e2e8f0;
+            padding: 0.625rem 1rem;
+            font-size: 0.875rem;
+            color: #1e293b;
+            border-radius: 0.5rem;
+        }
 
-                    <div>
-                        <label for="phone" class="block text-sm font-medium text-gray-700">Phone</label>
-                        <input type="text" name="phone" id="phone" value="{{ old('phone', $school->phone) }}" required
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        @error('phone')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+        .form-control:focus, .form-select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
 
-                    <div>
-                        <label for="website" class="block text-sm font-medium text-gray-700">Website</label>
-                        <input type="url" name="website" id="website" value="{{ old('website', $school->website) }}"
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        @error('website')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-                </div>
-            </div>
+        .btn-primary {
+            background: linear-gradient(to right, #3b82f6, #2563eb);
+            border: none;
+            padding: 0.625rem 1.25rem;
+            font-weight: 500;
+            letter-spacing: 0.025em;
+            transition: all 0.3s ease;
+        }
 
-            <!-- Address Information -->
-            <div class="mt-6 space-y-4">
-                <h2 class="text-xl font-semibold mb-4">Address Information</h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="address" class="block text-sm font-medium text-gray-700">Street Address</label>
-                        <input type="text" name="address" id="address" value="{{ old('address', $school->address) }}" required
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        @error('address')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+        .btn-primary:hover {
+            background: linear-gradient(to right, #2563eb, #1d4ed8);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
 
-                    <div>
-                        <label for="city" class="block text-sm font-medium text-gray-700">City</label>
-                        <input type="text" name="city" id="city" value="{{ old('city', $school->city) }}" required
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        @error('city')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+        .btn-light {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            color: #64748b;
+            padding: 0.625rem 1.25rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
 
-                    <div>
-                        <label for="state" class="block text-sm font-medium text-gray-700">State/Province</label>
-                        <input type="text" name="state" id="state" value="{{ old('state', $school->state) }}" required
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        @error('state')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+        .btn-light:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            color: #1e293b;
+        }
 
-                    <div>
-                        <label for="postal_code" class="block text-sm font-medium text-gray-700">Postal Code</label>
-                        <input type="text" name="postal_code" id="postal_code" value="{{ old('postal_code', $school->postal_code) }}" required
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        @error('postal_code')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+        .invalid-feedback {
+            font-size: 0.75rem;
+            color: #ef4444;
+        }
 
-                    <div>
-                        <label for="country" class="block text-sm font-medium text-gray-700">Country</label>
-                        <input type="text" name="country" id="country" value="{{ old('country', $school->country) }}" required
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        @error('country')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-                </div>
-            </div>
+        .is-invalid {
+            border-color: #ef4444 !important;
+        }
 
-            <!-- Description -->
-            <div class="mt-6">
-                <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
-                <textarea name="description" id="description" rows="4"
-                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('description', $school->description) }}</textarea>
-                @error('description')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
+        .is-invalid:focus {
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+        }
 
-            <div class="mt-6 flex justify-end space-x-3">
-                <a href="{{ route('schools.show', $school) }}" 
-                   class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
-                    Cancel
-                </a>
-                <button type="submit" 
-                        class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">
-                    Update School
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-@endsection
+        @media (max-width: 768px) {
+            .card-header {
+                padding: 1rem;
+            }
+
+            .row {
+                margin: 0 -0.5rem;
+            }
+
+            .col-md-6, .col-md-4, .col-md-12 {
+                padding: 0 0.5rem;
+            }
+        }
+    </style>
+    @endpush
+
+    @push('scripts')
+    <script>
+        // Form validation
+        (function () {
+            'use strict'
+            var forms = document.querySelectorAll('.needs-validation')
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
+        })()
+    </script>
+    @endpush
+</x-app-layout>

@@ -1,3 +1,89 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Toast Notifications */
+.toast-notification {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1050;
+    min-width: 300px;
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease-in-out;
+}
+
+.toast-notification.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.toast-header {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.toast-header i {
+    margin-right: 0.5rem;
+    font-size: 1.25rem;
+}
+
+.toast-body {
+    padding: 1rem;
+    color: #4a5568;
+}
+
+/* Notification Badge Animation */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Appliquer l'animation uniquement aux badges de notification */
+#notificationsDropdown .badge {
+    animation: pulse 2s infinite;
+}
+
+/* Style des badges de statut */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s ease;
+}
+
+.badge.bg-success {
+    background-color: #10B981;
+    color: white;
+}
+
+.badge.bg-danger {
+    background-color: #EF4444;
+    color: white;
+}
+
+.badge.bg-warning {
+    background-color: #F59E0B;
+    color: white;
+}
+
+.badge.bg-info {
+    background-color: #3B82F6;
+    color: white;
+}

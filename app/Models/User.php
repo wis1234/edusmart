@@ -167,22 +167,36 @@ class User extends Authenticatable
     }
 
     public function canManageEvaluations()
-{
-    return $this->email === 'ronaldoagbohou@gmail.com' || 
-           $this->hasRole('enseignant') || 
-           $this->teacher()->exists();
-}
+    {
+        return $this->email === 'ronaldoagbohou@gmail.com' || 
+               $this->hasRole('enseignant') || 
+               $this->teacher()->exists();
+    }
 
-// Scope for teacher filtering
-public function scopeForTeacher($query, $teacherId)
-{
-    return $query->where('teacher_id', $teacherId);
-}
+    // Scope for teacher filtering
+    public function scopeForTeacher($query, $teacherId)
+    {
+        return $query->where('teacher_id', $teacherId);
+    }
 
-// Relationship for teacher
-public function teacher()
-{
-    return $this->belongsTo(User::class, 'teacher_id');
-}
+    // Relationship for teacher
+    public function teacher()
+    {
+        return $this->belongsTo(User::class, 'teacher_id');
+    }
 
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function unreadNotifications()
+    {
+        return $this->notifications()->whereNull('read_at');
+    }
+
+    public function hasUnreadNotifications()
+    {
+        return $this->unreadNotifications()->exists();
+    }
 }

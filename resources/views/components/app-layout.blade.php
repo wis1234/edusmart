@@ -99,8 +99,6 @@
                 padding: 1.5rem;
                 background: #f3f4f6;
                 margin-top: 0;
-                position: relative;
-                min-height: 200px;
             }
 
             /* Card Styles */
@@ -214,70 +212,6 @@
             .hover-lift:hover {
                 transform: translateY(-2px);
             }
-
-            /* Loading Spinner */
-            .loading-spinner {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgb(115, 115, 114);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 100;
-                opacity: 0;
-                visibility: hidden;
-                transition: all 0.3s ease;
-                border-radius: 0.75rem;
-            }
-
-            .loading-spinner.show {
-                opacity: 1;
-                visibility: visible;
-            }
-
-            .spinner-container {
-                text-align: center;
-                background: white;
-                padding: 2rem;
-                border-radius: 1rem;
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            }
-
-            .spinner {
-                width: 40px;
-                height: 40px;
-                border: 3px solid #f3f3f3;
-                border-top: 3px solid var(--primary);
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-                margin-bottom: 1rem;
-            }
-
-            .spinner-text {
-                color: var(--primary);
-                font-size: 0.875rem;
-                font-weight: 500;
-            }
-
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-
-            /* Page Transition */
-            .page-transition {
-                opacity: 0;
-                transform: translateY(10px);
-                transition: all 0.3s ease;
-            }
-
-            .page-transition.show {
-                opacity: 1;
-                transform: translateY(0);
-            }
         </style>
         
         <!-- Scripts -->
@@ -295,15 +229,8 @@
             <!-- Main Content -->
             <div class="main-content">
                 <!-- Content -->
-                <div class="content-wrapper page-transition" id="mainContent">
-                    <!-- Loading Spinner -->
-                    <div class="loading-spinner" id="loadingSpinner">
-                        <div class="spinner-container">
-                            <div class="spinner"></div>
-                            <div class="spinner-text">Chargement en cours...</div>
-                        </div>
-                    </div>
-                    @yield('content')
+                <div class="content-wrapper">
+                    {{ $slot }}
                 </div>
             </div>
         </div>
@@ -321,21 +248,7 @@
                 const mainContent = document.querySelector('.main-content');
                 const sidebarToggle = document.getElementById('sidebarToggle');
                 const sidebarOverlay = document.getElementById('sidebarOverlay');
-                const loadingSpinner = document.getElementById('loadingSpinner');
-                const mainContentWrapper = document.getElementById('mainContent');
                 let isSidebarCollapsed = false;
-
-                // Show loading spinner
-                function showLoading() {
-                    loadingSpinner.classList.add('show');
-                    mainContentWrapper.classList.remove('show');
-                }
-
-                // Hide loading spinner
-                function hideLoading() {
-                    loadingSpinner.classList.remove('show');
-                    mainContentWrapper.classList.add('show');
-                }
 
                 // Toggle sidebar
                 function toggleSidebar() {
@@ -372,40 +285,21 @@
                     });
                 }
 
-                // Handle navigation links
-                document.querySelectorAll('a[href]').forEach(link => {
-                    link.addEventListener('click', function(e) {
-                        // Don't show loading for external links or links with target="_blank"
-                        if (this.hostname !== window.location.hostname || this.target === '_blank') {
-                            return;
+                // Handle window resize
+                window.addEventListener('resize', function() {
+                    if (window.innerWidth > 768) {
+                        if (sidebarOverlay) {
+                            sidebarOverlay.classList.remove('show');
                         }
-
-                        // Don't show loading for links with data-no-loading attribute
-                        if (this.hasAttribute('data-no-loading')) {
-                            return;
-                        }
-
-                        showLoading();
-                    });
+                    }
                 });
 
-                // Show content when page is loaded
-                hideLoading();
-
-                // Handle browser back/forward buttons
-                window.addEventListener('popstate', function() {
-                    showLoading();
-                });
-
-                // Handle form submissions
-                document.querySelectorAll('form').forEach(form => {
-                    form.addEventListener('submit', function() {
-                        if (!this.hasAttribute('data-no-loading')) {
-                            showLoading();
-                        }
-                    });
+                // Add hover effects to cards
+                document.querySelectorAll('.card').forEach(card => {
+                    card.classList.add('hover-lift');
                 });
             });
         </script>
+        @stack('scripts')
     </body>
-</html>
+</html> 
