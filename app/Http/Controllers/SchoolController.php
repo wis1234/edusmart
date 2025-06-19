@@ -21,11 +21,25 @@ class SchoolController extends Controller
     /**
      * Display a listing of the school resources.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $schools = School::with(['createdBy:id,first_name,last_name', 'updatedBy:id,first_name,last_name'])
-            ->orderBy('name')
-            ->get();
+        $query = School::with(['createdBy:id,first_name,last_name', 'updatedBy:id,first_name,last_name']);
+
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%'.$request->search.'%');
+        }
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status === 'active');
+        }
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+        if ($request->filled('country')) {
+            $query->where('country', $request->country);
+        }
+
+        $schools = $query->orderBy('name')->paginate(10);
+
         return view('schools.index', compact('schools'));
     }
 

@@ -52,6 +52,7 @@ const Table = ({
             </table>
         </div>
     );
+    
 };
 
 const Head = ({ children, className = '' }) => {

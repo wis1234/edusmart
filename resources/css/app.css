@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Dark mode support */
+@layer base {
+    html {
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    
+    html.dark {
+        color-scheme: dark;
+    }
+    
+    html.light {
+        color-scheme: light;
+    }
+}
+
 /* Toast Notifications */
 .toast-notification {
     position: fixed;
@@ -86,4 +101,59 @@
 .badge.bg-info {
     background-color: #3B82F6;
     color: white;
+}
+
+/* Dark mode overrides for Bootstrap components */
+html.dark .card {
+    background-color: #1f2937;
+    border-color: #374151;
+}
+
+html.dark .table {
+    color: #f9fafb;
+}
+
+html.dark .table th {
+    background-color: #374151;
+    border-color: #4b5563;
+}
+
+html.dark .table td {
+    border-color: #4b5563;
+}
+
+html.dark .form-control {
+    background-color: #1f2937;
+    border-color: #374151;
+    color: #f9fafb;
+}
+
+html.dark .form-control:focus {
+    background-color: #1f2937;
+    border-color: #6366f1;
+    color: #f9fafb;
+}
+
+html.dark .btn-light {
+    background-color: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+}
+
+html.dark .btn-light:hover {
+    background-color: #4b5563;
+    color: #f9fafb;
+}
+
+/* Theme toggle button animations */
+.theme-toggle-btn {
+    transition: all 0.3s ease;
+}
+
+.theme-toggle-btn:hover {
+    transform: scale(1.1);
+}
+
+.theme-toggle-btn:active {
+    transform: scale(0.95);
 }

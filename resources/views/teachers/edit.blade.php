@@ -1,22 +1,34 @@
-@extends('layouts.app')
-
-@section('content')
-<div class="container mx-auto px-4">
-    <div class="flex justify-between items-center mb-4">
-        <h1 class="text-2xl font-bold">Edit Teacher</h1>
-        <a href="{{ route('teachers.index') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Back to Teachers</a>
+<x-app-layout>
+    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <!-- Header modernisé -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-4">
+                <span class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 shadow-lg">
+                    <i class="fas fa-chalkboard-teacher text-white text-2xl"></i>
+                </span>
+                <div>
+                    <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Edit Teacher</h1>
+                    <p class="text-gray-500 dark:text-gray-300">Update information for {{ $teacher->teacher_firstname }} {{ $teacher->teacher_lastname }}</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <a href="{{ route('teachers.index') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    <i class="fas fa-arrow-left"></i> Back to List
+                </a>
+            </div>
     </div>
 
+        <!-- Messages de session -->
     @foreach (['success' => 'green', 'error' => 'red'] as $msg => $color)
         @if (session($msg))
-            <div class="bg-{{ $color }}-100 border border-{{ $color }}-400 text-{{ $color }}-700 px-4 py-3 rounded mb-4">
+                <div class="mb-6 bg-{{ $color }}-100 border border-{{ $color }}-400 text-{{ $color }}-700 px-4 py-3 rounded-lg">
                 {{ session($msg) }}
             </div>
         @endif
     @endforeach
 
     @if ($errors->any())
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
             <ul class="list-disc pl-5">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -25,164 +37,319 @@
         </div>
     @endif
 
-    <form action="{{ route('teachers.update', $teacher) }}" method="POST" enctype="multipart/form-data" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+        <!-- Formulaire modernisé -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+            <form action="{{ route('teachers.update', $teacher) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
         @csrf
         @method('PUT')
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {{-- Basic Info --}}
-            <div class="col-span-2">
-                <h2 class="text-xl font-semibold mb-3 border-b pb-2">Basic Information</h2>
+                <!-- Basic Information -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="first_name" class="block text-sm font-medium text-gray-700 dark:text-gray-200">First Name <span class="text-red-500">*</span></label>
+                        <input type="text" id="first_name" name="first_name" value="{{ old('first_name', $teacher->teacher_firstname) }}" required maxlength="255"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('first_name') border-red-500 @enderror">
+                        @error('first_name')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label for="last_name" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Last Name</label>
+                        <input type="text" id="last_name" name="last_name" value="{{ old('last_name', $teacher->teacher_lastname) }}" maxlength="255"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('last_name') border-red-500 @enderror">
+                        @error('last_name')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
             </div>
-
-<div class="mb-4">
-    <label for="first_name" class="block font-semibold mb-1">First Name*</label>
-    <input type="text" name="first_name" id="first_name" 
-        value="{{ old('first_name', $teacher->teacher_firstname) }}"
-        class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
 </div>
 
-<div class="mb-4">
-    <label for="last_name" class="block font-semibold mb-1">Last Name</label>
-    <input type="text" name="last_name" id="last_name" 
-        value="{{ old('last_name', $teacher->teacher_lastname) }}"
-        class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Email Address <span class="text-red-500">*</span></label>
+                        <input type="email" id="email" name="email" value="{{ old('email', $teacher->teacher_email) }}" required maxlength="255"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('email') border-red-500 @enderror">
+                        @error('email')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
 </div>
-
-            {{-- teacher_email --}}
-            <div class="mb-4">
-                <label for="email" class="block font-semibold mb-1">Email Address*</label>
-                <input type="email" name="email" id="email" value="{{ old('teacher_email', $teacher->teacher_email) }}"
-                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Phone Number <span class="text-red-500">*</span></label>
+                        <input type="tel" id="phone" name="phone" value="{{ old('phone', $teacher->teacher_phone) }}" required maxlength="20"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('phone') border-red-500 @enderror">
+                        @error('phone')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+            </div>
             </div>
 
-            {{-- teacher_phone --}}
-            <div class="mb-4">
-                <label for="phone" class="block font-semibold mb-1">Phone Number*</label>
-                <input type="tel" name="phone" id="phone" value="{{ old('teacher_phone', $teacher->teacher_phone) }}"
-                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label for="date_of_birth" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Date of Birth <span class="text-red-500">*</span></label>
+                        <input type="date" id="date_of_birth" name="date_of_birth" value="{{ old('date_of_birth', optional($teacher->date_of_birth)->format('Y-m-d')) }}" required
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('date_of_birth') border-red-500 @enderror">
+                        @error('date_of_birth')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
             </div>
-
-            {{-- date_of_birth --}}
-            <div class="mb-4">
-                <label for="date_of_birth" class="block font-semibold mb-1">Date of Birth*</label>
-                <input type="date" name="date_of_birth" id="date_of_birth" 
-                    value="{{ old('date_of_birth', optional($teacher->date_of_birth)->format('Y-m-d')) }}"
-                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
-            </div>
-
-            {{-- gender --}}
-            <div class="mb-4">
-                <label for="gender" class="block font-semibold mb-1">Gender*</label>
-                <select name="gender" id="gender" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                    <div>
+                        <label for="gender" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Gender <span class="text-red-500">*</span></label>
+                        <select id="gender" name="gender" required
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('gender') border-red-500 @enderror">
                     <option value="">Select Gender</option>
                     @foreach (['male' => 'Male', 'female' => 'Female', 'other' => 'Other'] as $val => $label)
                         <option value="{{ $val }}" {{ old('gender', $teacher->gender) === $val ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
                 </select>
+                        @error('gender')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label for="profile_photo" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Profile Photo</label>
+                        @if($teacher->profile_photo)
+                            <div class="mb-2">
+                                <img src="{{ asset('storage/' . $teacher->profile_photo) }}" alt="Profile Photo" class="w-32 h-32 rounded-lg object-cover border-2 border-gray-200 dark:border-gray-600">
+                            </div>
+                        @endif
+                        <input type="file" id="profile_photo" name="profile_photo" accept="image/*"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('profile_photo') border-red-500 @enderror"
+                            onchange="previewImage(this)">
+                        @error('profile_photo')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                        <div id="image-preview" class="mt-2 hidden">
+                            <img src="" alt="Preview" class="w-32 h-32 rounded-lg object-cover border-2 border-gray-200 dark:border-gray-600">
+                        </div>
+                    </div>
             </div>
 
-            {{-- address --}}
-            <div class="col-span-2 mb-4">
-                <label for="address" class="block font-semibold mb-1">Address*</label>
-                <textarea name="address" id="address" rows="3" required
-                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">{{ old('address', $teacher->address) }}</textarea>
+                <div>
+                    <label for="address" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Address <span class="text-red-500">*</span></label>
+                    <textarea id="address" name="address" rows="3" required maxlength="255"
+                        class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('address') border-red-500 @enderror">{{ old('address', $teacher->address) }}</textarea>
+                    @error('address')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
             </div>
 
-            {{-- grade --}}
-            <div class="mb-4">
-                <label for="grade" class="block font-semibold mb-1">Grade*</label>
-                <input type="text" name="grade" id="grade" value="{{ old('grade', $teacher->grade) }}"
-                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                <!-- Teaching Assignments -->
+                <div class="border rounded-lg p-6 bg-gray-50 dark:bg-gray-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Teaching Assignments</h3>
+                        <span id="assignment-counter" class="text-sm text-gray-600 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded-full">
+                            {{ count($teacher->taughtSubjects) > 0 ? count($teacher->taughtSubjects) . ' assignment(s)' : '1 assignment' }}
+                        </span>
+                    </div>
+                    <div id="assignments-container">
+                        @forelse ($teacher->taughtSubjects as $subject)
+                            @foreach($teacher->teachingClassRooms->where('pivot.subject_id', $subject->id) as $classRoom)
+                                <div class="assignment-entry grid grid-cols-1 md:grid-cols-5 gap-4 mb-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 shadow-sm" data-assignment-id="existing_{{ $subject->id }}_{{ $classRoom->id }}">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">School <span class="text-red-500">*</span></label>
+                                        <select name="schools[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                            <option value="">Select School</option>
+                                            @foreach($schools as $school)
+                                                <option value="{{ $school->id }}" {{ old('schools.0', $classRoom->school_id ?? '') == $school->id ? 'selected' : '' }}>{{ $school->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Subject <span class="text-red-500">*</span></label>
+                                        <select name="subjects[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                            <option value="">Select Subject</option>
+                                            @foreach($subjects as $s)
+                                                @if($s->is_active)
+                                                    <option value="{{ $s->id }}" {{ old('subjects.0', $subject->id) == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
+                                                @endif
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Class Room <span class="text-red-500">*</span></label>
+                                        <select name="class_rooms[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                            <option value="">Select Class Room</option>
+                                            @foreach($classRooms as $cr)
+                                                <option value="{{ $cr->id }}" {{ old('class_rooms.0', $classRoom->id) == $cr->id ? 'selected' : '' }}>{{ $cr->name }} ({{ $cr->grade_level }})</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Academic Year <span class="text-red-500">*</span></label>
+                                        <select name="years[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                            @for($year = date('Y') + 2; $year >= date('Y') - 5; $year--)
+                                                <option value="{{ $year }}" {{ old('years.0', $classRoom->pivot->year ?? date('Y')) == $year ? 'selected' : '' }}>
+                                                    {{ $year }}-{{ $year + 1 }}
+                                                </option>
+                                            @endfor
+                                        </select>
+                                    </div>
+                                    <div class="flex items-end">
+                                        <button type="button" class="remove-assignment bg-red-500 hover:bg-red-700 text-white text-sm font-bold py-2 px-3 rounded-lg transition w-full" 
+                                                onclick="window.removeAssignment('existing_{{ $subject->id }}_{{ $classRoom->id }}')" title="Remove this assignment">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
             </div>
-
-            {{-- speciality --}}
-            <div class="mb-4">
-                <label for="speciality" class="block font-semibold mb-1">Speciality*</label>
-                <input type="text" name="speciality" id="speciality" value="{{ old('speciality', $teacher->speciality) }}"
-                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                            @endforeach
+                        @empty
+                            <div class="assignment-entry grid grid-cols-1 md:grid-cols-5 gap-4 mb-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 shadow-sm" data-assignment-id="initial">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">School <span class="text-red-500">*</span></label>
+                                    <select name="schools[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                        <option value="">Select School</option>
+                                        @foreach($schools as $school)
+                                            <option value="{{ $school->id }}" {{ old('schools.0') == $school->id ? 'selected' : '' }}>{{ $school->name }}</option>
+                                        @endforeach
+                                    </select>
             </div>
-
-            {{-- subject_title --}}
-            <div class="mb-4">
-                <label for="subject_title" class="block font-semibold mb-1">Subject Title</label>
-                <input type="text" name="subject_title" id="subject_title" value="{{ old('subject_title', $teacher->subject_title) }}"
-                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Subject <span class="text-red-500">*</span></label>
+                                    <select name="subjects[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                        <option value="">Select Subject</option>
+                                        @foreach($subjects as $subject)
+                                            @if($subject->is_active==1)
+                                            <option value="{{ $subject->id }}" {{ old('subjects.0') == $subject->id ? 'selected' : '' }}>{{ $subject->name }}</option>
+                                            @endif
+                                        @endforeach
+                                    </select>
             </div>
-
-            {{-- status --}}
-            <div class="mb-4">
-                <label for="status" class="block font-semibold mb-1">Status</label>
-                <select name="status" id="status" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
-                    <option value="">Select Status</option>
-                    @foreach (['active' => 'Active', 'inactive' => 'Inactive', 'suspended' => 'Suspended'] as $val => $label)
-                        <option value="{{ $val }}" {{ old('status', $teacher->status) === $val ? 'selected' : '' }}>{{ $label }}</option>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Class Room <span class="text-red-500">*</span></label>
+                                    <select name="class_rooms[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                        <option value="">Select Class Room</option>
+                                        @foreach($classRooms as $classRoom)
+                                            <option value="{{ $classRoom->id }}" {{ old('class_rooms.0') == $classRoom->id ? 'selected' : '' }}>{{ $classRoom->name }} ({{ $classRoom->grade_level }})</option>
                     @endforeach
                 </select>
             </div>
-
-            {{-- profile_photo --}}
-            <div class="mb-4">
-                <label class="block font-semibold mb-1">Profile Photo</label>
-                @if($teacher->profile_photo)
-                    <div class="mb-2">
-                        <img src="{{ asset('storage/' . $teacher->profile_photo) }}" alt="Profile photo" class="w-32 h-32 rounded object-cover">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Academic Year <span class="text-red-500">*</span></label>
+                                    <select name="years[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                        @for($year = date('Y') + 2; $year >= date('Y') - 5; $year--)
+                                            <option value="{{ $year }}" {{ old('years.0', date('Y')) == $year ? 'selected' : '' }}>
+                                                {{ $year }}-{{ $year + 1 }}
+                                            </option>
+                                        @endfor
+                                    </select>
+                                </div>
+                                <div class="flex items-end">
+                                    <button type="button" class="remove-assignment bg-red-500 hover:bg-red-700 text-white text-sm font-bold py-2 px-3 rounded-lg transition w-full opacity-50 cursor-not-allowed" 
+                                            onclick="window.removeAssignment('initial')" title="Remove this assignment" disabled>
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        @endforelse
                     </div>
-                @endif
-                <input type="file" name="profile_photo" id="profile_photo" accept="image/*"
-                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500"
-                    onchange="previewImage(this)">
-                <div id="image-preview" class="mt-2 hidden">
-                    <img src="" alt="Preview" class="w-32 h-32 rounded object-cover">
+                    <button type="button" id="add-assignment" 
+                        class="mt-2 bg-green-500 hover:bg-green-700 text-white text-sm font-bold py-2 px-4 rounded-lg transition">
+                        <i class="fas fa-plus mr-1"></i> Add Assignment
+                    </button>
                 </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label for="grade" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Grade <span class="text-red-500">*</span></label>
+                        <input type="text" id="grade" name="grade" value="{{ old('grade', $teacher->grade) }}" required maxlength="100"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('grade') border-red-500 @enderror">
+                        @error('grade')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label for="speciality" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Speciality <span class="text-red-500">*</span></label>
+                        <input type="text" id="speciality" name="speciality" value="{{ old('speciality', $teacher->speciality) }}" required maxlength="255"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('speciality') border-red-500 @enderror">
+                        @error('speciality')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label for="subject_title" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Subject Title</label>
+                        <input type="text" id="subject_title" name="subject_title" value="{{ old('subject_title', $teacher->subject_title) }}" maxlength="255"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('subject_title') border-red-500 @enderror">
+                        @error('subject_title')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+            </div>
             </div>
 
-            {{-- Teaching Assignments --}}
-            <div class="col-span-2">
-                <h2 class="text-xl font-semibold mb-3 pb-2 border-b">Teaching Assignments</h2>
-            </div>
-
-            <div class="col-span-2">
-                <div class="border rounded-lg p-4" id="assignments-container">
-                    @forelse ($teacher->taughtSubjects as $subject)
-                        @foreach($teacher->teachingClassRooms->where('pivot.subject_id', $subject->id) as $classRoom)
-                            @include('teachers.partials.assignment', [
-                                'subjectId' => $subject->id,
-                                'classRoomId' => $classRoom->id,
-                                'year' => $classRoom->pivot->year
-                            ])
+                <div>
+                    <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Status <span class="text-red-500">*</span></label>
+                    <select id="status" name="status" required
+                        class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('status') border-red-500 @enderror">
+                        <option value="">Select Status</option>
+                        @foreach (['active' => 'Active', 'inactive' => 'Inactive', 'on_leave' => 'On Leave'] as $val => $label)
+                            <option value="{{ $val }}" {{ old('status', $teacher->status) === $val ? 'selected' : '' }}>{{ $label }}</option>
                         @endforeach
-                    @empty
-                        @include('teachers.partials.assignment')
-                    @endforelse
-                </div>
+                    </select>
+                    @error('status')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
             </div>
 
-        </div>
-
-        <div class="mt-6">
-            <button type="submit" class="bg-blue-600 text-white font-semibold px-6 py-2 rounded hover:bg-blue-700">
-                Update Teacher
+                <div class="flex justify-end gap-2 mt-8">
+                    <a href="{{ route('teachers.index') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                        Cancel
+                    </a>
+                    <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700 transition">
+                        <i class="fas fa-save"></i> Update Teacher
             </button>
         </div>
     </form>
+        </div>
 </div>
 
 <script>
-    function previewImage(input) {
-        const previewContainer = document.getElementById('image-preview');
-        const previewImage = previewContainer.querySelector('img');
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                previewImage.src = e.target.result;
-                previewContainer.classList.remove('hidden');
-            };
-            reader.readAsDataURL(input.files[0]);
+        // JavaScript pour l'ajout dynamique d'assignments et preview d'image
+        (function() {
+            'use strict';
+            
+            // Variables globales
+            let assignmentCounter = 1;
+            let schools = [];
+            let subjects = [];
+            let classRooms = [];
+            
+            // Initialiser les événements
+            function init() {
+                console.log('Initializing teacher edit form...');
+                
+                // Bouton d'ajout d'assignment
+                const addBtn = document.getElementById('add-assignment');
+                if (addBtn) {
+                    addBtn.addEventListener('click', function(event) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        addAssignment();
+                    });
+                }
+                
+                // Preview d'image
+                const imageInput = document.getElementById('profile_photo');
+                if (imageInput) {
+                    imageInput.addEventListener('change', handleImagePreview);
+                }
+                
+                // Validation du formulaire
+                const form = document.querySelector('form');
+                if (form) {
+                    form.addEventListener('submit', handleFormSubmit);
+                }
+                
+                // Initialiser l'interface
+                updateUI();
+                
+                console.log('Teacher edit form initialized successfully');
+            }
+            
+            // Initialisation
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
         } else {
-            previewImage.src = '';
-            previewContainer.classList.add('hidden');
+                init();
         }
-    }
+            
+        })();
 </script>
-@endsection
+</x-app-layout>

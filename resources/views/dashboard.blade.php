@@ -1,272 +1,156 @@
-@extends('layouts.app')
-
-@section('content')
-<div class="content-wrapper">
-    <div class="card">
-        <div class="card-header bg-white py-3">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-tachometer-alt fa-2x text-primary me-3"></i>
+<x-app-layout>
+    <div class="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <!-- Header modernisé -->
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center gap-4">
+                    <span class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 shadow-lg">
+                        <i class="fas fa-graduation-cap text-white text-2xl"></i>
+                    </span>
                     <div>
-                        <h4 class="mb-0">Dashboard</h4>
-                        <small class="text-muted">Overview of your educational system</small>
+                        <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Dashboard</h1>
+                        <p class="text-gray-500 dark:text-gray-300">Overview of your educational system</p>
                     </div>
                 </div>
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-light" id="refreshBtn" title="Refresh Dashboard">
-                        <i class="fas fa-sync-alt"></i>
+                <div class="flex items-center gap-2">
+                    <button class="p-2 rounded-full bg-white dark:bg-gray-800 shadow hover:bg-gray-100 dark:hover:bg-gray-700 transition" title="Refresh Dashboard">
+                        <i class="fas fa-sync-alt text-indigo-500"></i>
                     </button>
-                    <button type="button" class="btn btn-light" id="exportBtn" title="Export Data">
-                        <i class="fas fa-download"></i>
+                    <button class="p-2 rounded-full bg-white dark:bg-gray-800 shadow hover:bg-gray-100 dark:hover:bg-gray-700 transition" title="Export Data">
+                        <i class="fas fa-download text-green-500"></i>
                     </button>
                 </div>
             </div>
-        </div>
 
-        <!-- Stats Cards -->
-        <div class="card-body border-bottom">
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="flex-shrink-0 bg-primary bg-opacity-10 rounded p-3">
-                                    <i class="fas fa-school text-primary fa-2x"></i>
-                                </div>
-                                <div class="ms-3">
-                                    <h6 class="text-muted mb-1">Total Schools</h6>
-                                    <h3 class="mb-0">{{ \App\Models\School::count() }}</h3>
-                                    <small class="text-success">
-                                        <i class="fas fa-arrow-up"></i> 12% this month
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900 dark:to-blue-700 rounded-xl shadow-lg p-6 flex items-center gap-4">
+                    <i class="fas fa-school text-blue-500 dark:text-blue-300 text-3xl"></i>
+                    <div>
+                        <div class="text-gray-500 dark:text-gray-300 text-sm">Total Schools</div>
+                        <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ \App\Models\School::count() }}</div>
+                        <div class="text-green-600 dark:text-green-400 text-xs flex items-center gap-1"><i class="fas fa-arrow-up"></i> 12% this month</div>
                     </div>
                 </div>
-
-                <div class="col-md-3">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="flex-shrink-0 bg-success bg-opacity-10 rounded p-3">
-                                    <i class="fas fa-chalkboard-teacher text-success fa-2x"></i>
-                                </div>
-                                <div class="ms-3">
-                                    <h6 class="text-muted mb-1">Total Teachers</h6>
-                                    <h3 class="mb-0">{{ \App\Models\Teacher::count() }}</h3>
-                                    <small class="text-success">
-                                        <i class="fas fa-arrow-up"></i> 8% this month
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
+                <div class="bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900 dark:to-green-700 rounded-xl shadow-lg p-6 flex items-center gap-4">
+                    <i class="fas fa-chalkboard-teacher text-green-500 dark:text-green-300 text-3xl"></i>
+                    <div>
+                        <div class="text-gray-500 dark:text-gray-300 text-sm">Total Teachers</div>
+                        <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ \App\Models\Teacher::count() }}</div>
+                        <div class="text-green-600 dark:text-green-400 text-xs flex items-center gap-1"><i class="fas fa-arrow-up"></i> 8% this month</div>
                     </div>
                 </div>
-
-                <div class="col-md-3">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="flex-shrink-0 bg-info bg-opacity-10 rounded p-3">
-                                    <i class="fas fa-user-graduate text-info fa-2x"></i>
-                                </div>
-                                <div class="ms-3">
-                                    <h6 class="text-muted mb-1">Total Students</h6>
-                                    <h3 class="mb-0">{{ \App\Models\Student::count() }}</h3>
-                                    <small class="text-success">
-                                        <i class="fas fa-arrow-up"></i> 15% this month
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
+                <div class="bg-gradient-to-br from-cyan-100 to-cyan-50 dark:from-cyan-900 dark:to-cyan-700 rounded-xl shadow-lg p-6 flex items-center gap-4">
+                    <i class="fas fa-user-graduate text-cyan-500 dark:text-cyan-300 text-3xl"></i>
+                    <div>
+                        <div class="text-gray-500 dark:text-gray-300 text-sm">Total Students</div>
+                        <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ \App\Models\Student::count() }}</div>
+                        <div class="text-green-600 dark:text-green-400 text-xs flex items-center gap-1"><i class="fas fa-arrow-up"></i> 15% this month</div>
                     </div>
                 </div>
-
-                <div class="col-md-3">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="flex-shrink-0 bg-warning bg-opacity-10 rounded p-3">
-                                    <i class="fas fa-door-open text-warning fa-2x"></i>
-                                </div>
-                                <div class="ms-3">
-                                    <h6 class="text-muted mb-1">Total Classes</h6>
-                                    <h3 class="mb-0">{{ \App\Models\ClassRoom::count() }}</h3>
-                                    <small class="text-success">
-                                        <i class="fas fa-arrow-up"></i> 5% this month
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
+                <div class="bg-gradient-to-br from-yellow-100 to-yellow-50 dark:from-yellow-900 dark:to-yellow-700 rounded-xl shadow-lg p-6 flex items-center gap-4">
+                    <i class="fas fa-door-open text-yellow-500 dark:text-yellow-300 text-3xl"></i>
+                    <div>
+                        <div class="text-gray-500 dark:text-gray-300 text-sm">Total Classes</div>
+                        <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ \App\Models\ClassRoom::count() }}</div>
+                        <div class="text-green-600 dark:text-green-400 text-xs flex items-center gap-1"><i class="fas fa-arrow-up"></i> 5% this month</div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Quick Actions -->
-        <div class="card-body border-bottom">
-            <h5 class="mb-3">Quick Actions</h5>
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <a href="{{ route('schools.create') }}" class="card border-0 shadow-sm h-100 text-decoration-none">
-                        <div class="card-body text-center">
-                            <i class="fas fa-plus-circle fa-2x text-primary mb-2"></i>
-                            <h6 class="text-dark mb-0">Add School</h6>
-                        </div>
+            <!-- Quick Actions -->
+            <div class="mb-8">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <a href="{{ route('schools.create') }}" class="flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 hover:bg-blue-50 dark:hover:bg-gray-700 transition group">
+                        <i class="fas fa-plus-circle text-blue-500 dark:text-blue-300 text-3xl mb-2 group-hover:scale-110 transition"></i>
+                        <span class="text-gray-900 dark:text-white font-semibold">Add School</span>
                     </a>
-                </div>
-                <div class="col-md-3">
-                    <a href="{{ route('teachers.create') }}" class="card border-0 shadow-sm h-100 text-decoration-none">
-                        <div class="card-body text-center">
-                            <i class="fas fa-user-plus fa-2x text-success mb-2"></i>
-                            <h6 class="text-dark mb-0">Add Teacher</h6>
-                        </div>
+                    <a href="{{ route('teachers.create') }}" class="flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 hover:bg-green-50 dark:hover:bg-gray-700 transition group">
+                        <i class="fas fa-user-plus text-green-500 dark:text-green-300 text-3xl mb-2 group-hover:scale-110 transition"></i>
+                        <span class="text-gray-900 dark:text-white font-semibold">Add Teacher</span>
                     </a>
-                </div>
-                <div class="col-md-3">
-                    <a href="{{ route('students.create') }}" class="card border-0 shadow-sm h-100 text-decoration-none">
-                        <div class="card-body text-center">
-                            <i class="fas fa-user-graduate fa-2x text-info mb-2"></i>
-                            <h6 class="text-dark mb-0">Add Student</h6>
-                        </div>
+                    <a href="{{ route('students.create') }}" class="flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 hover:bg-cyan-50 dark:hover:bg-gray-700 transition group">
+                        <i class="fas fa-user-graduate text-cyan-500 dark:text-cyan-300 text-3xl mb-2 group-hover:scale-110 transition"></i>
+                        <span class="text-gray-900 dark:text-white font-semibold">Add Student</span>
                     </a>
-                </div>
-                <div class="col-md-3">
-                    <a href="{{ route('class_rooms.create') }}" class="card border-0 shadow-sm h-100 text-decoration-none">
-                        <div class="card-body text-center">
-                            <i class="fas fa-chalkboard fa-2x text-warning mb-2"></i>
-                            <h6 class="text-dark mb-0">Add Class</h6>
-                        </div>
+                    <a href="{{ route('class_rooms.create') }}" class="flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 hover:bg-yellow-50 dark:hover:bg-gray-700 transition group">
+                        <i class="fas fa-chalkboard text-yellow-500 dark:text-yellow-300 text-3xl mb-2 group-hover:scale-110 transition"></i>
+                        <span class="text-gray-900 dark:text-white font-semibold">Add Class</span>
                     </a>
                 </div>
             </div>
-        </div>
 
-        <!-- Recent Notifications -->
-        <div class="card-body border-bottom">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="mb-0">Recent Notifications</h5>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-sm btn-light" id="markAllReadBtn">
-                        <i class="fas fa-check-double me-1"></i>Mark All as Read
-                    </button>
-                    <a href="{{ route('notifications.index') }}" class="btn btn-sm btn-primary">
-                        View All
-                    </a>
+            <!-- Recent Notifications -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">Recent Notifications</h2>
+                    <div class="flex gap-2">
+                        <button class="px-3 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition" id="markAllReadBtn">
+                            <i class="fas fa-check-double mr-1"></i>Mark All as Read
+                        </button>
+                        <a href="{{ route('notifications.index') }}" class="px-3 py-1 rounded bg-indigo-500 text-white hover:bg-indigo-600 transition">View All</a>
+                    </div>
                 </div>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="bg-light">
-                        <tr>
-                            <th class="px-4 py-3">Type</th>
-                            <th class="px-4 py-3">Title</th>
-                            <th class="px-4 py-3">Message</th>
-                            <th class="px-4 py-3">Date</th>
-                            <th class="px-4 py-3 text-end">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse(auth()->user()->notifications()->latest()->take(5)->get() as $notification)
-                            <tr class="notification-item {{ $notification->isUnread() ? 'bg-light' : '' }}" 
-                                data-notification-id="{{ $notification->id }}">
-                                <td class="px-4 py-3">
-                                    @switch($notification->type)
-                                        @case('success')
-                                            <i class="fas fa-check-circle text-success"></i>
-                                            @break
-                                        @case('warning')
-                                            <i class="fas fa-exclamation-triangle text-warning"></i>
-                                            @break
-                                        @case('error')
-                                            <i class="fas fa-times-circle text-danger"></i>
-                                            @break
-                                        @default
-                                            <i class="fas fa-bell text-primary"></i>
-                                    @endswitch
-                                </td>
-                                <td class="px-4 py-3">{{ $notification->title }}</td>
-                                <td class="px-4 py-3">{{ Str::limit($notification->message, 50) }}</td>
-                                <td class="px-4 py-3">{{ $notification->created_at->diffForHumans() }}</td>
-                                <td class="px-4 py-3 text-end">
-                                    <div class="btn-group">
-                                        @if($notification->link)
-                                            <a href="{{ route('notifications.show', $notification) }}" class="btn btn-sm btn-light" title="View">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                        @endif
-                                        <button type="button" class="btn btn-sm btn-light mark-read-btn" title="Mark as Read">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-light delete-notification-btn" title="Delete">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
+                <div class="overflow-x-auto rounded-lg">
+                    <table class="min-w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-xl overflow-hidden">
+                        <thead class="bg-gray-100 dark:bg-gray-700">
                             <tr>
-                                <td colspan="5" class="px-4 py-3 text-center">
-                                    <div class="text-center py-4">
-                                        <i class="fas fa-bell fa-3x text-muted mb-3"></i>
-                                        <h5 class="text-muted">No recent notifications</h5>
-                                    </div>
-                                </td>
+                                <th class="px-4 py-3">Type</th>
+                                <th class="px-4 py-3">Title</th>
+                                <th class="px-4 py-3">Message</th>
+                                <th class="px-4 py-3">Date</th>
+                                <th class="px-4 py-3 text-end">Actions</th>
                             </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Recent Activity -->
-        <div class="card-body">
-            <h5 class="mb-3">Recent Activity</h5>
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="bg-light">
-                        <tr>
-                            <th class="px-4 py-3">Action</th>
-                            <th class="px-4 py-3">User</th>
-                            <th class="px-4 py-3">Date</th>
-                            <th class="px-4 py-3">Details</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($recentActivities as $activity)
+                        </thead>
+                        <tbody>
+                            @forelse(auth()->user()->notifications()->latest()->take(5)->get() as $notification)
+                                <tr class="notification-item {{ $notification->isUnread() ? 'bg-gray-50 dark:bg-gray-700' : '' }} transition">
+                                    <td class="px-4 py-3">
+                                        @switch($notification->type)
+                                            @case('success')
+                                                <i class="fas fa-check-circle text-green-500 dark:text-green-400"></i>
+                                                @break
+                                            @case('warning')
+                                                <i class="fas fa-exclamation-triangle text-yellow-500 dark:text-yellow-400"></i>
+                                                @break
+                                            @case('error')
+                                                <i class="fas fa-times-circle text-red-500 dark:text-red-400"></i>
+                                                @break
+                                            @default
+                                                <i class="fas fa-bell text-indigo-500 dark:text-blue-400"></i>
+                                        @endswitch
+                                    </td>
+                                    <td class="px-4 py-3">{{ $notification->title }}</td>
+                                    <td class="px-4 py-3">{{ Str::limit($notification->message, 50) }}</td>
+                                    <td class="px-4 py-3">{{ $notification->created_at->diffForHumans() }}</td>
+                                    <td class="px-4 py-3 text-end">
+                                        <div class="flex gap-2">
+                                            @if($notification->link)
+                                                <a href="{{ route('notifications.show', $notification) }}" class="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition" title="View">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            @endif
+                                            <button type="button" class="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition mark-read-btn" title="Mark as Read">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
                             <tr>
-                                <td class="px-4 py-3">
-                                    <span class="badge bg-{{ $activity->type === 'create' ? 'success' : ($activity->type === 'update' ? 'warning' : 'danger') }}">
-                                        {{ ucfirst($activity->type) }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <div class="d-flex align-items-center">
-                                        <img src="{{ $activity->user->profile_photo_url }}" alt="{{ $activity->user->name }}" 
-                                             class="rounded-circle me-2" width="32" height="32">
-                                        {{ $activity->user->name }}
-                                    </div>
-                                </td>
-                                <td class="px-4 py-3">{{ $activity->created_at->diffForHumans() }}</td>
-                                <td class="px-4 py-3">{{ $activity->description }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="4" class="px-4 py-3 text-center">
-                                    <div class="text-center py-4">
-                                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
-                                        <h5 class="text-muted">No recent activity</h5>
-                                    </div>
+                                <td colspan="5" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                                    No notifications found.
                                 </td>
                             </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
-</div>
+</x-app-layout>
 
 @push('styles')
 <style>
@@ -431,7 +315,8 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(data => {
                 if (data.success) {
-                    notificationItem.classList.remove('bg-light');
+                    notificationItem.classList.remove('bg-gray-50');
+                    notificationItem.classList.remove('dark:bg-gray-700');
                     updateNotificationCount();
                 } else {
                     throw new Error(data.message || 'Failed to mark notification as read');
@@ -533,7 +418,8 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 document.querySelectorAll('.notification-item').forEach(item => {
-                    item.classList.remove('bg-light');
+                    item.classList.remove('bg-gray-50');
+                    item.classList.remove('dark:bg-gray-700');
                 });
                 updateNotificationCount();
             } else {
@@ -563,7 +449,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateNotificationCount() {
         fetch('/notifications/unread-count')
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch notification count');
+                }
+                return response.json();
+            })
             .then(data => {
                 const badge = document.querySelector('#notificationsDropdown .badge');
                 if (badge) {
@@ -574,9 +465,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         badge.classList.remove('d-none');
                     }
                 }
+            })
+            .catch(error => {
+                console.warn('Could not update notification count:', error.message);
+                // Don't show error to user, just log it
             });
     }
 });
 </script>
 @endpush
-@endsection

@@ -22,8 +22,8 @@ class StudentController extends Controller
     {
         $students = Student::with(['user', 'classRoom', 'school', 'parent'])
             ->orderBy('admission_number')
-            ->get();
-            $users = User::all(); 
+            ->paginate(10);
+        $users = User::all(); 
         return view('students.index', compact('students', 'users'));
     }
 

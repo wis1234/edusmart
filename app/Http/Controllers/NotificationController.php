@@ -48,6 +48,11 @@ class NotificationController extends Controller
         }
     }
 
+    public function markAllAsReadPost()
+    {
+        return $this->markAllAsRead();
+    }
+
     public function getUnreadCount()
     {
         try {

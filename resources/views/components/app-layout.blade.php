@@ -227,7 +227,7 @@
             @include('layouts.sidebar')
 
             <!-- Main Content -->
-            <div class="main-content">
+            <div class="main-content pt-10">
                 <!-- Content -->
                 <div class="content-wrapper">
                     {{ $slot }}

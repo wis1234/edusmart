@@ -113,6 +113,30 @@ class Teacher extends Model
     }
 
     /**
+     * Get the notifications for the teacher.
+     */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    /**
+     * Get the class room teacher assignments.
+     */
+    public function classRoomTeachers(): HasMany
+    {
+        return $this->hasMany(ClassRoomTeacher::class);
+    }
+
+    /**
+     * Get the students assigned to this teacher.
+     */
+    public function students(): HasMany
+    {
+        return $this->hasMany(Student::class);
+    }
+
+    /**
      * Get the days of week for a specific classroom and subject.
      */
     public function getDaysOfWeek($classRoomId, $subjectId): array

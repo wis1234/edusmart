@@ -1,342 +1,188 @@
 <x-app-layout>
-    <div class="content-wrapper">
-        <div class="card">
-            <div class="card-header bg-white py-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-university fa-2x text-primary me-3"></i>
+    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <!-- Header modernisé -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-4">
+                <span class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 shadow-lg">
+                    <i class="fas fa-university text-white text-2xl"></i>
+                </span>
                         <div>
-                            <h4 class="mb-0">Add New Institution</h4>
-                            <small class="text-muted">Create a new school record</small>
-                        </div>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <a href="{{ route('schools.index') }}" class="btn btn-light">
-                            <i class="fas fa-arrow-left me-2"></i>Back to List
-                        </a>
-                    </div>
+                    <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Add New Institution</h1>
+                    <p class="text-gray-500 dark:text-gray-300">Create a new school record</p>
                 </div>
             </div>
-
-            <div class="card-body">
-                <form action="{{ route('schools.store') }}" method="POST" class="needs-validation" novalidate>
-                    @csrf
-                    <div class="row g-4">
-                        <!-- Basic Information -->
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="name" class="form-label">Institution Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('name') is-invalid @enderror" 
-                                    id="name" name="name" value="{{ old('name') }}" required maxlength="255">
-                                @error('name')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+            <div class="flex gap-2">
+                <a href="{{ route('schools.index') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    <i class="fas fa-arrow-left"></i> Back to List
+                </a>
                             </div>
                         </div>
 
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="code" class="form-label">Institution Code <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('code') is-invalid @enderror" 
-                                    id="code" name="code" value="{{ old('code') }}" required maxlength="50">
+        <!-- Formulaire modernisé -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+            <form action="{{ route('schools.store') }}" method="POST" class="space-y-6">
+                @csrf
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Nom -->
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Institution Name <span class="text-red-500">*</span></label>
+                        <input type="text" id="name" name="name" value="{{ old('name') }}" required maxlength="255"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('name') border-red-500 @enderror">
+                        @error('name')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <!-- Code -->
+                    <div>
+                        <label for="code" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Institution Code <span class="text-red-500">*</span></label>
+                        <input type="text" id="code" name="code" value="{{ old('code') }}" required maxlength="50"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('code') border-red-500 @enderror">
                                 @error('code')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
                         </div>
-
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label for="description" class="form-label">Description</label>
-                                <textarea class="form-control @error('description') is-invalid @enderror" 
-                                    id="description" name="description" rows="3">{{ old('description') }}</textarea>
+                <!-- Description -->
+                <div>
+                    <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Description</label>
+                    <textarea id="description" name="description" rows="3"
+                        class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('description') border-red-500 @enderror">{{ old('description') }}</textarea>
                                 @error('description')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
-                        </div>
-
-                        <!-- Contact Information -->
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="principal_name" class="form-label">Principal's Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('principal_name') is-invalid @enderror" 
-                                    id="principal_name" name="principal_name" value="{{ old('principal_name') }}" required maxlength="255">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Principal Name -->
+                    <div>
+                        <label for="principal_name" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Principal's Name <span class="text-red-500">*</span></label>
+                        <input type="text" id="principal_name" name="principal_name" value="{{ old('principal_name') }}" required maxlength="255"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('principal_name') border-red-500 @enderror">
                                 @error('principal_name')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control @error('email') is-invalid @enderror" 
-                                    id="email" name="email" value="{{ old('email') }}" required maxlength="255">
+                    <!-- Email -->
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Email Address <span class="text-red-500">*</span></label>
+                        <input type="email" id="email" name="email" value="{{ old('email') }}" required maxlength="255"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('email') border-red-500 @enderror">
                                 @error('email')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
-                                <input type="tel" class="form-control @error('phone') is-invalid @enderror" 
-                                    id="phone" name="phone" value="{{ old('phone') }}" required maxlength="20">
+                    <!-- Phone -->
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Phone Number <span class="text-red-500">*</span></label>
+                        <input type="tel" id="phone" name="phone" value="{{ old('phone') }}" required maxlength="20"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('phone') border-red-500 @enderror">
                                 @error('phone')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="website" class="form-label">Website</label>
-                                <input type="url" class="form-control @error('website') is-invalid @enderror" 
-                                    id="website" name="website" value="{{ old('website') }}" maxlength="255">
+                    <!-- Website -->
+                    <div>
+                        <label for="website" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Website</label>
+                        <input type="url" id="website" name="website" value="{{ old('website') }}" maxlength="255"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('website') border-red-500 @enderror">
                                 @error('website')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
                         </div>
-
-                        <!-- Address Information -->
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label for="address" class="form-label">Address <span class="text-danger">*</span></label>
-                                <textarea class="form-control @error('address') is-invalid @enderror" 
-                                    id="address" name="address" rows="2" required maxlength="255">{{ old('address') }}</textarea>
+                <!-- Adresse -->
+                <div>
+                    <label for="address" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Address <span class="text-red-500">*</span></label>
+                    <textarea id="address" name="address" rows="2" required maxlength="255"
+                        class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('address') border-red-500 @enderror">{{ old('address') }}</textarea>
                                 @error('address')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="city" class="form-label">City <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('city') is-invalid @enderror" 
-                                    id="city" name="city" value="{{ old('city') }}" required maxlength="100">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <!-- City -->
+                    <div>
+                        <label for="city" class="block text-sm font-medium text-gray-700 dark:text-gray-200">City <span class="text-red-500">*</span></label>
+                        <input type="text" id="city" name="city" value="{{ old('city') }}" required maxlength="100"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('city') border-red-500 @enderror">
                                 @error('city')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="state" class="form-label">State/Province <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('state') is-invalid @enderror" 
-                                    id="state" name="state" value="{{ old('state') }}" required maxlength="100">
+                    <!-- State -->
+                    <div>
+                        <label for="state" class="block text-sm font-medium text-gray-700 dark:text-gray-200">State/Province <span class="text-red-500">*</span></label>
+                        <input type="text" id="state" name="state" value="{{ old('state') }}" required maxlength="100"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('state') border-red-500 @enderror">
                                 @error('state')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="country" class="form-label">Country <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('country') is-invalid @enderror" 
-                                    id="country" name="country" value="{{ old('country') }}" required maxlength="100">
+                    <!-- Country -->
+                    <div>
+                        <label for="country" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Country <span class="text-red-500">*</span></label>
+                        <input type="text" id="country" name="country" value="{{ old('country') }}" required maxlength="100"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('country') border-red-500 @enderror">
                                 @error('country')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="postal_code" class="form-label">Postal/ZIP Code <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('postal_code') is-invalid @enderror" 
-                                    id="postal_code" name="postal_code" value="{{ old('postal_code') }}" required maxlength="20">
+                    <!-- Postal Code -->
+                    <div>
+                        <label for="postal_code" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Postal/ZIP Code <span class="text-red-500">*</span></label>
+                        <input type="text" id="postal_code" name="postal_code" value="{{ old('postal_code') }}" required maxlength="20"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('postal_code') border-red-500 @enderror">
                                 @error('postal_code')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
                         </div>
-
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="type" class="form-label">Institution Type <span class="text-danger">*</span></label>
-                                <select class="form-select @error('type') is-invalid @enderror" 
-                                    id="type" name="type" required>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Type -->
+                    <div>
+                        <label for="type" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Institution Type <span class="text-red-500">*</span></label>
+                        <select id="type" name="type" required
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('type') border-red-500 @enderror">
                                     <option value="">Select Type</option>
                                     <option value="public" {{ old('type') == 'public' ? 'selected' : '' }}>Public</option>
                                     <option value="private" {{ old('type') == 'private' ? 'selected' : '' }}>Private</option>
                                     <option value="charter" {{ old('type') == 'charter' ? 'selected' : '' }}>Charter</option>
                                 </select>
                                 @error('type')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="capacity" class="form-label">Student Capacity <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control @error('capacity') is-invalid @enderror" 
-                                    id="capacity" name="capacity" value="{{ old('capacity') }}" required min="1">
+                    <!-- Capacity -->
+                    <div>
+                        <label for="capacity" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Student Capacity <span class="text-red-500">*</span></label>
+                        <input type="number" id="capacity" name="capacity" value="{{ old('capacity') }}" required min="1"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('capacity') border-red-500 @enderror">
                                 @error('capacity')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
-                        </div>
-
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
-                                <select class="form-select @error('status') is-invalid @enderror" 
-                                    id="status" name="status" required>
+                    <!-- Status -->
+                    <div>
+                        <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Status <span class="text-red-500">*</span></label>
+                        <select id="status" name="status" required
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('status') border-red-500 @enderror">
                                     <option value="">Select Status</option>
                                     <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>Active</option>
                                     <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
                                 </select>
                                 @error('status')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
                         </div>
-                    </div>
-
-                    <div class="d-flex justify-content-end mt-4">
-                        <a href="{{ route('schools.index') }}" class="btn btn-light me-2">Cancel</a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-2"></i>Create School
+                <div class="flex justify-end gap-2 mt-8">
+                    <a href="{{ route('schools.index') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                        Cancel
+                    </a>
+                    <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700 transition">
+                        <i class="fas fa-save"></i> Create Institution
                         </button>
                     </div>
                 </form>
             </div>
         </div>
-    </div>
-
-    @push('styles')
-    <style>
-        .content-wrapper {
-            padding: 0;
-            background: #f8fafc;
-        }
-
-        .card {
-            border: none;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            border-radius: 0.75rem;
-            margin: 0;
-        }
-
-        .card-header {
-            background: linear-gradient(to right, #ffffff, #f8fafc);
-            border-bottom: 1px solid #e2e8f0;
-            padding: 1.5rem;
-        }
-
-        .card-header h4 {
-            color: #1e293b;
-            font-weight: 600;
-            letter-spacing: -0.025em;
-        }
-
-        .card-header small {
-            color: #64748b;
-            font-size: 0.875rem;
-        }
-
-        .form-label {
-            color: #475569;
-            font-weight: 500;
-            font-size: 0.875rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .form-control, .form-select {
-            border: 1px solid #e2e8f0;
-            padding: 0.625rem 1rem;
-            font-size: 0.875rem;
-            color: #1e293b;
-            border-radius: 0.5rem;
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .btn-primary {
-            background: linear-gradient(to right, #3b82f6, #2563eb);
-            border: none;
-            padding: 0.625rem 1.25rem;
-            font-weight: 500;
-            letter-spacing: 0.025em;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary:hover {
-            background: linear-gradient(to right, #2563eb, #1d4ed8);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
-        }
-
-        .btn-light {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            color: #64748b;
-            padding: 0.625rem 1.25rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .btn-light:hover {
-            background: #f8fafc;
-            border-color: #cbd5e1;
-            color: #1e293b;
-        }
-
-        .invalid-feedback {
-            font-size: 0.75rem;
-            color: #ef4444;
-        }
-
-        .is-invalid {
-            border-color: #ef4444 !important;
-        }
-
-        .is-invalid:focus {
-            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
-        }
-
-        @media (max-width: 768px) {
-            .card-header {
-                padding: 1rem;
-            }
-
-            .row {
-                margin: 0 -0.5rem;
-            }
-
-            .col-md-6, .col-md-4, .col-md-12 {
-                padding: 0 0.5rem;
-            }
-        }
-    </style>
-    @endpush
-
-    @push('scripts')
-    <script>
-        // Form validation
-        (function () {
-            'use strict'
-            var forms = document.querySelectorAll('.needs-validation')
-            Array.prototype.slice.call(forms).forEach(function (form) {
-                form.addEventListener('submit', function (event) {
-                    if (!form.checkValidity()) {
-                        event.preventDefault()
-                        event.stopPropagation()
-                    }
-                    form.classList.add('was-validated')
-                }, false)
-            })
-        })()
-    </script>
-    @endpush
 </x-app-layout>

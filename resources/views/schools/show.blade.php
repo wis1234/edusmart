@@ -1,199 +1,95 @@
 <x-app-layout>
-    <div class="content-wrapper">
-        <div class="card">
-            <div class="card-header bg-white py-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center">
+    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <!-- Header modernisé -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-4">
                         @if($school->logo)
-                            <img src="{{ asset('storage/' . $school->logo) }}" 
-                                 alt="School Logo" 
-                                 class="w-16 h-16 object-contain rounded-lg border-4 border-primary me-3">
+                    <img src="{{ asset('storage/' . $school->logo) }}" alt="School Logo" class="w-16 h-16 object-contain rounded-lg border-4 border-indigo-500 shadow-lg">
                         @else
-                            <i class="fas fa-school fa-3x text-primary me-3"></i>
+                    <span class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 shadow-lg">
+                        <i class="fas fa-university text-white text-3xl"></i>
+                    </span>
                         @endif
                         <div>
-                            <h4 class="mb-0">{{ $school->name }}</h4>
-                            <small class="text-muted">{{ $school->type }} - {{ $school->status }}</small>
+                    <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">{{ $school->name }}</h1>
+                    <p class="text-gray-500 dark:text-gray-300">{{ ucfirst($school->type) }} - {{ ucfirst($school->status) }}</p>
                         </div>
                     </div>
-                    <div class="d-flex gap-2">
+            <div class="flex gap-2">
                         @can('update', $school)
-                        <a href="{{ route('schools.edit', $school) }}" class="btn btn-light">
-                            <i class="fas fa-edit me-2"></i>Edit
+                <a href="{{ route('schools.edit', $school) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700 transition">
+                    <i class="fas fa-edit"></i> Edit
                         </a>
                         @endcan
-                        <a href="{{ route('schools.index') }}" class="btn btn-light">
-                            <i class="fas fa-arrow-left me-2"></i>Back to List
+                <a href="{{ route('schools.index') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    <i class="fas fa-arrow-left"></i> Back to List
                         </a>
                     </div>
                 </div>
+
+        <!-- Infos principales -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Basic Information -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="fas fa-info-circle text-indigo-500"></i> Basic Information</h2>
+                <div class="mb-2"><span class="text-gray-500">Type:</span> <span class="font-semibold">{{ ucfirst($school->type) }}</span></div>
+                <div class="mb-2"><span class="text-gray-500">Status:</span> <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold {{ $school->status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' }}">{{ ucfirst($school->status) }}</span></div>
+                <div class="mb-2"><span class="text-gray-500">Register on:</span> <span>{{ $school->created_at?->format('M d, Y') }}</span></div>
+                <div class="mb-2"><span class="text-gray-500">Principal:</span> <span>{{ $school->principal_name}}</span></div>
+
+                <div class="mb-2"><span class="text-gray-500">Description:</span> <span>{{ $school->description ?: 'No description available' }}</span></div>
             </div>
-
-            <div class="card-body">
-                <div class="row g-4">
-                    <!-- Basic Information -->
-                    <div class="col-md-4">
-                        <div class="card h-100">
-                            <div class="card-header bg-light">
-                                <h5 class="mb-0">
-                                    <i class="fas fa-info-circle me-2 text-primary"></i>
-                                    Basic Information
-                                </h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <label class="form-label text-muted">Type</label>
-                                    <div class="text-dark">
-                                        <i class="fas fa-building me-2 text-muted"></i>
-                                        {{ ucfirst($school->type) }}
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label text-muted">Status</label>
-                                    <div>
-                                        <span class="badge bg-{{ $school->status === 'active' ? 'success' : 'danger' }}">
-                                            {{ ucfirst($school->status) }}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label text-muted">Founded Date</label>
-                                    <div class="text-dark">
-                                        <i class="fas fa-calendar me-2 text-muted"></i>
-                                        {{ $school->founded_date?->format('M d, Y') }}
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label text-muted">Description</label>
-                                    <div class="text-dark">
-                                        <i class="fas fa-align-left me-2 text-muted"></i>
-                                        {{ $school->description ?: 'No description available' }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Contact Information -->
-                    <div class="col-md-4">
-                        <div class="card h-100">
-                            <div class="card-header bg-light">
-                                <h5 class="mb-0">
-                                    <i class="fas fa-address-book me-2 text-primary"></i>
-                                    Contact Information
-                                </h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <label class="form-label text-muted">Email</label>
-                                    <div class="text-dark">
-                                        <i class="fas fa-envelope me-2 text-muted"></i>
-                                        {{ $school->email }}
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label text-muted">Phone</label>
-                                    <div class="text-dark">
-                                        <i class="fas fa-phone me-2 text-muted"></i>
-                                        {{ $school->phone }}
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label text-muted">Website</label>
-                                    <div class="text-dark">
-                                        <i class="fas fa-globe me-2 text-muted"></i>
-                                        @if($school->website)
-                                            <a href="{{ $school->website }}" target="_blank" class="text-primary">
-                                                {{ $school->website }}
-                                            </a>
-                                        @else
-                                            No website available
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="fas fa-address-book text-indigo-500"></i> Contact Information</h2>
+                <div class="mb-2"><span class="text-gray-500">Email:</span> <span class="font-semibold">{{ $school->email }}</span></div>
+                <div class="mb-2"><span class="text-gray-500">Phone:</span> <span class="font-semibold">{{ $school->phone }}</span></div>
+                <div class="mb-2"><span class="text-gray-500">Website:</span> @if($school->website)<a href="{{ $school->website }}" target="_blank" class="text-indigo-600 hover:underline">{{ $school->website }}</a>@else<span>No website available</span>@endif</div>
                     </div>
-
                     <!-- Address Information -->
-                    <div class="col-md-4">
-                        <div class="card h-100">
-                            <div class="card-header bg-light">
-                                <h5 class="mb-0">
-                                    <i class="fas fa-map-marker-alt me-2 text-primary"></i>
-                                    Address Information
-                                </h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <label class="form-label text-muted">Address</label>
-                                    <div class="text-dark">
-                                        <i class="fas fa-map me-2 text-muted"></i>
-                                        {{ $school->address }}
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label text-muted">City</label>
-                                    <div class="text-dark">
-                                        <i class="fas fa-city me-2 text-muted"></i>
-                                        {{ $school->city }}
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label text-muted">State</label>
-                                    <div class="text-dark">
-                                        <i class="fas fa-map-pin me-2 text-muted"></i>
-                                        {{ $school->state }}
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label text-muted">Country</label>
-                                    <div class="text-dark">
-                                        <i class="fas fa-flag me-2 text-muted"></i>
-                                        {{ $school->country }}
-                                    </div>
-                                </div>
-                            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="fas fa-map-marker-alt text-indigo-500"></i> Address Information</h2>
+                <div class="mb-2"><span class="text-gray-500">Address:</span> <span class="font-semibold">{{ $school->address }}</span></div>
+                <div class="mb-2"><span class="text-gray-500">City:</span> <span class="font-semibold">{{ $school->city }}</span></div>
+                <div class="mb-2"><span class="text-gray-500">State:</span> <span class="font-semibold">{{ $school->state }}</span></div>
+                <div class="mb-2"><span class="text-gray-500">Country:</span> <span class="font-semibold">{{ $school->country }}</span></div>
                         </div>
                     </div>
 
+        <!-- Teachers & Classrooms -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     <!-- Teachers -->
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0">
-                                    <i class="fas fa-chalkboard-teacher me-2 text-primary"></i>
-                                    Teachers
-                                </h5>
-                                <span class="badge bg-primary">{{ $school->teachers->count() }} Teachers</span>
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold flex items-center gap-2"><i class="fas fa-chalkboard-teacher text-indigo-500"></i> Teachers</h2>
+                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">{{ $school->teachers->count() }} Teachers</span>
                             </div>
-                            <div class="card-body">
                                 @if($school->teachers->count() > 0)
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>Name</th>
-                                                <th>Subjects</th>
-                                                <th>Status</th>
-                                                <th>Actions</th>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                        <thead class="bg-gray-100 dark:bg-gray-700">
+                            <tr>
+                                <th class="px-4 py-2 text-left font-semibold">Name</th>
+                                <th class="px-4 py-2 text-left font-semibold">Subjects</th>
+                                <th class="px-4 py-2 text-left font-semibold">Status</th>
+                                <th class="px-4 py-2 text-right font-semibold">Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
+                        <tbody class="bg-white dark:bg-gray-800">
                                             @foreach($school->teachers->take(5) as $teacher)
-                                            <tr>
-                                                <td>
-                                                    <a href="{{ route('teachers.show', $teacher) }}" class="text-primary">
+                            <tr class="hover:bg-indigo-50 dark:hover:bg-indigo-900 transition">
+                                <td class="px-4 py-2">
+                                    <a href="{{ route('teachers.show', $teacher) }}" class="text-indigo-600 hover:underline">
                                                         {{ $teacher->teacher_firstname }} {{ $teacher->teacher_lastname }}
                                                     </a>
                                                 </td>
-                                                <td>{{ $teacher->subjects->pluck('name')->join(', ') }}</td>
-                                                <td>
-                                                    <span class="badge bg-{{ $teacher->status === 'active' ? 'success' : 'danger' }}">
+                                <td class="px-4 py-2">{{ $teacher->subjects->pluck('name')->join(', ') }}</td>
+                                <td class="px-4 py-2">
+                                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold {{ $teacher->status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' }}">
                                                         {{ ucfirst($teacher->status) }}
                                                     </span>
                                                 </td>
-                                                <td>
+                                <td class="px-4 py-2 text-right">
                                                     <x-action-icons 
                                                         :viewRoute="route('teachers.show', $teacher)" 
                                                         :canEdit="false" 
@@ -205,54 +101,43 @@
                                         </tbody>
                                     </table>
                                     @if($school->teachers->count() > 5)
-                                    <div class="text-end mt-3">
-                                        <a href="{{ route('teachers.index', ['school_id' => $school->id]) }}" 
-                                           class="btn btn-link text-primary">
-                                            View All Teachers
-                                        </a>
+                    <div class="text-right mt-3">
+                        <a href="{{ route('teachers.index', ['school_id' => $school->id]) }}" class="text-indigo-600 hover:underline">View All Teachers</a>
                                     </div>
                                     @endif
                                 </div>
                                 @else
-                                <p class="text-muted text-center my-4">No teachers assigned yet.</p>
+                <p class="text-gray-400 text-center my-4">No teachers assigned yet.</p>
                                 @endif
                             </div>
-                        </div>
-                    </div>
-
                     <!-- Classrooms -->
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0">
-                                    <i class="fas fa-door-open me-2 text-primary"></i>
-                                    Classrooms
-                                </h5>
-                                <span class="badge bg-primary">{{ $school->classRooms->count() }} Classrooms</span>
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold flex items-center gap-2"><i class="fas fa-door-open text-indigo-500"></i> Classrooms</h2>
+                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">{{ $school->classRooms->count() }} Classrooms</span>
                             </div>
-                            <div class="card-body">
                                 @if($school->classRooms->count() > 0)
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>Name</th>
-                                                <th>Grade Level</th>
-                                                <th>Students</th>
-                                                <th>Actions</th>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                        <thead class="bg-gray-100 dark:bg-gray-700">
+                            <tr>
+                                <th class="px-4 py-2 text-left font-semibold">Name</th>
+                                <th class="px-4 py-2 text-left font-semibold">Grade Level</th>
+                                <th class="px-4 py-2 text-left font-semibold">Students</th>
+                                <th class="px-4 py-2 text-right font-semibold">Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
+                        <tbody class="bg-white dark:bg-gray-800">
                                             @foreach($school->classRooms->take(5) as $classRoom)
-                                            <tr>
-                                                <td>
-                                                    <a href="{{ route('class_rooms.show', $classRoom) }}" class="text-primary">
+                            <tr class="hover:bg-indigo-50 dark:hover:bg-indigo-900 transition">
+                                <td class="px-4 py-2">
+                                    <a href="{{ route('class_rooms.show', $classRoom) }}" class="text-indigo-600 hover:underline">
                                                         {{ $classRoom->name }}
                                                     </a>
                                                 </td>
-                                                <td>{{ $classRoom->grade_level }}</td>
-                                                <td>{{ $classRoom->students->count() }}</td>
-                                                <td>
+                                <td class="px-4 py-2">{{ $classRoom->grade_level }}</td>
+                                <td class="px-4 py-2">{{ $classRoom->students->count() }}</td>
+                                <td class="px-4 py-2 text-right">
                                                     <x-action-icons 
                                                         :viewRoute="route('class_rooms.show', $classRoom)" 
                                                         :canEdit="false" 
@@ -264,66 +149,57 @@
                                         </tbody>
                                     </table>
                                     @if($school->classRooms->count() > 5)
-                                    <div class="text-end mt-3">
-                                        <a href="{{ route('class_rooms.index', ['school_id' => $school->id]) }}" 
-                                           class="btn btn-link text-primary">
-                                            View All Classrooms
-                                        </a>
+                    <div class="text-right mt-3">
+                        <a href="{{ route('class_rooms.index', ['school_id' => $school->id]) }}" class="text-indigo-600 hover:underline">View All Classrooms</a>
                                     </div>
                                     @endif
                                 </div>
                                 @else
-                                <p class="text-muted text-center my-4">No classrooms created yet.</p>
+                <p class="text-gray-400 text-center my-4">No classrooms created yet.</p>
                                 @endif
-                            </div>
                         </div>
                     </div>
 
                     <!-- Students -->
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0">
-                                    <i class="fas fa-user-graduate me-2 text-primary"></i>
-                                    Students
-                                </h5>
-                                <span class="badge bg-primary">{{ $school->students->count() }} Students</span>
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold flex items-center gap-2"><i class="fas fa-user-graduate text-indigo-500"></i> Students</h2>
+                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">{{ $school->students->count() }} Students</span>
                             </div>
-                            <div class="card-body">
                                 @if($school->students->count() > 0)
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>Name</th>
-                                                <th>Class</th>
-                                                <th>Status</th>
-                                                <th>Actions</th>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                    <thead class="bg-gray-100 dark:bg-gray-700">
+                        <tr>
+                            <th class="px-4 py-2 text-left font-semibold">Name</th>
+                            <th class="px-4 py-2 text-left font-semibold">Class</th>
+                            <th class="px-4 py-2 text-left font-semibold">Status</th>
+                            <th class="px-4 py-2 text-right font-semibold">Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
+                    <tbody class="bg-white dark:bg-gray-800">
                                             @foreach($school->students->take(5) as $student)
-                                            <tr>
-                                                <td>
-                                                    <a href="{{ route('students.show', $student) }}" class="text-primary">
+                        <tr class="hover:bg-indigo-50 dark:hover:bg-indigo-900 transition">
+                            <td class="px-4 py-2">
+                                <a href="{{ route('students.show', $student) }}" class="text-indigo-600 hover:underline">
                                                         {{ $student->first_name }} {{ $student->last_name }}
                                                     </a>
                                                 </td>
-                                                <td>
+                            <td class="px-4 py-2">
                                                     @if($student->classRoom)
-                                                        <a href="{{ route('class_rooms.show', $student->classRoom) }}" class="text-primary">
+                                    <a href="{{ route('class_rooms.show', $student->classRoom) }}" class="text-indigo-600 hover:underline">
                                                             {{ $student->classRoom->name }}
                                                         </a>
                                                     @else
-                                                        <span class="text-muted">Not Assigned</span>
+                                    <span class="text-gray-400">Not Assigned</span>
                                                     @endif
                                                 </td>
-                                                <td>
-                                                    <span class="badge bg-{{ $student->status === 'active' ? 'success' : 'danger' }}">
+                            <td class="px-4 py-2">
+                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold {{ $student->status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' }}">
                                                         {{ ucfirst($student->status) }}
                                                     </span>
                                                 </td>
-                                                <td>
+                            <td class="px-4 py-2 text-right">
                                                     <x-action-icons 
                                                         :viewRoute="route('students.show', $student)" 
                                                         :canEdit="false" 
@@ -335,143 +211,14 @@
                                         </tbody>
                                     </table>
                                     @if($school->students->count() > 5)
-                                    <div class="text-end mt-3">
-                                        <a href="{{ route('students.index', ['school_id' => $school->id]) }}" 
-                                           class="btn btn-link text-primary">
-                                            View All Students
-                                        </a>
+                <div class="text-right mt-3">
+                    <a href="{{ route('students.index', ['school_id' => $school->id]) }}" class="text-indigo-600 hover:underline">View All Students</a>
                                     </div>
                                     @endif
                                 </div>
                                 @else
-                                <p class="text-muted text-center my-4">No students enrolled yet.</p>
+            <p class="text-gray-400 text-center my-4">No students enrolled yet.</p>
                                 @endif
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
-
-    @push('styles')
-    <style>
-        .content-wrapper {
-            padding: 0;
-            background: #f8fafc;
-        }
-
-        .card {
-            border: none;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            border-radius: 0.75rem;
-            margin: 0;
-        }
-
-        .card-header {
-            background: linear-gradient(to right, #ffffff, #f8fafc);
-            border-bottom: 1px solid #e2e8f0;
-            padding: 1.5rem;
-        }
-
-        .card-header h4 {
-            color: #1e293b;
-            font-weight: 600;
-            letter-spacing: -0.025em;
-        }
-
-        .card-header small {
-            color: #64748b;
-            font-size: 0.875rem;
-        }
-
-        .form-label {
-            color: #475569;
-            font-weight: 500;
-            font-size: 0.875rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .btn-primary {
-            background: linear-gradient(to right, #3b82f6, #2563eb);
-            border: none;
-            padding: 0.625rem 1.25rem;
-            font-weight: 500;
-            letter-spacing: 0.025em;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary:hover {
-            background: linear-gradient(to right, #2563eb, #1d4ed8);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
-        }
-
-        .btn-light {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            color: #64748b;
-            padding: 0.625rem 1.25rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .btn-light:hover {
-            background: #f8fafc;
-            border-color: #cbd5e1;
-            color: #1e293b;
-        }
-
-        .badge {
-            padding: 0.5em 0.75em;
-            font-weight: 500;
-            font-size: 0.75rem;
-            border-radius: 0.375rem;
-        }
-
-        .badge.bg-success {
-            background: linear-gradient(to right, #10b981, #059669) !important;
-        }
-
-        .badge.bg-danger {
-            background: linear-gradient(to right, #ef4444, #dc2626) !important;
-        }
-
-        .badge.bg-info {
-            background: linear-gradient(to right, #3b82f6, #2563eb) !important;
-        }
-
-        .text-dark {
-            color: #1e293b !important;
-        }
-
-        .table {
-            margin-bottom: 0;
-        }
-
-        .table th {
-            font-weight: 600;
-            color: #475569;
-            border-bottom-width: 1px;
-        }
-
-        .table td {
-            vertical-align: middle;
-        }
-
-        @media (max-width: 768px) {
-            .card-header {
-                padding: 1rem;
-            }
-
-            .row {
-                margin: 0 -0.5rem;
-            }
-
-            .col-md-6, .col-md-4, .col-md-3, .col-md-12 {
-                padding: 0 0.5rem;
-            }
-        }
-    </style>
-    @endpush
 </x-app-layout>
