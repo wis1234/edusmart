@@ -1,4 +1,7 @@
-<div class="p-4 min-w-[300px] max-w-full">
+<div class="p-6 min-w-[300px] max-w-full bg-white dark:bg-gray-900 rounded-xl shadow relative">
+    <!-- <button onclick="closeActivityDetails()" class="absolute top-3 right-3 w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-400 transition" title="Close">
+        <i class="fas fa-times text-lg"></i>
+    </button> -->
     <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-white flex items-center gap-2">
         <i class="fas fa-info-circle text-indigo-500"></i> Activity Details
     </h3>
@@ -33,6 +36,22 @@
         <span class="font-semibold">Description:</span>
         <div class="text-gray-700 dark:text-gray-300 break-words">{{ $activity->description }}</div>
     </div>
+    @if($activity->model_type === 'App\\Models\\Student' && $activity->details)
+        @php
+            $details = $activity->getDetailsFormatted();
+        @endphp
+        <div class="mb-2">
+            <span class="font-semibold">Student:</span>
+            <div class="text-gray-700 dark:text-gray-300">
+                @if(isset($details['user']))
+                    Name: {{ $details['student']['first_name'] ?? '' }} {{ $details['student']['last_name'] ?? '' }}<br>
+                    Class Room: {{ $details['student']['class_room_name'] ?? '' }}<br>
+                    School: {{ $details['student']['school_name'] ?? '' }}<br>
+                    Parent: {{ $details['student']['parent_name'] ?? '' }}<br>
+                @endif
+            </div>
+        </div>
+    @endif
     <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
         <div><span class="font-semibold">IP Address:</span> <span class="break-all">{{ $activity->ip_address }}</span></div>
         <div><span class="font-semibold">User Agent:</span> <span class="break-all">{{ $activity->user_agent }}</span></div>

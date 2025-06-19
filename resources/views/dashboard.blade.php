@@ -88,7 +88,7 @@
                 </div>
                 <div class="relative border-l-2 border-indigo-200 dark:border-indigo-700 pl-6">
                     @forelse($recentActivities as $activity)
-                        <div class="mb-10 group relative">
+                        <div class="mb-10 group relative p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
                             <span class="absolute -left-4 top-2 w-8 h-8 rounded-full bg-white dark:bg-gray-800 border-2 border-indigo-400 flex items-center justify-center shadow">
                                 @if($activity->user && $activity->user->profile_photo)
                                     <img src="{{ asset('storage/' . $activity->user->profile_photo) }}" alt="Profile Photo" class="w-7 h-7 rounded-full object-cover">

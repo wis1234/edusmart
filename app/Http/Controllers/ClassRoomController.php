@@ -42,7 +42,14 @@ class ClassRoomController extends Controller
         $validated['updated_by'] = auth()->id();
 
         $classRoom = ClassRoom::create($validated);
-
+        // Notification
+        app(\App\Services\NotificationService::class)->sendToRole(
+            'admin',
+            'New Class Created',
+            'A new class has been created in the system.',
+            'success',
+            route('class_rooms.show', $classRoom)
+        );
         return redirect()
             ->route('class_rooms.show', $classRoom)
             ->with('success', 'Classroom created successfully.');
@@ -84,7 +91,14 @@ class ClassRoomController extends Controller
         $validated['updated_by'] = auth()->id();
 
         $classRoom->update($validated);
-
+        // Notification
+        app(\App\Services\NotificationService::class)->sendToRole(
+            'admin',
+            'Class Updated',
+            'A class has been updated in the system.',
+            'warning',
+            route('class_rooms.show', $classRoom)
+        );
         return redirect()
             ->route('class_rooms.show', $classRoom)
             ->with('success', 'Classroom updated successfully.');
@@ -100,7 +114,13 @@ class ClassRoomController extends Controller
         }
 
         $classRoom->delete();
-
+        // Notification
+        app(\App\Services\NotificationService::class)->sendToRole(
+            'admin',
+            'Class Deleted',
+            'A class has been deleted from the system.',
+            'error'
+        );
         return redirect()
             ->route('class_rooms.index')
             ->with('success', 'Classroom deleted successfully.');

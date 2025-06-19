@@ -18,13 +18,48 @@ class StudentController extends Controller
         $this->authorizeResource(Student::class, 'student');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $students = Student::with(['user', 'classRoom', 'school', 'parent'])
-            ->orderBy('admission_number')
-            ->paginate(10);
-        $users = User::all(); 
-        return view('students.index', compact('students', 'users'));
+        $query = Student::with(['user', 'classRoom', 'school', 'parent']);
+
+        // Search
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('first_name', 'like', "%$search%")
+                  ->orWhere('last_name', 'like', "%$search%")
+                  ->orWhere('admission_number', 'like', "%$search%")
+                  ->orWhere('roll_number', 'like', "%$search%")
+                  ->orWhere('gender', 'like', "%$search%")
+                  ->orWhere('status', 'like', "%$search%")
+                  ->orWhereHas('classRoom', function($q2) use ($search) {
+                      $q2->where('name', 'like', "%$search%")
+                         ->orWhere('grade_level', 'like', "%$search%")
+                         ;
+                  })
+                  ->orWhereHas('parent', function($q2) use ($search) {
+                      $q2->where('first_name', 'like', "%$search%")
+                         ->orWhere('last_name', 'like', "%$search%")
+                         ->orWhere('email', 'like', "%$search%")
+                         ;
+                  });
+            });
+        }
+
+        // Filter by class room
+        if ($request->filled('class_room')) {
+            $query->where('class_room_id', $request->input('class_room'));
+        }
+
+        // Filter by parent
+        if ($request->filled('parent')) {
+            $query->where('selected_parent_id', $request->input('parent'));
+        }
+
+        $students = $query->orderBy('admission_number')->paginate(10)->appends($request->except('page'));
+        $classRooms = \App\Models\ClassRoom::orderBy('name')->get();
+        $users = \App\Models\User::orderBy('first_name')->get();
+        return view('students.index', compact('students', 'classRooms', 'users'));
     }
 
     public function create()
@@ -47,8 +82,6 @@ class StudentController extends Controller
             'school_id' => ['required', 'exists:schools,id'],
             'parent_id' => ['nullable', 'exists:users,id'],
             'selected_parent_id' => ['nullable'],
-            'admission_number' => ['required', 'string', 'max:255', 'unique:students,admission_number'],
-            'roll_number' => ['nullable', 'string', 'max:255', 'sometimes'],
             'admission_date' => ['required', 'date'],
             'date_of_birth' => ['required', 'date'],
             'gender' => ['nullable', Rule::in(['male', 'female', 'other'])],
@@ -65,6 +98,23 @@ class StudentController extends Controller
         if (empty($validated['user_id'])) {
             $validated['user_id'] = Auth::id();
         }
+
+        // Auto-generate unique admission_number
+        $year = date('Y');
+        do {
+            $admission_number = 'S' . $year . mt_rand(10000, 99999);
+        } while (Student::where('admission_number', $admission_number)->exists());
+        $validated['admission_number'] = $admission_number;
+
+        // Auto-generate roll_number: next available for class_room_id + academic_year
+        $roll_number = null;
+        if (!empty($validated['class_room_id']) && !empty($validated['academic_year'])) {
+            $maxRoll = Student::where('class_room_id', $validated['class_room_id'])
+                ->where('academic_year', $validated['academic_year'])
+                ->max('roll_number');
+            $roll_number = $maxRoll ? ((int)$maxRoll + 1) : 1;
+        }
+        $validated['roll_number'] = $roll_number;
 
         if ($request->hasFile('profile_photo')) {
             $path = $request->file('profile_photo')->store('profile_photos', 'public');
@@ -85,18 +135,24 @@ class StudentController extends Controller
         }
 
         $student = Student::create($validated);
-
+        // Notification
+        app(\App\Services\NotificationService::class)->sendToRole(
+            'admin',
+            'New Student Created',
+            'A new student profile has been created in the system.',
+            'success',
+            route('students.show', $student)
+        );
         return redirect()->route('students.show', $student)->with('success', 'Student created successfully.');
     }
 
-public function show(Student $student)
-{
-    $student->load(['user', 'classRoom', 'school', 'parent', 'grades.evaluation.evaluationType']);
-    $users = User::all(); // ou User::where('role', 'parent')->get(); selon ce que tu veux
+    public function show(Student $student)
+    {
+        $student->load(['user', 'classRoom', 'school', 'parent', 'grades.evaluation.evaluationType']);
+        $users = User::all(); // ou User::where('role', 'parent')->get(); selon ce que tu veux
 
-    return view('students.show', compact('student', 'users'));
-}
-
+        return view('students.show', compact('student', 'users'));
+    }
 
     public function edit(Student $student)
     {
@@ -118,8 +174,6 @@ public function show(Student $student)
             'school_id' => ['required', 'exists:schools,id'],
             'selected_parent_id' => ['nullable'],
             'parent_id' => ['nullable', 'exists:users,id'],
-            'admission_number' => ['required', 'string', 'max:255', Rule::unique('students', 'admission_number')->ignore($student->id)],
-            'roll_number' => ['nullable', 'string', 'max:255'],
             'admission_date' => ['required', 'date'],
             'date_of_birth' => ['required', 'date'],
             'gender' => ['nullable', Rule::in(['male', 'female', 'other'])],
@@ -137,6 +191,10 @@ public function show(Student $student)
             $validated['user_id'] = Auth::id();
         }
 
+        // Do not allow changing admission_number or roll_number
+        $validated['admission_number'] = $student->admission_number;
+        $validated['roll_number'] = $student->roll_number;
+
         if ($request->hasFile('profile_photo')) {
             // Delete old photo if exists
             if ($student->profile_photo && Storage::disk('public')->exists($student->profile_photo)) {
@@ -147,7 +205,14 @@ public function show(Student $student)
         }
 
         $student->update($validated);
-
+        // Notification
+        app(\App\Services\NotificationService::class)->sendToRole(
+            'admin',
+            'Student Updated',
+            'A student profile has been updated in the system.',
+            'warning',
+            route('students.show', $student)
+        );
         return redirect()->route('students.show', $student)->with('success', 'Student updated successfully.');
     }
 
@@ -159,7 +224,13 @@ public function show(Student $student)
         }
 
         $student->delete();
-
+        // Notification
+        app(\App\Services\NotificationService::class)->sendToRole(
+            'admin',
+            'Student Deleted',
+            'A student profile has been deleted from the system.',
+            'error'
+        );
         return redirect()->route('students.index')->with('success', 'Student deleted successfully.');
     }
 }

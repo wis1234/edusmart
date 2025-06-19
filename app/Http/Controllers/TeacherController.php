@@ -154,51 +154,17 @@ class TeacherController extends Controller
 
         DB::commit();
 
-        // Notification détaillée de création
-        $currentUser = Auth::user();
-        $currentTime = Carbon::now()->format('d/m/Y H:i:s');
-        $assignmentsCount = count($validated['subjects']);
-        
-        $notificationMessage = "🎉 NEW TEACHER CREATED\n\n" .
-            "Teacher Profile Created Successfully\n\n" .
-            "Personal Information:\n" .
-            "   Full Name: {$teacher->teacher_firstname} {$teacher->teacher_lastname}\n" .
-            "   Email: {$teacher->teacher_email}\n" .
-            "   Phone: {$teacher->teacher_phone}\n" .
-            "   Grade: {$teacher->grade}\n" .
-            "   Speciality: {$teacher->speciality}\n" .
-            "   Status: " . ucfirst($teacher->status) . "\n\n" .
-            "Teaching Assignments: {$assignmentsCount} assignment(s)\n" .
-            "   Subjects: " . implode(', ', array_map(function($subjectId) {
-                $subject = Subject::find($subjectId);
-                return $subject ? $subject->name : 'Unknown';
-            }, $validated['subjects'])) . "\n" .
-            "   Class Rooms: " . implode(', ', array_map(function($classRoomId) {
-                $classRoom = ClassRoom::find($classRoomId);
-                return $classRoom ? $classRoom->name : 'Unknown';
-            }, $validated['class_rooms'])) . "\n\n" .
-            "Created By: {$currentUser->first_name} {$currentUser->last_name}\n" .
-            "Date & Time: {$currentTime}\n" .
-            "Action: Teacher account created with full profile and teaching assignments";
-
+        // Notification
         $this->notificationService->sendToRole(
             'admin',
+            'New Teacher Created',
+            'A new teacher profile has been created in the system.',
             'success',
-            'New Teacher Added to System',
-            $notificationMessage,
-            route('teachers.show', $teacher),
-            [
-                'teacher_id' => $teacher->id,
-                'teacher_name' => $teacher->teacher_firstname . ' ' . $teacher->teacher_lastname,
-                'created_by' => $currentUser->id,
-                'created_at' => $currentTime,
-                'assignments_count' => $assignmentsCount
-            ]
+            route('teachers.show', $teacher)
         );
-
         return redirect()
             ->route('teachers.show', $teacher)
-            ->with('success', '✅ Teacher created successfully with ' . $assignmentsCount . ' teaching assignment(s)!');
+            ->with('success', 'Teacher created successfully.');
     }
 
     /**
@@ -239,12 +205,12 @@ class TeacherController extends Controller
     /**
      * Update the specified teacher in storage.
      */
-  public function update(TeacherRequest $request, Teacher $teacher)
-{
-    try {
-        DB::beginTransaction();
+    public function update(TeacherRequest $request, Teacher $teacher)
+    {
+        try {
+            DB::beginTransaction();
 
-        $validated = $request->validated();
+            $validated = $request->validated();
 
             // Store old values for comparison
             $oldValues = [
@@ -262,28 +228,28 @@ class TeacherController extends Controller
                 'assignments' => $teacher->taughtSubjects->count()
             ];
 
-        // Handle profile photo upload
-        if ($request->hasFile('profile_photo')) {
-            // Delete old photo if exists
+            // Handle profile photo upload
+            if ($request->hasFile('profile_photo')) {
+                // Delete old photo if exists
                 if ($teacher->profile_photo) {
                     Storage::disk('public')->delete($teacher->profile_photo);
                 }
-            $validated['profile_photo'] = $request->file('profile_photo')->store('teacher-photos', 'public');
-        }
+                $validated['profile_photo'] = $request->file('profile_photo')->store('teacher-photos', 'public');
+            }
 
-        // Update teacher record
-        $teacher->update([
-            'teacher_firstname' => $validated['first_name'],
-            'teacher_lastname' => $validated['last_name'] ?? null,
-            'teacher_email' => $validated['email'],
-            'teacher_phone' => $validated['phone'],
-            'date_of_birth' => $validated['date_of_birth'],
-            'gender' => $validated['gender'],
-            'address' => $validated['address'],
-            'grade' => $validated['grade'],
-            'speciality' => $validated['speciality'],
-            'subject_title' => $validated['subject_title'],
-            'status' => $validated['status'],
+            // Update teacher record
+            $teacher->update([
+                'teacher_firstname' => $validated['first_name'],
+                'teacher_lastname' => $validated['last_name'] ?? null,
+                'teacher_email' => $validated['email'],
+                'teacher_phone' => $validated['phone'],
+                'date_of_birth' => $validated['date_of_birth'],
+                'gender' => $validated['gender'],
+                'address' => $validated['address'],
+                'grade' => $validated['grade'],
+                'speciality' => $validated['speciality'],
+                'subject_title' => $validated['subject_title'],
+                'status' => $validated['status'],
                 'profile_photo' => $validated['profile_photo'] ?? $teacher->profile_photo,
             ]);
 
@@ -320,85 +286,20 @@ class TeacherController extends Controller
 
             DB::commit();
 
-            // Notification détaillée de modification
-            $currentUser = Auth::user();
-            $currentTime = Carbon::now()->format('d/m/Y H:i:s');
-            $newAssignmentsCount = count($validated['subjects']);
-            
-            // Détecter les changements
-            $changes = [];
-            if ($oldValues['first_name'] !== $validated['first_name']) {
-                $changes[] = "First Name: '{$oldValues['first_name']}' → '{$validated['first_name']}'";
-            }
-            if ($oldValues['last_name'] !== ($validated['last_name'] ?? null)) {
-                $changes[] = "Last Name: '{$oldValues['last_name']}' → '{$validated['last_name']}'";
-            }
-            if ($oldValues['email'] !== $validated['email']) {
-                $changes[] = "Email: '{$oldValues['email']}' → '{$validated['email']}'";
-            }
-            if ($oldValues['phone'] !== $validated['phone']) {
-                $changes[] = "Phone: '{$oldValues['phone']}' → '{$validated['phone']}'";
-            }
-            if ($oldValues['grade'] !== $validated['grade']) {
-                $changes[] = "Grade: '{$oldValues['grade']}' → '{$validated['grade']}'";
-            }
-            if ($oldValues['speciality'] !== $validated['speciality']) {
-                $changes[] = "Speciality: '{$oldValues['speciality']}' → '{$validated['speciality']}'";
-            }
-            if ($oldValues['status'] !== $validated['status']) {
-                $changes[] = "Status: '{$oldValues['status']}' → '{$validated['status']}'";
-            }
-            if ($oldValues['assignments'] !== $newAssignmentsCount) {
-                $changes[] = "Teaching Assignments: {$oldValues['assignments']} → {$newAssignmentsCount}";
-            }
-            if ($request->hasFile('profile_photo')) {
-                $changes[] = "Profile Photo: Updated";
-            }
-
-            $changesText = empty($changes) ? "No significant changes detected" : implode("\n   • ", $changes);
-            
-            $notificationMessage = "✏️ TEACHER PROFILE UPDATED\n\n" .
-                "Profile Modification Summary\n\n" .
-                "Teacher Information:\n" .
-                "   Teacher ID: #{$teacher->id}\n" .
-                "   Full Name: {$teacher->teacher_firstname} {$teacher->teacher_lastname}\n\n" .
-                "Changes Made:\n   • {$changesText}\n\n" .
-                "Current Teaching Assignments: {$newAssignmentsCount} assignment(s)\n" .
-                "   Subjects: " . implode(', ', array_map(function($subjectId) {
-                    $subject = Subject::find($subjectId);
-                    return $subject ? $subject->name : 'Unknown';
-                }, $validated['subjects'])) . "\n" .
-                "   Class Rooms: " . implode(', ', array_map(function($classRoomId) {
-                    $classRoom = ClassRoom::find($classRoomId);
-                    return $classRoom ? $classRoom->name : 'Unknown';
-                }, $validated['class_rooms'])) . "\n\n" .
-                "Updated By: {$currentUser->first_name} {$currentUser->last_name}\n" .
-                "Date & Time: {$currentTime}\n" .
-                "Action: Teacher profile and assignments updated successfully";
-
+            // Notification
             $this->notificationService->sendToRole(
                 'admin',
+                'Teacher Updated',
+                'A teacher profile has been updated in the system.',
                 'warning',
-                'Teacher Profile Modified',
-                $notificationMessage,
-                route('teachers.show', $teacher),
-                [
-                    'teacher_id' => $teacher->id,
-                    'teacher_name' => $teacher->teacher_firstname . ' ' . $teacher->teacher_lastname,
-                    'updated_by' => $currentUser->id,
-                    'updated_at' => $currentTime,
-                    'changes_count' => count($changes),
-                    'changes' => $changes,
-                    'assignments_count' => $newAssignmentsCount
-                ]
+                route('teachers.show', $teacher)
             );
+            return redirect()
+                ->route('teachers.show', $teacher)
+                ->with('success', 'Teacher updated successfully.');
 
-        return redirect()
-            ->route('teachers.show', $teacher)
-                ->with('success', '✅ Teacher updated successfully with ' . count($changes) . ' change(s) and ' . $newAssignmentsCount . ' teaching assignment(s)!');
-
-    } catch (\Exception $e) {
-        DB::rollBack();
+        } catch (\Exception $e) {
+            DB::rollBack();
             Log::error('Teacher update failed: ' . $e->getMessage());
             
             return redirect()
@@ -477,7 +378,7 @@ class TeacherController extends Controller
 
             // Delete teacher record
             try {
-            $teacher->delete();
+                $teacher->delete();
             } catch (\Exception $e) {
                 Log::error('Failed to delete teacher record: ' . $e->getMessage());
                 throw new \Exception('Failed to delete teacher record: ' . $e->getMessage());
@@ -485,51 +386,16 @@ class TeacherController extends Controller
 
             DB::commit();
 
-            // Notification détaillée de suppression
-            $currentUser = Auth::user();
-            $currentTime = Carbon::now()->format('d/m/Y H:i:s');
-            
-            $notificationMessage = "🗑️ TEACHER ACCOUNT REMOVED\n\n" .
-                "Account Deletion Summary\n\n" .
-                "Teacher Information:\n" .
-                "   Teacher ID: #{$teacherInfo['id']}\n" .
-                "   Full Name: {$teacherInfo['name']}\n" .
-                "   Email: {$teacherInfo['email']}\n" .
-                "   Grade: {$teacherInfo['grade']}\n" .
-                "   Speciality: {$teacherInfo['speciality']}\n\n" .
-                "Teaching History:\n" .
-                "   Total Assignments: {$teacherInfo['assignments_count']}\n" .
-                "   Subjects Taught: " . implode(', ', $teacherInfo['subjects']) . "\n" .
-                "   Class Rooms: " . implode(', ', $teacherInfo['class_rooms']) . "\n" .
-                "   Account Created: {$teacherInfo['created_at']}\n\n" .
-                "Deletion Details:\n" .
-                "   Deleted By: {$currentUser->first_name} {$currentUser->last_name}\n" .
-                "   Date & Time: {$currentTime}\n" .
-                "   Action: Teacher account and all associated data permanently removed\n" .
-                "   Profile Photo: " . ($teacherInfo['profile_photo'] ? 'Deleted' : 'None existed') . "\n\n" .
-                "⚠️ IMPORTANT: This action is irreversible. All teacher data has been permanently deleted.";
-
+            // Notification
             $this->notificationService->sendToRole(
                 'admin',
-                'error',
-                'Teacher Account Deleted',
-                $notificationMessage,
-                null,
-                [
-                    'teacher_id' => $teacherInfo['id'],
-                    'teacher_name' => $teacherInfo['name'],
-                    'deleted_by' => $currentUser->id,
-                    'deleted_at' => $currentTime,
-                    'assignments_count' => $teacherInfo['assignments_count'],
-                    'subjects_taught' => $teacherInfo['subjects'],
-                    'class_rooms' => $teacherInfo['class_rooms'],
-                    'account_created_at' => $teacherInfo['created_at']
-                ]
+                'Teacher Deleted',
+                'A teacher profile has been deleted from the system.',
+                'error'
             );
-
             return redirect()
                 ->route('teachers.index')
-                ->with('success', '🗑️ Teacher "' . $teacherInfo['name'] . '" has been permanently deleted from the system.');
+                ->with('success', 'Teacher deleted successfully.');
 
         } catch (\Exception $e) {
             DB::rollBack();

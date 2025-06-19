@@ -46,8 +46,15 @@ class SubjectController extends Controller
 
         $validated['is_active'] = $request->has('is_active');
 
-        Subject::create($validated);
-
+        $subject = Subject::create($validated);
+        // Notification
+        app(\App\Services\NotificationService::class)->sendToRole(
+            'admin',
+            'New Subject Created',
+            'A new subject has been created in the system.',
+            'success',
+            route('subjects.show', $subject)
+        );
         return redirect()->route('subjects.index')->with('success', 'Subject created successfully.');
     }
 
@@ -76,14 +83,27 @@ class SubjectController extends Controller
         $validated['is_active'] = $request->has('is_active');
 
         $subject->update($validated);
-
+        // Notification
+        app(\App\Services\NotificationService::class)->sendToRole(
+            'admin',
+            'Subject Updated',
+            'A subject has been updated in the system.',
+            'warning',
+            route('subjects.show', $subject)
+        );
         return redirect()->route('subjects.index')->with('success', 'Subject updated successfully.');
     }
 
     public function destroy(Subject $subject)
     {
         $subject->delete();
-
+        // Notification
+        app(\App\Services\NotificationService::class)->sendToRole(
+            'admin',
+            'Subject Deleted',
+            'A subject has been deleted from the system.',
+            'error'
+        );
         return redirect()->route('subjects.index')->with('success', 'Subject deleted successfully.');
     }
 }

@@ -9,6 +9,11 @@ trait LogsActivity
     protected static function bootLogsActivity()
     {
         static::created(function ($model) {
+            if ($model instanceof \App\Models\Student) {
+                $desc = 'Created new Student: ' . $model->first_name . ' ' . $model->last_name;
+                $model->logActivity('create', $desc);
+                return;
+            }
             $attributes = $model->getAttributes();
             $details = [];
 
@@ -29,6 +34,63 @@ trait LogsActivity
         });
 
         static::updated(function ($model) {
+            if ($model instanceof \App\Models\Student) {
+                $changes = $model->getDirty();
+                $changeDescription = [];
+                $fieldLabels = self::fieldLabels();
+                foreach ($changes as $attribute => $value) {
+                    if (!in_array($attribute, ['updated_at'])) {
+                        $oldValue = $model->getOriginal($attribute);
+                        if (is_null($oldValue)) $oldValue = 'null';
+                        if (is_null($value)) $value = 'null';
+                        // Format date if casted
+                        if ($model->hasCast($attribute, ['date', 'datetime'])) {
+                            $oldValue = $oldValue ? date('Y-m-d', strtotime($oldValue)) : 'null';
+                            $value = $value ? date('Y-m-d', strtotime($value)) : 'null';
+                        }
+                        // Password: hide actual value
+                        if ($attribute === 'password') {
+                            $changeDescription[] = 'The password has been updated to reinforce security.';
+                            continue;
+                        }
+                        // Profile photo
+                        if ($attribute === 'profile_photo') {
+                            $changeDescription[] = 'The profile photo has been updated.';
+                            continue;
+                        }
+                        // Related fields
+                        if ($attribute === 'class_room_id') {
+                            $oldClass = optional(\App\Models\ClassRoom::find($oldValue))->name;
+                            $newClass = optional(\App\Models\ClassRoom::find($value))->name;
+                            $changeDescription[] = 'Class Room changed from ' . $oldClass . ' to ' . $newClass;
+                            continue;
+                        }
+                        if ($attribute === 'school_id') {
+                            $oldSchool = optional(\App\Models\School::find($oldValue))->name;
+                            $newSchool = optional(\App\Models\School::find($value))->name;
+                            $changeDescription[] = 'School changed from ' . $oldSchool . ' to ' . $newSchool;
+                            continue;
+                        }
+                        if ($attribute === 'selected_parent_id' || $attribute === 'parent_id') {
+                            $oldParent = optional(\App\Models\User::find($oldValue))->first_name . ' ' . optional(\App\Models\User::find($oldValue))->last_name;
+                            $newParent = optional(\App\Models\User::find($value))->first_name . ' ' . optional(\App\Models\User::find($value))->last_name;
+                            $changeDescription[] = 'Parent changed from ' . $oldParent . ' to ' . $newParent;
+                            continue;
+                        }
+                        $label = $fieldLabels[$attribute] ?? ucfirst(str_replace('_', ' ', $attribute));
+                        $changeDescription[] = "$label changed from '$oldValue' to '$value'";
+                    }
+                }
+                if (!empty($changeDescription)) {
+                    static::logActivity(
+                        'update',
+                        'Updated Student with changes: ' . implode('; ', $changeDescription),
+                        $model,
+                        $changeDescription
+                    );
+                }
+                return;
+            }
             $changes = $model->getDirty();
             $changeDescription = [];
 
