@@ -230,6 +230,35 @@
             <div class="main-content pt-10">
                 <!-- Content -->
                 <div class="content-wrapper">
+                    <!-- Flash Message Popup (Vanilla JS) -->
+                    @if(session('success') || session('error'))
+                        <div id="flash-message"
+                            class="fixed top-6 right-6 z-50 px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 text-white text-base transition-all duration-300 opacity-0 translate-y-4"
+                            style="background-color: {{ session('success') ? '#22c55e' : '#ef4444' }}; min-width: 260px;"
+                        >
+                            <i class="fas {{ session('success') ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
+                            <span>{{ session('success') ?? session('error') }}</span>
+                        </div>
+                        <script>
+                            window.addEventListener('DOMContentLoaded', function() {
+                                var flash = document.getElementById('flash-message');
+                                if (flash) {
+                                    setTimeout(function() {
+                                        flash.classList.remove('opacity-0', 'translate-y-4');
+                                        flash.classList.add('opacity-100', 'translate-y-0');
+                                    }, 100); // animation in
+                                    setTimeout(function() {
+                                        flash.classList.remove('opacity-100', 'translate-y-0');
+                                        flash.classList.add('opacity-0', 'translate-y-4');
+                                    }, 4000); // animation out
+                                    setTimeout(function() {
+                                        if (flash.parentNode) flash.parentNode.removeChild(flash);
+                                    }, 4300);
+                                }
+                            });
+                        </script>
+                    @endif
+                    <!-- End Flash Message Popup -->
                     {{ $slot }}
                 </div>
             </div>

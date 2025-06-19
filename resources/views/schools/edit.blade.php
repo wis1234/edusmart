@@ -23,6 +23,24 @@
 
         <!-- Formulaire modernisé -->
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+            @if(session('success'))
+                <div id="success-message" class="fixed top-6 right-6 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in">
+                    <i class="fas fa-check-circle"></i> {{ session('success') }}
+                </div>
+            @endif
+            @if(session('error'))
+                <div id="error-message" class="fixed top-6 right-6 z-50 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in">
+                    <i class="fas fa-times-circle"></i> {{ session('error') }}
+                </div>
+            @endif
+            <script>
+                setTimeout(() => {
+                    const successMsg = document.getElementById('success-message');
+                    if(successMsg) successMsg.style.display = 'none';
+                    const errorMsg = document.getElementById('error-message');
+                    if(errorMsg) errorMsg.style.display = 'none';
+                }, 4000);
+            </script>
             <form action="{{ route('schools.update', $school) }}" method="POST" class="space-y-6">
                     @csrf
                     @method('PUT')

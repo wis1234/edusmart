@@ -283,4 +283,19 @@
             });
         </script>
     </div>
+    @push('styles')
+    <style>
+        /* Ombre uniquement sur le haut du tableau et des cards grid */
+        .table thead, thead.bg-gray-100 {
+            box-shadow: 0 -6px 16px -6px rgba(99,102,241,0.13);
+            z-index: 2;
+            position: relative;
+        }
+        .teacher-card-header {
+            box-shadow: 0 -6px 16px -6px rgba(99,102,241,0.13);
+            border-radius: 0.75rem 0.75rem 0 0;
+            background: inherit;
+        }
+    </style>
+    @endpush
 </x-app-layout>

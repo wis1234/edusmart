@@ -20,17 +20,37 @@ class DashboardController extends Controller
         $this->notificationService = $notificationService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
+        $query = Activity::with('user')->latest();
+
+        // Restriction d'accès : seul l'admin voit tout, les autres voient leurs propres activités
+        if (!auth()->user()->hasRole('admin')) {
+            $query->where('user_id', auth()->id());
+        }
+
+        // Filtrer par type si spécifié
+        if ($request->has('type')) {
+            $query->where('type', $request->type);
+        }
+
+        // Filtrer par utilisateur si spécifié (admin uniquement)
+        if ($request->has('user_id') && auth()->user()->hasRole('admin')) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        // Filtrer par date si spécifié
+        if ($request->has('date')) {
+            $query->whereDate('created_at', $request->date);
+        }
+
         $data = [
             'totalStudents' => Student::count(),
             'totalTeachers' => Teacher::count(),
             'totalSchools' => School::count(),
             'totalClasses' => ClassRoom::count(),
-            'recentActivities' => Activity::with('user')
-                ->latest()
-                ->take(5)
-                ->get()
+            'recentActivities' => $query->paginate(5),
+            'activityTypes' => Activity::distinct()->pluck('type'),
         ];
 
         // Envoyer une notification de bienvenue si c'est la première connexion
@@ -45,11 +65,26 @@ class DashboardController extends Controller
             session()->put('welcome_notification_sent', true);
         }
 
-        if (request()->wantsJson()) {
+        if ($request->wantsJson()) {
             return response()->json($data);
         }
 
         return view('dashboard', $data);
+    }
+
+    public function deleteActivity($id)
+    {
+        try {
+            $activity = Activity::findOrFail($id);
+            $activity->delete();
+            
+            // Log the deletion
+            Activity::log('delete', 'Deleted activity log entry');
+            
+            return response()->json(['message' => 'Activity deleted successfully']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to delete activity'], 500);
+        }
     }
 
     public function getContent($type)

@@ -7,10 +7,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+use App\Traits\LogsActivity;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, LogsActivity;
 
     protected $fillable = [
         'first_name',
@@ -198,5 +199,16 @@ class User extends Authenticatable
     public function hasUnreadNotifications()
     {
         return $this->unreadNotifications()->exists();
+    }
+
+    /**
+     * Get the URL for the profile photo or default image
+     */
+    public function getProfilePhotoUrlAttribute()
+    {
+        if ($this->profile_photo && \Storage::disk('public')->exists($this->profile_photo)) {
+            return \Storage::url($this->profile_photo);
+        }
+        return asset('images/default-profile.png');
     }
 }

@@ -24,6 +24,7 @@
     "dependencies": {
         "@inertiajs/inertia-react": "^0.8.1",
         "@inertiajs/progress": "^0.2.7",
+        "alpinejs": "^3.14.9",
         "progress": "^2.0.3"
     }
 }

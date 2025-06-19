@@ -239,12 +239,12 @@ class TeacherController extends Controller
     /**
      * Update the specified teacher in storage.
      */
-    public function update(TeacherRequest $request, Teacher $teacher)
-    {
-        try {
-            DB::beginTransaction();
+  public function update(TeacherRequest $request, Teacher $teacher)
+{
+    try {
+        DB::beginTransaction();
 
-            $validated = $request->validated();
+        $validated = $request->validated();
 
             // Store old values for comparison
             $oldValues = [
@@ -262,28 +262,28 @@ class TeacherController extends Controller
                 'assignments' => $teacher->taughtSubjects->count()
             ];
 
-            // Handle profile photo upload
-            if ($request->hasFile('profile_photo')) {
-                // Delete old photo if exists
+        // Handle profile photo upload
+        if ($request->hasFile('profile_photo')) {
+            // Delete old photo if exists
                 if ($teacher->profile_photo) {
                     Storage::disk('public')->delete($teacher->profile_photo);
                 }
-                $validated['profile_photo'] = $request->file('profile_photo')->store('teacher-photos', 'public');
-            }
+            $validated['profile_photo'] = $request->file('profile_photo')->store('teacher-photos', 'public');
+        }
 
-            // Update teacher record
-            $teacher->update([
-                'teacher_firstname' => $validated['first_name'],
-                'teacher_lastname' => $validated['last_name'] ?? null,
-                'teacher_email' => $validated['email'],
-                'teacher_phone' => $validated['phone'],
-                'date_of_birth' => $validated['date_of_birth'],
-                'gender' => $validated['gender'],
-                'address' => $validated['address'],
-                'grade' => $validated['grade'],
-                'speciality' => $validated['speciality'],
-                'subject_title' => $validated['subject_title'],
-                'status' => $validated['status'],
+        // Update teacher record
+        $teacher->update([
+            'teacher_firstname' => $validated['first_name'],
+            'teacher_lastname' => $validated['last_name'] ?? null,
+            'teacher_email' => $validated['email'],
+            'teacher_phone' => $validated['phone'],
+            'date_of_birth' => $validated['date_of_birth'],
+            'gender' => $validated['gender'],
+            'address' => $validated['address'],
+            'grade' => $validated['grade'],
+            'speciality' => $validated['speciality'],
+            'subject_title' => $validated['subject_title'],
+            'status' => $validated['status'],
                 'profile_photo' => $validated['profile_photo'] ?? $teacher->profile_photo,
             ]);
 
@@ -393,12 +393,12 @@ class TeacherController extends Controller
                 ]
             );
 
-            return redirect()
-                ->route('teachers.show', $teacher)
+        return redirect()
+            ->route('teachers.show', $teacher)
                 ->with('success', '✅ Teacher updated successfully with ' . count($changes) . ' change(s) and ' . $newAssignmentsCount . ' teaching assignment(s)!');
 
-        } catch (\Exception $e) {
-            DB::rollBack();
+    } catch (\Exception $e) {
+        DB::rollBack();
             Log::error('Teacher update failed: ' . $e->getMessage());
             
             return redirect()
@@ -477,7 +477,7 @@ class TeacherController extends Controller
 
             // Delete teacher record
             try {
-                $teacher->delete();
+            $teacher->delete();
             } catch (\Exception $e) {
                 Log::error('Failed to delete teacher record: ' . $e->getMessage());
                 throw new \Exception('Failed to delete teacher record: ' . $e->getMessage());
@@ -533,7 +533,7 @@ class TeacherController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             // Log detailed error information
             Log::error('Teacher deletion failed', [
                 'teacher_id' => $teacher->id ?? 'unknown',

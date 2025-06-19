@@ -2,28 +2,23 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Traits\LogsActivity;
 
 class Teacher extends Model
 {
+    use HasFactory, LogsActivity;
+
     protected $fillable = [
         'grade',
-        'speciality',
-        'subject_title',
+        'experience',
+        'qualification',
         'user_id',
-        'school_id',
-        'teacher_firstname',
-        'teacher_lastname',
-        'teacher_email',
-        'teacher_phone',
-        'date_of_birth',
-        'gender',
-        'address',
-        'status',
-        'profile_photo',
+        'school_id'
     ];
 
     protected $casts = [
@@ -62,9 +57,7 @@ class Teacher extends Model
      */
     public function subjects(): BelongsToMany
     {
-        return $this->belongsToMany(Subject::class)
-                    ->withPivot(['year'])
-                    ->withTimestamps();
+        return $this->belongsToMany(Subject::class);
     }
 
     /**
@@ -72,9 +65,7 @@ class Teacher extends Model
      */
     public function classRooms(): BelongsToMany
     {
-        return $this->belongsToMany(ClassRoom::class, 'class_room_teacher')
-                    ->withPivot(['subject_id', 'year', 'start_time', 'end_time', 'days_of_week'])
-                    ->withTimestamps();
+        return $this->belongsToMany(ClassRoom::class);
     }
 
     /**
@@ -99,9 +90,17 @@ class Teacher extends Model
     /**
      * Get the evaluations conducted by the teacher.
      */
-    public function conductedEvaluations(): HasMany
+    public function evaluations(): HasMany
     {
         return $this->hasMany(Evaluation::class);
+    }
+
+    /**
+     * Get the evaluations conducted by the teacher (alias for compatibility).
+     */
+    public function conductedEvaluations(): HasMany
+    {
+        return $this->hasMany(Evaluation::class, 'teacher_id');
     }
 
     /**

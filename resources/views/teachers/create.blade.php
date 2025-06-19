@@ -148,11 +148,11 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Subject <span class="text-red-500">*</span></label>
                                 <select name="subjects[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
-                                    <option value="">Select Subject</option>
-                                    @foreach($subjects as $subject)
-                                        @if($subject->is_active==1)
+                             <option value="">Select Subject</option>
+                             @foreach($subjects as $subject)
+                              @if($subject->is_active==1)
                                         <option value="{{ $subject->id }}" {{ old('subjects.0') == $subject->id ? 'selected' : '' }}>{{ $subject->name }}</option>
-                                        @endif
+                              @endif
                               @endforeach
                             </select>
                             </div>

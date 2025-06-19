@@ -81,73 +81,82 @@
                 </div>
             </div>
 
-            <!-- Recent Notifications -->
+            <!-- Recent Activities (Timeline) -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">Recent Notifications</h2>
-                    <div class="flex gap-2">
-                        <button class="px-3 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition" id="markAllReadBtn">
-                            <i class="fas fa-check-double mr-1"></i>Mark All as Read
-                        </button>
-                        <a href="{{ route('notifications.index') }}" class="px-3 py-1 rounded bg-indigo-500 text-white hover:bg-indigo-600 transition">View All</a>
-                    </div>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">Recent Activities</h2>
                 </div>
-                <div class="overflow-x-auto rounded-lg">
-                    <table class="min-w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-xl overflow-hidden">
-                        <thead class="bg-gray-100 dark:bg-gray-700">
-                            <tr>
-                                <th class="px-4 py-3">Type</th>
-                                <th class="px-4 py-3">Title</th>
-                                <th class="px-4 py-3">Message</th>
-                                <th class="px-4 py-3">Date</th>
-                                <th class="px-4 py-3 text-end">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse(auth()->user()->notifications()->latest()->take(5)->get() as $notification)
-                                <tr class="notification-item {{ $notification->isUnread() ? 'bg-gray-50 dark:bg-gray-700' : '' }} transition">
-                                    <td class="px-4 py-3">
-                                        @switch($notification->type)
-                                            @case('success')
-                                                <i class="fas fa-check-circle text-green-500 dark:text-green-400"></i>
-                                                @break
-                                            @case('warning')
-                                                <i class="fas fa-exclamation-triangle text-yellow-500 dark:text-yellow-400"></i>
-                                                @break
-                                            @case('error')
-                                                <i class="fas fa-times-circle text-red-500 dark:text-red-400"></i>
-                                                @break
-                                            @default
-                                                <i class="fas fa-bell text-indigo-500 dark:text-blue-400"></i>
-                                        @endswitch
-                                    </td>
-                                    <td class="px-4 py-3">{{ $notification->title }}</td>
-                                    <td class="px-4 py-3">{{ Str::limit($notification->message, 50) }}</td>
-                                    <td class="px-4 py-3">{{ $notification->created_at->diffForHumans() }}</td>
-                                    <td class="px-4 py-3 text-end">
-                                        <div class="flex gap-2">
-                                            @if($notification->link)
-                                                <a href="{{ route('notifications.show', $notification) }}" class="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition" title="View">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                            @endif
-                                            <button type="button" class="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition mark-read-btn" title="Mark as Read">
-                                                <i class="fas fa-check"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                            <tr>
-                                <td colspan="5" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
-                                    No notifications found.
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                <div class="relative border-l-2 border-indigo-200 dark:border-indigo-700 pl-6">
+                    @forelse($recentActivities as $activity)
+                        <div class="mb-10 group relative">
+                            <span class="absolute -left-4 top-2 w-8 h-8 rounded-full bg-white dark:bg-gray-800 border-2 border-indigo-400 flex items-center justify-center shadow">
+                                @if($activity->user && $activity->user->profile_photo)
+                                    <img src="{{ asset('storage/' . $activity->user->profile_photo) }}" alt="Profile Photo" class="w-7 h-7 rounded-full object-cover">
+                                @else
+                                    <i class="fas fa-user text-indigo-400"></i>
+                                @endif
+                            </span>
+                            <div class="ml-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-semibold text-gray-900 dark:text-white">{{ $activity->user ? ($activity->user->first_name . ' ' . $activity->user->last_name) : 'Système' }}</span>
+                                    <span class="text-xs px-2 py-1 rounded-full font-bold"
+                                        style="background: {{ $activity->type === 'create' ? '#dbeafe' : ($activity->type === 'update' ? '#ede9fe' : ($activity->type === 'delete' ? '#fee2e2' : '#f3f4f6')) }}; color: {{ $activity->type === 'create' ? '#2563eb' : ($activity->type === 'update' ? '#7c3aed' : ($activity->type === 'delete' ? '#dc2626' : '#374151')) }};">
+                                        <i class="fas {{ $activity->type === 'create' ? 'fa-plus-circle' : ($activity->type === 'update' ? 'fa-edit' : ($activity->type === 'delete' ? 'fa-trash-alt' : 'fa-info-circle')) }} mr-1"></i>
+                                        {{ ucfirst($activity->type) }}
+                                    </span>
+                                </div>
+                                <div class="text-gray-700 dark:text-gray-300 text-sm mt-1">
+                                    {{ Str::limit($activity->description, 120) }}
+                                </div>
+                                <div class="flex items-center gap-3 mt-1 text-xs text-gray-400 dark:text-gray-500">
+                                    <span><i class="fas fa-clock mr-1"></i> {{ $activity->created_at->format('Y-m-d H:i:s') }}</span>
+                                    <span><i class="fas fa-network-wired mr-1"></i> {{ $activity->ip_address }}</span>
+                                    <button type="button" class="ml-2 text-indigo-600 dark:text-indigo-300 hover:underline focus:outline-none" onclick="showActivityDetails({{ $activity->id }})">Détails</button>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center text-gray-500 dark:text-gray-400 py-8">
+                            <i class="fas fa-history text-2xl mb-2"></i>
+                            <p>Aucune activité trouvée.</p>
+                        </div>
+                    @endforelse
+                </div>
+                <div class="mt-4 flex justify-center">
+                    {{ $recentActivities->onEachSide(1)->links('pagination::tailwind') }}
                 </div>
             </div>
+
+            <!-- Modal Activity Details (Popover style, fully transparent background, centered, hidden by default) -->
+            <div id="activityDetailsModal" class="fixed inset-0 z-50 flex items-center justify-center hidden" style="background: transparent !important;">
+                <div class="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-lg p-6 relative flex flex-col items-center justify-center">
+                    <button onclick="closeActivityDetails()" class="absolute top-2 right-2 text-gray-400 hover:text-red-500"><i class="fas fa-times"></i></button>
+                    <div id="activityDetailsContent"><!-- Dynamic content --></div>
+                </div>
+            </div>
+
+            <script>
+                function showActivityDetails(id) {
+                    fetch(`/activities/${id}`)
+                        .then(res => res.text())
+                        .then(html => {
+                            document.getElementById('activityDetailsContent').innerHTML = html;
+                            document.getElementById('activityDetailsModal').classList.remove('hidden');
+                        });
+                }
+                function closeActivityDetails() {
+                    document.getElementById('activityDetailsModal').classList.add('hidden');
+                    document.getElementById('activityDetailsContent').innerHTML = '';
+                }
+                // Close on click outside
+                document.addEventListener('mousedown', function(e) {
+                    const modal = document.getElementById('activityDetailsModal');
+                    const popover = document.querySelector('#activityDetailsModal > div');
+                    if (!modal.classList.contains('hidden') && popover && !popover.contains(e.target)) {
+                        closeActivityDetails();
+                    }
+                });
+            </script>
         </div>
     </div>
 </x-app-layout>
@@ -287,190 +296,53 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Mark notification as read
-    document.querySelectorAll('.mark-read-btn').forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const notificationItem = this.closest('.notification-item');
-            const notificationId = notificationItem.dataset.notificationId;
-            const button = this;
-            
-            // Disable button and show loading state
-            button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            
-            fetch(`/notifications/${notificationId}/mark-as-read`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    notificationItem.classList.remove('bg-gray-50');
-                    notificationItem.classList.remove('dark:bg-gray-700');
-                    updateNotificationCount();
-                } else {
-                    throw new Error(data.message || 'Failed to mark notification as read');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                // Restore button state
-                button.disabled = false;
-                button.innerHTML = '<i class="fas fa-check"></i>';
-                // Show error message
-                alert(error.message || 'An error occurred while marking the notification as read.');
-            });
-        });
-    });
-
-    // Delete notification
-    document.querySelectorAll('.delete-notification-btn').forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.stopPropagation();
-            if (confirm('Are you sure you want to delete this notification?')) {
-                const notificationItem = this.closest('.notification-item');
-                const notificationId = notificationItem.dataset.notificationId;
-                const button = this;
-                
-                // Disable button and show loading state
-                button.disabled = true;
-                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                
-                fetch(`/notifications/${notificationId}`, {
+    // Delete activity functionality
+    document.querySelectorAll('.delete-activity').forEach(button => {
+        button.addEventListener('click', function() {
+            const activityId = this.dataset.activityId;
+            if (confirm('Are you sure you want to delete this activity?')) {
+                fetch(`/dashboard/activities/${activityId}`, {
                     method: 'DELETE',
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
                     }
                 })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
-                    if (data.success) {
-                        notificationItem.remove();
-                        updateNotificationCount();
-                        
-                        // Si c'était la dernière notification, afficher le message "No notifications"
-                        const tbody = notificationItem.closest('tbody');
-                        if (tbody && tbody.children.length === 0) {
-                            tbody.innerHTML = `
-                                <tr>
-                                    <td colspan="5" class="px-4 py-3 text-center">
-                                        <div class="text-center py-4">
-                                            <i class="fas fa-bell fa-3x text-muted mb-3"></i>
-                                            <h5 class="text-muted">No recent notifications</h5>
-                                        </div>
-                                    </td>
-                                </tr>
-                            `;
-                        }
+                    if (data.message) {
+                        // Remove the activity row from the table
+                        const activityRow = button.closest('tr');
+                        activityRow.remove();
+
+                        // Show success message
+                        alert('Activity deleted successfully');
                     } else {
-                        throw new Error(data.message || 'Failed to delete notification');
+                        throw new Error(data.error || 'Failed to delete activity');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    // Restore button state
-                    button.disabled = false;
-                    button.innerHTML = '<i class="fas fa-trash"></i>';
-                    // Show error message
-                    alert(error.message || 'An error occurred while deleting the notification.');
+                    alert(error.message);
                 });
             }
         });
     });
 
-    // Mark all notifications as read
-    document.getElementById('markAllReadBtn').addEventListener('click', function() {
-        const button = this;
-        button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...';
-
-        fetch('/notifications/mark-all-as-read', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                document.querySelectorAll('.notification-item').forEach(item => {
-                    item.classList.remove('bg-gray-50');
-                    item.classList.remove('dark:bg-gray-700');
-                });
-                updateNotificationCount();
-            } else {
-                throw new Error(data.message || 'Failed to mark all notifications as read');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert(error.message || 'An error occurred while marking all notifications as read.');
-        })
-        .finally(() => {
-            button.disabled = false;
-            button.innerHTML = '<i class="fas fa-check-double me-1"></i>Mark All as Read';
-        });
-    });
-
-    // Refresh dashboard
-    document.getElementById('refreshBtn').addEventListener('click', function() {
-        window.location.reload();
-    });
-
-    // Export data
-    document.getElementById('exportBtn').addEventListener('click', function() {
-        // Implement export functionality
-        alert('Export functionality will be implemented soon');
-    });
-
-    function updateNotificationCount() {
-        fetch('/notifications/unread-count')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to fetch notification count');
-                }
-                return response.json();
-            })
-            .then(data => {
-                const badge = document.querySelector('#notificationsDropdown .badge');
-                if (badge) {
-                    badge.textContent = data.count;
-                    if (data.count === 0) {
-                        badge.classList.add('d-none');
-                    } else {
-                        badge.classList.remove('d-none');
-                    }
-                }
-            })
-            .catch(error => {
-                console.warn('Could not update notification count:', error.message);
-                // Don't show error to user, just log it
-            });
-    }
+    // Filter activities
+    window.filterActivities = function() {
+        const type = document.querySelector('select[name="type"]').value;
+        const date = document.querySelector('input[name="date"]').value;
+        
+        let url = new URL(window.location.href);
+        if (type) url.searchParams.set('type', type);
+        else url.searchParams.delete('type');
+        
+        if (date) url.searchParams.set('date', date);
+        else url.searchParams.delete('date');
+        
+        window.location.href = url.toString();
+    };
 });
 </script>
 @endpush

@@ -8,6 +8,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\EvaluationController;
 use App\Http\Controllers\StudentGradeController;
 use App\Http\Controllers\DashboardController;
+use App\Models\Activity;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -79,4 +80,15 @@ Route::prefix('ecommerce')->name('ecommerce.')->group(function () {
     Route::post('/cart', [OrderController::class, 'addToCart'])->name('cart.add');
     Route::get('/cart', [OrderController::class, 'viewCart'])->name('cart.view');
     Route::post('/checkout', [OrderController::class, 'checkout'])->name('checkout');
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::delete('/dashboard/activities/{id}', [DashboardController::class, 'deleteActivity'])->name('dashboard.activities.delete');
+});
+
+// Route pour afficher les détails d'une activité (pour le modal du dashboard)
+Route::middleware(['auth'])->get('/activities/{id}', function($id) {
+    $activity = Activity::with('user')->findOrFail($id);
+    return view('dashboard.partials.activity_details', compact('activity'));
 });

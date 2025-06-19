@@ -91,20 +91,56 @@
                     </div>
                 </div>
             </div>
-            <!-- User Dropdown -->
-            <div class="relative group">
-                <button class="flex items-center gap-2 focus:outline-none">
-                    <img src="{{ Auth::user()->profile_photo ? asset('storage/' . Auth::user()->profile_photo) : 'https://ui-avatars.com/api/?name='.urlencode(Auth::user()->first_name . ' ' . Auth::user()->last_name).'&background=4f46e5&color=fff' }}" alt="User" class="w-10 h-10 rounded-full border-2 border-indigo-500 shadow" />
-                    <span class="hidden md:inline text-gray-900 dark:text-gray-100 font-semibold">{{ Auth::user()->first_name }}</span>
-                    <i class="fas fa-chevron-down text-gray-400 dark:text-gray-500"></i>
+            <!-- User Dropdown (Vanilla JS) -->
+            <div class="relative" id="userDropdownWrapper">
+                <button id="userDropdownBtn" class="flex items-center gap-3 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
+                    <div class="relative">
+                        <img 
+                            src="{{ Auth::user()->profile_photo ? asset('storage/' . Auth::user()->profile_photo) : 'https://ui-avatars.com/api/?name='.urlencode(Auth::user()->first_name . ' ' . Auth::user()->last_name).'&background=4f46e5&color=fff' }}" 
+                            alt="{{ Auth::user()->first_name }}" 
+                            class="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-md"
+                        />
+                        <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-700 rounded-full"></div>
+                    </div>
+                    <div class="hidden md:block text-left">
+                        <div class="text-sm font-semibold text-gray-900 dark:text-white">
+                            {{ Auth::user()->first_name }} {{ Auth::user()->last_name }}
+                        </div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                            {{ ucfirst(Auth::user()->roles->first()?->name ?? 'User') }}
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-down text-gray-400 dark:text-gray-500 transition-transform duration-200"></i>
                 </button>
-                <div class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition z-50">
-                    <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-900 transition"><i class="fas fa-user-edit mr-2"></i> Edit Profile</a>
-                    <a href="#" class="block px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-900 transition"><i class="fas fa-cog mr-2"></i> Settings</a>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="w-full text-left px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 transition"><i class="fas fa-sign-out-alt mr-2"></i> Logout</button>
-                    </form>
+                <div id="userDropdownMenu" class="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-lg py-2 border border-gray-200 dark:border-gray-700 z-50 hidden">
+                    <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                        <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {{ Auth::user()->email }}
+                        </div>
+                    </div>
+                    <div class="py-2">
+                        <a href="{{ route('profile.edit') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition group">
+                            <i class="fas fa-user-edit w-5 text-gray-400 dark:text-gray-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400"></i>
+                            <span class="ml-3">Edit Profile</span>
+                        </a>
+                        <a href="{{ route('dashboard') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition group">
+                            <i class="fas fa-tachometer-alt w-5 text-gray-400 dark:text-gray-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400"></i>
+                            <span class="ml-3">Dashboard</span>
+                        </a>
+                        <a href="#settings" class="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition group">
+                            <i class="fas fa-cog w-5 text-gray-400 dark:text-gray-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400"></i>
+                            <span class="ml-3">Settings</span>
+                        </a>
+                    </div>
+                    <div class="py-2 border-t border-gray-200 dark:border-gray-700">
+                        <form method="POST" action="{{ route('logout') }}" class="w-full">
+                            @csrf
+                            <button type="submit" class="flex w-full items-center px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/50 transition group">
+                                <i class="fas fa-sign-out-alt w-5 text-red-400 dark:text-red-500 group-hover:text-red-600 dark:group-hover:text-red-400"></i>
+                                <span class="ml-3">Sign Out</span>
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -319,6 +355,21 @@
                 }, 300);
             }, 5000);
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const btn = document.getElementById('userDropdownBtn');
+            const menu = document.getElementById('userDropdownMenu');
+            const wrapper = document.getElementById('userDropdownWrapper');
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                menu.classList.toggle('hidden');
+            });
+            document.addEventListener('click', function(e) {
+                if (!wrapper.contains(e.target)) {
+                    menu.classList.add('hidden');
+                }
+            });
+        });
     </script>
 </header>
 

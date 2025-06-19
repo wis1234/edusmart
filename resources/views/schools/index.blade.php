@@ -95,9 +95,12 @@
                                     <span class="truncate">{{ $school->email }}</span>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold {{ $school->is_active ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' }}">
-                                        {{ $school->is_active ? 'Active' : 'Inactive' }}
-                                    </span>
+                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold 
+                                {{ $school->status === 'active' 
+                                 ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' 
+                                : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' }}">
+                                 {{ ucfirst($school->status) }}
+                                </span>
                                 </td>
                                 <td class="px-4 py-3 text-right">
                                     <x-action-icons

@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\LogsActivity;
 
 class School extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'name',
@@ -27,8 +28,10 @@ class School extends Model
         'capacity',
         'status',
         'created_by',
-        'updated_by'
+        'updated_by',
     ];
+
+    protected $dates = ['deleted_at'];
 
     /**
      * Get the user who created the school.
