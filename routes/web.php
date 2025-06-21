@@ -11,16 +11,13 @@ use App\Http\Controllers\DashboardController;
 use App\Models\Activity;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+    return view('welcome');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', function () {
+        return view('dashboard');
+    })->name('dashboard');
     Route::get('/dashboard/{type}', [DashboardController::class, 'getContent'])->name('dashboard.content');
 });
 
@@ -28,6 +25,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
+    // Settings routes
+    Route::get('/settings', [App\Http\Controllers\SettingsController::class, 'index'])->name('settings.index');
+    Route::post('/settings/toggle-two-factor', [App\Http\Controllers\SettingsController::class, 'toggleTwoFactor'])->name('settings.toggle-two-factor');
 });
 
 // Notifications routes - ensure they are accessible
@@ -92,3 +93,15 @@ Route::middleware(['auth'])->get('/activities/{id}', function($id) {
     $activity = Activity::with('user')->findOrFail($id);
     return view('dashboard.partials.activity_details', compact('activity'));
 });
+
+Route::get('lang/{locale}', function ($locale) {
+    if (in_array($locale, ['en', 'fr'])) {
+        session(['locale' => $locale]);
+    }
+    return back();
+})->name('lang.switch');
+
+// Two Factor Authentication
+Route::get('/two-factor', [App\Http\Controllers\Auth\TwoFactorController::class, 'index'])->name('two-factor.index');
+Route::post('/two-factor', [App\Http\Controllers\Auth\TwoFactorController::class, 'store'])->name('two-factor.verify');
+Route::post('/two-factor/resend', [App\Http\Controllers\Auth\TwoFactorController::class, 'resend'])->name('two-factor.resend');

@@ -34,14 +34,13 @@
         <form method="GET" class="flex flex-col md:flex-row md:items-center gap-4 mb-6">
             <div class="flex-1 flex gap-2 items-end">
                 <div class="relative w-full max-w-xs">
-                    <label for="search" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Search</label>
+                    <label for="status" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">&nbsp;</label>
                     <input type="text" name="search" id="search" value="{{ request('search') }}" class="w-full pl-10 pr-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="Search by name, email, phone, grade, speciality...">
                     <span class="absolute left-3 top-8 text-gray-400 dark:text-gray-500">
                         <i class="fas fa-search"></i>
                     </span>
                 </div>
                 <div>
-                    <label for="status" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Status</label>
                     <select name="status" id="status" class="rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-indigo-500">
                         <option value="">All Status</option>
                         <option value="active" @if(request('status')=='active') selected @endif>Active</option>
@@ -50,7 +49,6 @@
                     </select>
                 </div>
                 <div>
-                    <label for="school" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">School</label>
                     <select name="school" id="school" class="rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-indigo-500">
                         <option value="">All Schools</option>
                         @isset($schools)
@@ -61,7 +59,6 @@
                     </select>
                 </div>
                 <div>
-                    <label for="subject" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Subject</label>
                     <select name="subject" id="subject" class="rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-indigo-500">
                         <option value="">All Subjects</option>
                         @isset($subjects)

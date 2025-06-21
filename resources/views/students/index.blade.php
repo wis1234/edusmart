@@ -22,7 +22,7 @@
         <form method="GET" class="flex flex-col md:flex-row md:items-center gap-4 mb-6">
             <div class="flex-1 flex gap-2 items-end">
                 <div class="relative w-full max-w-xs">
-                    <label for="search" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Search</label>
+                    <label for="status" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">&nbsp;</label>
                     <input type="text" name="search" id="search" value="{{ request('search') }}" class="w-full pl-10 pr-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="Search by name, class, parent...">
                     <span class="absolute left-3 top-8 text-gray-400 dark:text-gray-500">
                         <i class="fas fa-search"></i>
@@ -39,7 +39,6 @@
                     </select>
                 </div> -->
                 <div>
-                    <label for="class_room" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Class Room</label>
                     <select name="class_room" id="class_room" class="rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-indigo-500">
                         <option value="">All Classes</option>
                         @isset($classRooms)
@@ -50,7 +49,6 @@
                     </select>
                 </div>
                 <div>
-                    <label for="parent" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Parent</label>
                     <select name="parent" id="parent" class="rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-indigo-500">
                         <option value="">All Parents</option>
                         @isset($users)
@@ -206,7 +204,14 @@
                         <div class="flex flex-col gap-1 text-sm">
                             <span class="truncate"><i class="fas fa-calendar mr-1"></i> {{ $student->date_of_birth?->format('Y-m-d') }}</span>
                             <span class="truncate"><i class="fas fa-venus-mars mr-1"></i> {{ ucfirst($student->gender) }}</span>
-                            <span class="truncate"><i class="fas fa-user mr-1"></i> @php $parent = $users->firstWhere('id', $student->selected_parent_id); @endphp{{ $parent ? $parent->first_name . ' ' . $parent->last_name : 'No parent assigned' }}</span>
+                            <span class="truncate"><i class="fas fa-user mr-1"></i>
+                                     @php $parent = $users->firstWhere('id', $student->selected_parent_id); @endphp
+                                    @if($parent)
+                                        {{ $parent->first_name }} {{ $parent->last_name }}
+                                    @else
+                                        <span class="text-gray-400">Not assigned</span>
+                                    @endif                           
+                             </span>
                         </div>
                         <div class="flex items-center gap-2 mt-2">
                             <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold {{ $student->status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' }}">
@@ -251,4 +256,22 @@
             @endif
         </div>
     </div>
+    <script>
+        const tableViewBtn = document.getElementById('tableViewBtn');
+        const gridViewBtn = document.getElementById('gridViewBtn');
+        const tableView = document.getElementById('tableView');
+        const gridView = document.getElementById('gridView');
+        tableViewBtn.addEventListener('click', function() {
+            tableView.classList.remove('hidden');
+            gridView.classList.add('hidden');
+            tableViewBtn.classList.add('active');
+            gridViewBtn.classList.remove('active');
+        });
+        gridViewBtn.addEventListener('click', function() {
+            tableView.classList.add('hidden');
+            gridView.classList.remove('hidden');
+            gridViewBtn.classList.add('active');
+            tableViewBtn.classList.remove('active');
+        });
+    </script>
 </x-app-layout>

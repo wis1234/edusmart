@@ -1,4 +1,4 @@
-<header class="fixed top-0 left-0 right-0 z-30 w-full bg-white dark:bg-gray-900 shadow transition-colors duration-300">
+<header class="fixed top-0 left-0 right-0 z-30 w-full bg-white dark:bg-gray-900" style="box-shadow: 0 8px 32px 0 rgba(31,38,135,0.07);">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
         <!-- Left: Logo & Menu -->
         <div class="flex items-center gap-4">
@@ -8,7 +8,7 @@
             <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 shadow-lg">
                 <i class="fas fa-graduation-cap text-white text-xl"></i>
             </span>
-            <span class="ml-2 text-xl font-extrabold text-gray-900 dark:text-white tracking-tight">EduSmart</span>
+            <span class="ml-2 text-xl font-extrabold text-gray-900 dark:text-white tracking-tight">{{ config('app.name', __('messages.welcome')) }}</span>
         </div>
         <!-- Center: Search -->
         <div class="hidden md:flex flex-1 justify-center">
@@ -26,6 +26,16 @@
                 <span class="hidden dark:inline"><i class="fas fa-sun text-yellow-400"></i></span>
                 <span class="inline dark:hidden"><i class="fas fa-moon text-gray-700"></i></span>
             </button>
+            <!-- Language Dropdown -->
+            <div class="relative">
+                <button class="p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition" id="langDropdownBtn" title="Change language">
+                    <i class="fas fa-globe text-indigo-600 dark:text-indigo-300 text-xl"></i>
+                </button>
+                <div id="langDropdown" class="hidden absolute right-0 mt-2 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 z-50 border border-gray-200 dark:border-gray-700">
+                    <a href="{{ route('lang.switch', 'en') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-900 transition">English</a>
+                    <a href="{{ route('lang.switch', 'fr') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-900 transition">Français</a>
+                </div>
+            </div>
             <!-- Notifications Dropdown -->
             <div class="relative">
                 <button class="p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition relative" id="notificationsDropdownBtn">
@@ -121,13 +131,13 @@
                     <div class="py-2">
                         <a href="{{ route('profile.edit') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition group">
                             <i class="fas fa-user-edit w-5 text-gray-400 dark:text-gray-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400"></i>
-                            <span class="ml-3">Edit Profile</span>
+                            <span class="ml-3">{{ __('messages.profile') }}</span>
                         </a>
                         <a href="{{ route('dashboard') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition group">
                             <i class="fas fa-tachometer-alt w-5 text-gray-400 dark:text-gray-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400"></i>
-                            <span class="ml-3">Dashboard</span>
+                            <span class="ml-3">{{ __('messages.dashboard') }}</span>
                         </a>
-                        <a href="#settings" class="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition group">
+                        <a href="{{ route('settings.index') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition group">
                             <i class="fas fa-cog w-5 text-gray-400 dark:text-gray-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400"></i>
                             <span class="ml-3">Settings</span>
                         </a>
@@ -137,7 +147,7 @@
                             @csrf
                             <button type="submit" class="flex w-full items-center px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/50 transition group">
                                 <i class="fas fa-sign-out-alt w-5 text-red-400 dark:text-red-500 group-hover:text-red-600 dark:group-hover:text-red-400"></i>
-                                <span class="ml-3">Sign Out</span>
+                                <span class="ml-3">{{ __('messages.logout') }}</span>
                             </button>
                         </form>
                     </div>
@@ -369,6 +379,21 @@
                     menu.classList.add('hidden');
                 }
             });
+        });
+
+        // Language dropdown toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const btn = document.getElementById('langDropdownBtn');
+            const menu = document.getElementById('langDropdown');
+            if(btn && menu) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    menu.classList.toggle('hidden');
+                });
+                document.addEventListener('click', function(e) {
+                    if (!menu.contains(e.target)) menu.classList.add('hidden');
+                });
+            }
         });
     </script>
 </header>

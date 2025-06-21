@@ -8,8 +8,8 @@
                         <i class="fas fa-graduation-cap text-white text-2xl"></i>
                     </span>
                     <div>
-                        <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Dashboard</h1>
-                        <p class="text-gray-500 dark:text-gray-300">Overview of your educational system</p>
+                        <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">{{ __('messages.dashboard') }}</h1>
+                        <p class="text-gray-500 dark:text-gray-300">{{ __('messages.overview') }}</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
@@ -27,7 +27,7 @@
                 <div class="bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900 dark:to-blue-700 rounded-xl shadow-lg p-6 flex items-center gap-4">
                     <i class="fas fa-school text-blue-500 dark:text-blue-300 text-3xl"></i>
                     <div>
-                        <div class="text-gray-500 dark:text-gray-300 text-sm">Total Schools</div>
+                        <div class="text-gray-500 dark:text-gray-300 text-sm">{{ __('messages.total_schools') }}</div>
                         <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ \App\Models\School::count() }}</div>
                         <div class="text-green-600 dark:text-green-400 text-xs flex items-center gap-1"><i class="fas fa-arrow-up"></i> 12% this month</div>
                     </div>
@@ -35,7 +35,7 @@
                 <div class="bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900 dark:to-green-700 rounded-xl shadow-lg p-6 flex items-center gap-4">
                     <i class="fas fa-chalkboard-teacher text-green-500 dark:text-green-300 text-3xl"></i>
                     <div>
-                        <div class="text-gray-500 dark:text-gray-300 text-sm">Total Teachers</div>
+                        <div class="text-gray-500 dark:text-gray-300 text-sm">{{ __('messages.total_teachers') }}</div>
                         <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ \App\Models\Teacher::count() }}</div>
                         <div class="text-green-600 dark:text-green-400 text-xs flex items-center gap-1"><i class="fas fa-arrow-up"></i> 8% this month</div>
                     </div>
@@ -43,7 +43,7 @@
                 <div class="bg-gradient-to-br from-cyan-100 to-cyan-50 dark:from-cyan-900 dark:to-cyan-700 rounded-xl shadow-lg p-6 flex items-center gap-4">
                     <i class="fas fa-user-graduate text-cyan-500 dark:text-cyan-300 text-3xl"></i>
                     <div>
-                        <div class="text-gray-500 dark:text-gray-300 text-sm">Total Students</div>
+                        <div class="text-gray-500 dark:text-gray-300 text-sm">{{ __('messages.total_students') }}</div>
                         <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ \App\Models\Student::count() }}</div>
                         <div class="text-green-600 dark:text-green-400 text-xs flex items-center gap-1"><i class="fas fa-arrow-up"></i> 15% this month</div>
                     </div>
@@ -51,7 +51,7 @@
                 <div class="bg-gradient-to-br from-yellow-100 to-yellow-50 dark:from-yellow-900 dark:to-yellow-700 rounded-xl shadow-lg p-6 flex items-center gap-4">
                     <i class="fas fa-door-open text-yellow-500 dark:text-yellow-300 text-3xl"></i>
                     <div>
-                        <div class="text-gray-500 dark:text-gray-300 text-sm">Total Classes</div>
+                        <div class="text-gray-500 dark:text-gray-300 text-sm">{{ __('messages.total_classes') }}</div>
                         <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ \App\Models\ClassRoom::count() }}</div>
                         <div class="text-green-600 dark:text-green-400 text-xs flex items-center gap-1"><i class="fas fa-arrow-up"></i> 5% this month</div>
                     </div>
@@ -60,23 +60,23 @@
 
             <!-- Quick Actions -->
             <div class="mb-8">
-                <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">{{ __('messages.quick_actions') }}</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <a href="{{ route('schools.create') }}" class="flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 hover:bg-blue-50 dark:hover:bg-gray-700 transition group">
                         <i class="fas fa-plus-circle text-blue-500 dark:text-blue-300 text-3xl mb-2 group-hover:scale-110 transition"></i>
-                        <span class="text-gray-900 dark:text-white font-semibold">Add School</span>
+                        <span class="text-gray-900 dark:text-white font-semibold">{{ __('messages.add_school') }}</span>
                     </a>
                     <a href="{{ route('teachers.create') }}" class="flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 hover:bg-green-50 dark:hover:bg-gray-700 transition group">
                         <i class="fas fa-user-plus text-green-500 dark:text-green-300 text-3xl mb-2 group-hover:scale-110 transition"></i>
-                        <span class="text-gray-900 dark:text-white font-semibold">Add Teacher</span>
+                        <span class="text-gray-900 dark:text-white font-semibold">{{ __('messages.add_teacher') }}</span>
                     </a>
                     <a href="{{ route('students.create') }}" class="flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 hover:bg-cyan-50 dark:hover:bg-gray-700 transition group">
                         <i class="fas fa-user-graduate text-cyan-500 dark:text-cyan-300 text-3xl mb-2 group-hover:scale-110 transition"></i>
-                        <span class="text-gray-900 dark:text-white font-semibold">Add Student</span>
+                        <span class="text-gray-900 dark:text-white font-semibold">{{ __('messages.add_student') }}</span>
                     </a>
                     <a href="{{ route('class_rooms.create') }}" class="flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 hover:bg-yellow-50 dark:hover:bg-gray-700 transition group">
                         <i class="fas fa-chalkboard text-yellow-500 dark:text-yellow-300 text-3xl mb-2 group-hover:scale-110 transition"></i>
-                        <span class="text-gray-900 dark:text-white font-semibold">Add Class</span>
+                        <span class="text-gray-900 dark:text-white font-semibold">{{ __('messages.add_class') }}</span>
                     </a>
                 </div>
             </div>
@@ -84,7 +84,7 @@
             <!-- Recent Activities (Timeline) -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">Recent Activities</h2>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ __('messages.recent_activities') }}</h2>
                 </div>
                 <div class="relative border-l-2 border-indigo-200 dark:border-indigo-700 pl-6">
                     @forelse($recentActivities as $activity)
@@ -98,7 +98,7 @@
                             </span>
                             <div class="ml-2">
                                 <div class="flex items-center gap-2">
-                                    <span class="font-semibold text-gray-900 dark:text-white">{{ $activity->user ? ($activity->user->first_name . ' ' . $activity->user->last_name) : 'Système' }}</span>
+                                    <span class="font-semibold text-gray-900 dark:text-white">{{ __('messages.profile_photo') }}</span>
                                     <span class="text-xs px-2 py-1 rounded-full font-bold"
                                         style="background: {{ $activity->type === 'create' ? '#dbeafe' : ($activity->type === 'update' ? '#ede9fe' : ($activity->type === 'delete' ? '#fee2e2' : '#f3f4f6')) }}; color: {{ $activity->type === 'create' ? '#2563eb' : ($activity->type === 'update' ? '#7c3aed' : ($activity->type === 'delete' ? '#dc2626' : '#374151')) }};">
                                         <i class="fas {{ $activity->type === 'create' ? 'fa-plus-circle' : ($activity->type === 'update' ? 'fa-edit' : ($activity->type === 'delete' ? 'fa-trash-alt' : 'fa-info-circle')) }} mr-1"></i>
@@ -118,12 +118,17 @@
                     @empty
                         <div class="text-center text-gray-500 dark:text-gray-400 py-8">
                             <i class="fas fa-history text-2xl mb-2"></i>
-                            <p>Aucune activité trouvée.</p>
+                            <p>{{ __('messages.no_activity_found') }}</p>
                         </div>
                     @endforelse
                 </div>
                 <div class="mt-4 flex justify-center">
                     {{ $recentActivities->onEachSide(1)->links('pagination::tailwind') }}
+                </div>
+                <div class="mt-4 text-center">
+                    <div class="text-gray-500 dark:text-gray-400 text-sm">
+                        {{ __('messages.showing_results', ['from' => $recentActivities->firstItem(), 'to' => $recentActivities->lastItem(), 'total' => $recentActivities->total()]) }}
+                    </div>
                 </div>
             </div>
 

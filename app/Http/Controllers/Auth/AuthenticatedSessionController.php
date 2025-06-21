@@ -11,16 +11,20 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\Activity;
+use App\Models\User;
+use App\Notifications\AccountLocked;
+use Illuminate\Support\Facades\Password;
+use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
     /**
      * Display the login view.
      */
-    public function create(): Response
+    public function create()
     {
-        return Inertia::render('Auth/Login', [
-            'canResetPassword' => Route::has('password.request'),
+        return view('auth.login', [
+            'canResetPassword' => \Route::has('password.request'),
             'status' => session('status'),
         ]);
     }
@@ -28,11 +32,44 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(LoginRequest $request): RedirectResponse|View
     {
+        $user = User::where('email', $request->email)->first();
+
+        // 1. Vérifier si le compte est verrouillé
+        if ($user && $user->locked_at) {
+            // Renvoyer la vue du compte verrouillé
+            return view('auth.locked');
+        }
+
         try {
             $request->authenticate();
+
+            // Réinitialiser les tentatives en cas de succès
+            if ($user) {
+                $user->login_attempts = 0;
+                $user->save();
+            }
+
         } catch (\Illuminate\Validation\ValidationException $e) {
+            // Incrémenter les tentatives de connexion
+            if ($user) {
+                $user->login_attempts += 1;
+                $user->save();
+
+                // Verrouiller le compte après 3 tentatives
+                if ($user->login_attempts >= 3) {
+                    $user->locked_at = now();
+                    $user->save();
+
+                    // Envoyer l'email de notification
+                    $user->notify(new AccountLocked());
+                    
+                    // Renvoyer la vue du compte verrouillé
+                    return view('auth.locked');
+                }
+            }
+
             // Log failed login
             Activity::create([
                 'user_id' => null,
@@ -55,7 +92,25 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // 2FA: Generate and send code, store user ID in session, logout user
+        $user = auth()->user();
+        if ($user) { // S'assurer que l'utilisateur est bien authentifié
+            if ($user->two_factor_enabled) {
+                $user->two_factor_attempts = 0; // Reset counter
+                $user->save();
+                $user->generateTwoFactorCode();
+                $user->notify(new \App\Notifications\TwoFactorCode());
+                session(['two_factor:user:id' => $user->id]);
+                auth()->logout(); // On déconnecte pour la vérification 2FA
+
+                return redirect()->route('two-factor.index');
+            } else {
+                // 2FA not enabled, proceed directly to dashboard
+                return redirect()->intended(route('dashboard'));
+            }
+        }
+        
+        return redirect()->intended(route('dashboard'));
     }
 
     /**

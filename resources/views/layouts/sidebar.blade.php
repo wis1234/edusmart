@@ -10,61 +10,61 @@
             <li class="nav-item">
                 <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                     <i class="fas fa-tachometer-alt me-2"></i>
-                    <span>Dashboard</span>
+                    <span>{{ __('messages.dashboard') }}</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a href="{{ route('schools.index') }}" class="nav-link {{ request()->routeIs('schools.*') ? 'active' : '' }}">
                     <i class="fas fa-school me-2"></i>
-                    <span>Schools</span>
+                    <span>{{ __('messages.schools') }}</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a href="{{ route('teachers.index') }}" class="nav-link {{ request()->routeIs('teachers.*') ? 'active' : '' }}">
                     <i class="fas fa-chalkboard-teacher me-2"></i>
-                    <span>Teachers</span>
+                    <span>{{ __('messages.teachers') }}</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a href="{{ route('students.index') }}" class="nav-link {{ request()->routeIs('students.*') ? 'active' : '' }}">
                     <i class="fas fa-user-graduate me-2"></i>
-                    <span>Students</span>
+                    <span>{{ __('messages.students') }}</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a href="{{ route('parents.index') }}" class="nav-link {{ request()->routeIs('parents.*') ? 'active' : '' }}">
                     <i class="fas fa-users me-2"></i>
-                    <span>Parents</span>
+                    <span>{{ __('messages.parents') }}</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a href="{{ route('subjects.index') }}" class="nav-link {{ request()->routeIs('subjects.*') ? 'active' : '' }}">
                     <i class="fas fa-book me-2"></i>
-                    <span>Subjects</span>
+                    <span>{{ __('messages.subjects') }}</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a href="{{ route('class_rooms.index') }}" class="nav-link {{ request()->routeIs('class_rooms.*') ? 'active' : '' }}">
                     <i class="fas fa-door-open me-2"></i>
-                    <span>Classrooms</span>
+                    <span>{{ __('messages.classrooms') }}</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a href="{{ route('evaluations.index') }}" class="nav-link {{ request()->routeIs('evaluations.*') ? 'active' : '' }}">
                     <i class="fas fa-tasks me-2"></i>
-                    <span>Evaluations</span>
+                    <span>{{ __('messages.evaluations') }}</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a href="{{ route('evaluations.index') }}" class="nav-link {{ request()->routeIs('evaluations.student_grades.*') ? 'active' : '' }}">
                     <i class="fas fa-chart-bar me-2"></i>
-                    <span>Grades</span>
+                    <span>{{ __('messages.grades') }}</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a href="{{ route('calendars.index') }}" class="nav-link {{ request()->routeIs('calendars.*') ? 'active' : '' }}">
                     <i class="fas fa-calendar-alt me-2"></i>
-                    <span>Calendar</span>
+                    <span>{{ __('messages.calendar') }}</span>
                 </a>
             </li>
         </ul>

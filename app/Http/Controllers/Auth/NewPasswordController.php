@@ -19,9 +19,9 @@ class NewPasswordController extends Controller
     /**
      * Display the password reset view.
      */
-    public function create(Request $request): Response
+    public function create(Request $request)
     {
-        return Inertia::render('Auth/ResetPassword', [
+        return view('auth.passwords.reset', [
             'email' => $request->email,
             'token' => $request->route('token'),
         ]);
@@ -49,6 +49,8 @@ class NewPasswordController extends Controller
                 $user->forceFill([
                     'password' => Hash::make($request->password),
                     'remember_token' => Str::random(60),
+                    'login_attempts' => 0,
+                    'locked_at' => null,
                 ])->save();
 
                 event(new PasswordReset($user));

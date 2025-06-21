@@ -27,6 +27,7 @@ class User extends Authenticatable
         'status',
         'school_id',
         'selected_parent_id',
+        'two_factor_enabled',
     ];
 
     protected $hidden = [
@@ -210,5 +211,33 @@ class User extends Authenticatable
             return \Storage::url($this->profile_photo);
         }
         return asset('images/default-profile.png');
+    }
+
+    /**
+     * Send the password reset notification.
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new \App\Notifications\ResetPasswordCustom($token));
+    }
+
+    /**
+     * Generate and save a new 2FA code (6 digits).
+     */
+    public function generateTwoFactorCode()
+    {
+        $this->two_factor_code = random_int(100000, 999999);
+        $this->two_factor_expires_at = now()->addMinutes(2);
+        $this->save();
+    }
+
+    /**
+     * Reset the 2FA code.
+     */
+    public function resetTwoFactorCode()
+    {
+        $this->two_factor_code = null;
+        $this->two_factor_expires_at = null;
+        $this->save();
     }
 }
