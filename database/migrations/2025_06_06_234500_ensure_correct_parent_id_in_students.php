@@ -6,26 +6,31 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up()
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
     {
         Schema::table('students', function (Blueprint $table) {
-            // First, drop any existing foreign key constraints on parent_id
+            // Drop the old foreign key and column if exists
             $table->dropForeign(['parent_id']);
-            
-            // Then modify the column to be nullable and properly reference users table
-            $table->foreignId('parent_id')->nullable()->change();
-            $table->foreign('parent_id')
-                  ->references('id')
-                  ->on('users')
-                  ->onDelete('set null');
+            $table->dropColumn('parent_id');
+        });
+        Schema::table('students', function (Blueprint $table) {
+            // Add the correct parent_id referencing parents(id)
+            $table->foreignId('parent_id')->nullable()->constrained('parents')->onDelete('set null');
         });
     }
 
-    public function down()
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
     {
         Schema::table('students', function (Blueprint $table) {
             $table->dropForeign(['parent_id']);
-            $table->foreignId('parent_id')->nullable()->change();
+            $table->dropColumn('parent_id');
+            $table->foreignId('parent_id')->nullable()->constrained('users')->onDelete('set null');
         });
     }
 }; 

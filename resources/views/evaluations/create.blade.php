@@ -1,198 +1,216 @@
-@extends('layouts.app')
-
-@section('content')
-<div class="container mx-auto px-4 py-8 max-w-4xl">
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-        <!-- Header Section -->
-        <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-            <div class="flex justify-between items-center">
-                <h1 class="text-2xl font-bold text-gray-800">📝 Create New Evaluation</h1>
-                <a href="{{ route('evaluations.index') }}" class="inline-flex items-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-4 py-2 rounded-lg shadow-sm transition duration-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                    Back to Evaluations
-                </a>
+<x-app-layout>
+    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-4">
+                <span class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 shadow-lg">
+                    <i class="fas fa-clipboard-check text-white text-2xl"></i>
+                </span>
+                <div>
+                    <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Create Evaluation</h1>
+                    <p class="text-gray-500 dark:text-gray-300">Add a new academic evaluation</p>
+                </div>
             </div>
+            <a href="{{ route('evaluations.index') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                <i class="fas fa-arrow-left"></i> Back to Evaluations
+            </a>
         </div>
 
-        <!-- Error Messages -->
-        @if ($errors->any())
-        <div class="bg-red-50 border-l-4 border-red-500 p-4 mx-6 mt-6 rounded-lg">
-            <div class="flex items-start">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <h3 class="text-sm font-medium text-red-800">There were {{ $errors->count() }} errors with your submission</h3>
-                    <div class="mt-2 text-sm text-red-700">
-                        <ul class="list-disc pl-5 space-y-1">
-                            @foreach ($errors->all() as $error)
+        <!-- Form Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+            @if ($errors->any())
+                <div class="mb-6 p-4 rounded-lg bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 border border-red-200 dark:border-red-800">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span class="font-semibold">Please fix the following errors:</span>
+                    </div>
+                    <ul class="list-disc pl-5 space-y-1">
+                        @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <form action="{{ route('evaluations.store') }}" method="POST" class="space-y-6">
+                @csrf
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Teacher Selection (Admin Only) -->
+                    @if(auth()->user()->isAdmin() || auth()->user()->email === 'ronaldoagbohou@gmail.com')
+                    <div>
+                        <label for="teacher_id" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Teacher</label>
+                        <select name="teacher_id" id="teacher_id" class="w-full px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-700 border-0 focus:ring-2 focus:ring-indigo-500 transition" required>
+                            <option value="">Select Teacher</option>
+                            @foreach ($teachers as $teacher)
+                            <option value="{{ $teacher->id }}" @selected(old('teacher_id') == $teacher->id)>
+                                {{ $teacher->user->name }}
+                            </option>
                             @endforeach
-                        </ul>
+                        </select>
+                    </div>
+                    @else
+                    <input type="hidden" name="teacher_id" value="{{ auth()->user()->teacherProfile->id }}">
+                    @endif
+
+                    <!-- School (readonly for teachers) -->
+                    @if(auth()->user()->hasRole('enseignant') && auth()->user()->teacherProfile && auth()->user()->teacherProfile->school)
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">School</label>
+                        <input type="text" value="{{ auth()->user()->teacherProfile->school->name }}" class="w-full px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-700 border-0" readonly>
+                    </div>
+                    @endif
+
+                    <!-- Subject -->
+                    <div>
+                        <label for="subject_id" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Subject</label>
+                        @if($subjects->isEmpty())
+                            <div class="text-red-500 text-sm mb-2">No subjects available for you. Please contact your administration.</div>
+                        @endif
+                        <select name="subject_id" id="subject_id" class="w-full px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-700 border-0 focus:ring-2 focus:ring-indigo-500 transition" required @if($subjects->isEmpty()) disabled @endif>
+                            <option value="">Select Subject</option>
+                            @foreach ($subjects as $subject)
+                            <option value="{{ $subject->id }}" @selected(old('subject_id') == $subject->id)>
+                                {{ $subject->name }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Classroom -->
+                    <div>
+                        <label for="class_room_id" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Class Room</label>
+                        @if($classRooms->isEmpty())
+                            <div class="text-red-500 text-sm mb-2">No classrooms available for you. Please contact your administration.</div>
+                        @endif
+                        <select name="class_room_id" id="class_room_id" class="w-full px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-700 border-0 focus:ring-2 focus:ring-indigo-500 transition" required @if($classRooms->isEmpty()) disabled @endif>
+                            <option value="">Select Class Room</option>
+                            @foreach ($classRooms as $classRoom)
+                            <option value="{{ $classRoom->id }}" @selected(old('class_room_id') == $classRoom->id)>
+                                {{ $classRoom->name }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Evaluation Type -->
+                    <div>
+                        <label for="evaluation_type" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Evaluation Type</label>
+                        <input type="text" name="evaluation_type" id="evaluation_type" value="{{ old('evaluation_type') }}" class="w-full px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-700 border-0 focus:ring-2 focus:ring-indigo-500 transition" placeholder="e.g. Quiz, Exam, Assignment" required>
+                    </div>
+
+                    <!-- Academic Year -->
+                    <div>
+                        <label for="academic_year" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Academic Year</label>
+                        <select name="academic_year" id="academic_year" required
+                            class="w-full px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-700 border-0 focus:ring-2 focus:ring-indigo-500 transition">
+                            <option value="">Select Academic Year</option>
+                            @php
+                                $currentYear = date('Y');
+                                $academicYears = [];
+                                for ($i = 0; $i < 5; $i++) {
+                                    $year = $currentYear + $i;
+                                    $academicYears[] = $year . '-' . ($year + 1);
+                                }
+                            @endphp
+                            @foreach($academicYears as $academic)
+                                <option value="{{ $academic }}" {{ old('academic_year') == $academic ? 'selected' : '' }}>{{ $academic }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Term -->
+                    <div>
+                        <label for="term" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Term</label>
+                        <input type="text" name="term" id="term" value="{{ old('term') }}" 
+                               class="w-full px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-700 border-0 focus:ring-2 focus:ring-indigo-500 transition" 
+                               placeholder="Term 1" required>
+                    </div>
+
+                    <!-- Evaluation Date -->
+                    <div>
+                        <label for="evaluation_date" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Evaluation Date</label>
+                        <input type="date" name="evaluation_date" id="evaluation_date" value="{{ old('evaluation_date') }}" 
+                               class="w-full px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-700 border-0 focus:ring-2 focus:ring-indigo-500 transition" 
+                               required>
+                    </div>
+
+                    <!-- Total Marks -->
+                    <div>
+                        <label for="total_marks" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Total Marks</label>
+                        <input type="number" name="total_marks" id="total_marks" value="{{ old('total_marks') }}" 
+                               class="w-full px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-700 border-0 focus:ring-2 focus:ring-indigo-500 transition" 
+                               min="1" required>
+                    </div>
+
+                    <!-- Passing Marks -->
+                    <div>
+                        <label for="passing_marks" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Passing Marks</label>
+                        <input type="number" name="passing_marks" id="passing_marks" value="{{ old('passing_marks') }}" 
+                               class="w-full px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-700 border-0 focus:ring-2 focus:ring-indigo-500 transition" 
+                               min="0" required>
                     </div>
                 </div>
-            </div>
-        </div>
-        @endif
 
-        <!-- Form Section -->
-        <form action="{{ route('evaluations.store') }}" method="POST" class="p-6">
-            @csrf
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Teacher Selection (Admin Only) -->
-                @if(auth()->user()->isAdmin() || auth()->user()->email === 'ronaldoagbohou@gmail.com')
-                <div class="space-y-1">
-                    <label for="teacher_id" class="block text-sm font-medium text-gray-700">Teacher</label>
-                    <select name="teacher_id" id="teacher_id" class="mt-1 block w-full pl-3 pr-10 py-2.5 text-base border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-                        <option value="">Select Teacher</option>
-                        @foreach ($teachers as $teacher)
-                        <option value="{{ $teacher->id }}" @selected(old('teacher_id') == $teacher->id)>
-                            {{ $teacher->user->name }}
-                        </option>
-                        @endforeach
-                    </select>
+                <!-- Notes -->
+                <div class="col-span-full">
+                    <label for="notes" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Notes</label>
+                    <textarea name="notes" id="notes" rows="4" 
+                              class="w-full px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-700 border-0 focus:ring-2 focus:ring-indigo-500 transition">{{ old('notes') }}</textarea>
                 </div>
-                @else
-                <input type="hidden" name="teacher_id" value="{{ auth()->user()->teacher?->id ?? auth()->id() }}">
+
+                <!-- Submit Buttons -->
+                <div class="flex items-center justify-end gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <a href="{{ route('evaluations.index') }}" class="px-6 py-3 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                        Cancel
+                    </a>
+                    <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed" @if($subjects->isEmpty() || $classRooms->isEmpty()) disabled @endif title="You must have at least one subject and one classroom assigned to create an evaluation.">
+                        <i class="fas fa-plus"></i> Create Evaluation
+                    </button>
+                </div>
+                @if($subjects->isEmpty() || $classRooms->isEmpty())
+                    <div class="mt-4 text-sm text-yellow-600 dark:text-yellow-300 flex items-center gap-2">
+                        <i class="fas fa-info-circle"></i>
+                        You must have at least one subject and one classroom assigned to create an evaluation. Please contact your administration.
+                    </div>
                 @endif
-
-                <!-- Subject Selection -->
-                <div class="space-y-1">
-                    <label for="subject_id" class="block text-sm font-medium text-gray-700">Subject</label>
-                    <select name="subject_id" id="subject_id" class="mt-1 block w-full pl-3 pr-10 py-2.5 text-base border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-                        <option value="">Select Subject</option>
-                        @foreach ($subjects as $subject)
-                        <option value="{{ $subject->id }}" @selected(old('subject_id') == $subject->id)>
-                            {{ $subject->name }}
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Class Room Selection -->
-                <div class="space-y-1">
-                    <label for="class_room_id" class="block text-sm font-medium text-gray-700">Class Room</label>
-                    <select name="class_room_id" id="class_room_id" class="mt-1 block w-full pl-3 pr-10 py-2.5 text-base border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-                        <option value="">Select Class Room</option>
-                        @foreach ($classRooms as $classRoom)
-                        <option value="{{ $classRoom->id }}" @selected(old('class_room_id') == $classRoom->id)>
-                            {{ $classRoom->name }}
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Evaluation Type -->
-                <div class="space-y-1">
-                    <label for="evaluation_type_id" class="block text-sm font-medium text-gray-700">Evaluation Type</label>
-                    <select name="evaluation_type_id" id="evaluation_type_id" class="mt-1 block w-full pl-3 pr-10 py-2.5 text-base border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-                        <option value="">Select Type</option>
-                        @foreach ($evaluationTypes as $type)
-                        <option value="{{ $type->id }}" @selected(old('evaluation_type_id') == $type->id)>
-                            {{ $type->name }} ({{ $type->weight }}%)
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Academic Year -->
-                <div class="space-y-1">
-                    <label for="academic_year" class="block text-sm font-medium text-gray-700">Academic Year</label>
-                    <input type="text" name="academic_year" id="academic_year" value="{{ old('academic_year') }}" 
-                           class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm py-2.5 px-3" 
-                           placeholder="2023-2024" required>
-                </div>
-
-                <!-- Term -->
-                <div class="space-y-1">
-                    <label for="term" class="block text-sm font-medium text-gray-700">Term</label>
-                    <input type="text" name="term" id="term" value="{{ old('term') }}" 
-                           class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm py-2.5 px-3" 
-                           placeholder="Term 1" required>
-                </div>
-
-                <!-- Evaluation Date -->
-                <div class="space-y-1">
-                    <label for="evaluation_date" class="block text-sm font-medium text-gray-700">Evaluation Date</label>
-                    <input type="date" name="evaluation_date" id="evaluation_date" value="{{ old('evaluation_date') }}" 
-                           class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm py-2.5 px-3" 
-                           required>
-                </div>
-
-                <!-- Total Marks -->
-                <div class="space-y-1">
-                    <label for="total_marks" class="block text-sm font-medium text-gray-700">Total Marks</label>
-                    <input type="number" name="total_marks" id="total_marks" value="{{ old('total_marks') }}" 
-                           class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm py-2.5 px-3" 
-                           min="1" required>
-                </div>
-
-                <!-- Passing Marks -->
-                <div class="space-y-1">
-                    <label for="passing_marks" class="block text-sm font-medium text-gray-700">Passing Marks</label>
-                    <input type="number" name="passing_marks" id="passing_marks" value="{{ old('passing_marks') }}" 
-                           class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm py-2.5 px-3" 
-                           min="0" required>
-                </div>
-            </div>
-
-            <!-- Notes -->
-            <div class="mt-6 space-y-1">
-                <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
-                <textarea name="notes" id="notes" rows="3" 
-                          class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm py-2.5 px-3">{{ old('notes') }}</textarea>
-            </div>
-
-            <!-- Form Actions -->
-            <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200 mt-6">
-                <button type="reset" class="inline-flex items-center px-5 py-2.5 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Reset Form
-                </button>
-                <button type="submit" class="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    Create Evaluation
-                </button>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
-</div>
-@endsection
 
-@section('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Dynamic classroom loading based on subject
-    const subjectSelect = document.getElementById('subject_id');
-    const classroomSelect = document.getElementById('class_room_id');
+    @push('scripts')
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const subjectSelect = document.getElementById('subject_id');
+        const classroomSelect = document.getElementById('class_room_id');
 
-    if(subjectSelect && classroomSelect) {
-        subjectSelect.addEventListener('change', function() {
-            const subjectId = this.value;
-            classroomSelect.innerHTML = '<option value="">Loading...</option>';
-            
-            fetch(`/api/classrooms?subject_id=${subjectId}`)
-                .then(response => response.json())
-                .then(data => {
-                    classroomSelect.innerHTML = '<option value="">Select Class Room</option>';
-                    data.forEach(classroom => {
-                        const option = document.createElement('option');
-                        option.value = classroom.id;
-                        option.textContent = classroom.name;
-                        classroomSelect.appendChild(option);
+        if(subjectSelect && classroomSelect) {
+            subjectSelect.addEventListener('change', function() {
+                const subjectId = this.value;
+                if (!subjectId) {
+                    classroomSelect.innerHTML = '<option value="">Select Subject First</option>';
+                    return;
+                }
+                classroomSelect.innerHTML = '<option value="">Loading...</option>';
+                
+                fetch(`/api/classrooms?subject_id=${subjectId}`)
+                    .then(response => response.ok ? response.json() : Promise.reject('Network response was not ok.'))
+                    .then(data => {
+                        classroomSelect.innerHTML = '<option value="">Select Class Room</option>';
+                        data.forEach(classroom => {
+                            const option = document.createElement('option');
+                            option.value = classroom.id;
+                            option.textContent = classroom.name;
+                            classroomSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error fetching classrooms:', error);
+                        classroomSelect.innerHTML = '<option value="">Error loading classrooms</option>';
                     });
-                });
-        });
-    }
-});
-</script>
-@endsection
+            });
+        }
+    });
+    </script>
+    @endpush
+</x-app-layout>

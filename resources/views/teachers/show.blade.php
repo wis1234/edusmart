@@ -12,7 +12,10 @@
                 @endif
                 <div>
                     <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">{{ $teacher->teacher_firstname }} {{ $teacher->teacher_lastname }}</h1>
-                    <p class="text-gray-500 dark:text-gray-300">{{ $teacher->subjects->pluck('name')->join(', ') ?: 'No subject assigned' }} - {{ ucfirst($teacher->status) }}</p>
+                    <p class="text-gray-500 dark:text-gray-300">
+                        <!-- {{ $teacher->taughtSubjects->pluck('name')->unique()->join(', ') ?: 'No subject assigned' }} - -->
+                         {{ ucfirst($teacher->status) }}
+                    </p>
                 </div>
             </div>
             <div class="flex gap-2">

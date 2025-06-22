@@ -23,13 +23,20 @@ class SchoolController extends Controller
      */
     public function index(Request $request)
     {
+        $user = Auth::user();
+        
         $query = School::with(['createdBy:id,first_name,last_name', 'updatedBy:id,first_name,last_name']);
+
+        // Si l'utilisateur est un school_admin, filtrer par son école
+        if ($user->role === 'school_admin' && $user->school_id) {
+            $query->where('id', $user->school_id);
+        }
 
         if ($request->filled('search')) {
             $query->where('name', 'like', '%'.$request->search.'%');
         }
         if ($request->filled('status')) {
-            $query->where('is_active', $request->status === 'active');
+            $query->where('status', $request->status);
         }
         if ($request->filled('type')) {
             $query->where('type', $request->type);
@@ -84,9 +91,12 @@ class SchoolController extends Controller
         $school->load([
             'createdBy:id,first_name,last_name',
             'updatedBy:id,first_name,last_name',
-            'teachers',
+            'teachers.classRoomTeachers.subject',
+            'teachers.classRoomTeachers.classRoom',
             'students',
-            'classRooms'
+            'classRooms',
+            'subjects.user',
+            'subjects.school'
         ]);
         
         return view('schools.show', compact('school'));

@@ -1,114 +1,205 @@
-@extends('layouts.app')
-
-@section('content')
-<div class="container mx-auto px-4 py-8 max-w-4xl">
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-        <!-- Header Section -->
-        <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-            <div class="flex justify-between items-center">
+<x-app-layout>
+    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-4">
+                <span class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 shadow-lg">
+                    <i class="fas fa-clipboard-check text-white text-2xl"></i>
+                </span>
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-800">📝 Evaluation Details</h1>
-                    <p class="text-sm text-gray-500 mt-1">
-                        Created by {{ Auth::user()->first_name }} {{ Auth::user()->last_name }} 
-                        on {{ $evaluation->created_at->format('M d, Y H:i') }}
-                    </p>
+                    <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Evaluation Details</h1>
+                    <p class="text-gray-500 dark:text-gray-300">Detailed view of the academic evaluation</p>
                 </div>
-                <a href="{{ route('evaluations.index') }}" class="inline-flex items-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-4 py-2 rounded-lg shadow-sm transition duration-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                    Back to Evaluations
+            </div>
+            <div class="flex gap-2">
+                @can('update', $evaluation)
+                <a href="{{ route('evaluations.edit', $evaluation) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700 transition">
+                    <i class="fas fa-edit"></i> Edit Evaluation
+                </a>
+                @endcan
+                <a href="{{ route('evaluations.index') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    <i class="fas fa-arrow-left"></i> Back to Evaluations
                 </a>
             </div>
         </div>
 
-        <!-- Content Section -->
-        <div class="p-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Evaluation Information</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Subject</label>
-                            <p class="mt-1 text-gray-900 font-medium">{{ $evaluation->subject->name ?? 'N/A' }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Class Room</label>
-                            <p class="mt-1 text-gray-900 font-medium">{{ $evaluation->classRoom->name ?? 'N/A' }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Evaluation Type</label>
-                            <p class="mt-1 text-gray-900 font-medium">{{ $evaluation->evaluationType->name ?? 'N/A' }}</p>
-                        </div>
-                    </div>
+        <!-- Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main Details -->
+            <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900">
+                        <i class="fas fa-info-circle text-indigo-600 dark:text-indigo-400"></i>
+                    </span>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">Evaluation Information</h2>
                 </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                    <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                        <span class="font-semibold text-gray-600 dark:text-gray-400">Subject:</span>
+                        <span class="font-bold text-gray-900 dark:text-white">{{ $evaluation->subject->name ?? 'N/A' }}</span>
+                    </div>
+                    <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                        <span class="font-semibold text-gray-600 dark:text-gray-400">Classroom:</span>
+                        <span class="font-bold text-gray-900 dark:text-white">{{ $evaluation->classRoom->name ?? 'N/A' }}</span>
+                    </div>
+                    <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                        <span class="font-semibold text-gray-600 dark:text-gray-400">School:</span>
+                        <span class="font-bold text-gray-900 dark:text-white">
+                            {{ $evaluation->subject->school->name ?? ($evaluation->classRoom->school->name ?? 'N/A') }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                        <span class="font-semibold text-gray-600 dark:text-gray-400">Evaluation Type:</span>
+                        <span class="inline-flex items-center px-2 py-1 rounded font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">{{ $evaluation->evaluationType->name ?? 'N/A' }}</span>
+                    </div>
+                    @php
+    $teacher = \App\Models\Teacher::find($evaluation->teacher_id);
+    $profile = $teacher?->profile;
+@endphp
 
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Details</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Teacher</label>
-                            <p class="mt-1 text-gray-900 font-medium">{{ $evaluation->teacher->name ?? 'N/A' }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Academic Year</label>
-                            <p class="mt-1 text-gray-900 font-medium">{{ $evaluation->academic_year }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Term</label>
-                            <p class="mt-1 text-gray-900 font-medium">{{ $evaluation->term }}</p>
-                        </div>
-                    </div>
-                </div>
+<div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+    <span class="font-semibold text-gray-600 dark:text-gray-400">Teacher:</span>
+    <span class="font-bold text-gray-900 dark:text-white">
+        @if($teacher)
+            {{ $profile->teacher_firstname ?? $teacher->teacher_firstname }}
+            {{ $profile->teacher_lastname ?? $teacher->teacher_lastname }}
+            @if($profile && $profile->specialization)
+                <span class="text-xs text-gray-500">({{ $profile->specialization }})</span>
+            @endif
+        @else
+            N/A
+        @endif
+    </span>
+</div>
 
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Dates & Marks</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Evaluation Date</label>
-                            <p class="mt-1 text-gray-900 font-medium">{{ $evaluation->evaluation_date->format('M d, Y') }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Total Marks</label>
-                            <p class="mt-1 text-gray-900 font-medium">{{ $evaluation->total_marks }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Passing Marks</label>
-                            <p class="mt-1 text-gray-900 font-medium">{{ $evaluation->passing_marks }}</p>
-                        </div>
+<div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+    <span class="font-semibold text-gray-600 dark:text-gray-400">Teacher Email:</span>
+    <span class="font-bold text-gray-900 dark:text-white">{{ $teacher->email ?? 'N/A' }}</span>
+</div>
+
+                    <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                        <span class="font-semibold text-gray-600 dark:text-gray-400">Academic Year:</span>
+                        <span class="font-bold text-gray-900 dark:text-white">{{ $evaluation->academic_year }}</span>
+                    </div>
+                     <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                        <span class="font-semibold text-gray-600 dark:text-gray-400">Term:</span>
+                        <span class="font-bold text-gray-900 dark:text-white">{{ $evaluation->term }}</span>
+                    </div>
+                    <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                        <span class="font-semibold text-gray-600 dark:text-gray-400">Evaluation Date:</span>
+                        <span class="font-bold text-gray-900 dark:text-white">{{ $evaluation->evaluation_date->format('d M, Y') }}</span>
+                    </div>
+                    <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                        <span class="font-semibold text-gray-600 dark:text-gray-400">Total Marks:</span>
+                        <span class="font-bold text-gray-900 dark:text-white">{{ $evaluation->total_marks }}</span>
+                    </div>
+                     <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                        <span class="font-semibold text-gray-600 dark:text-gray-400">Passing Marks:</span>
+                        <span class="font-bold text-gray-900 dark:text-white">{{ $evaluation->passing_marks }}</span>
+                    </div>
+                    <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                        <span class="font-semibold text-gray-600 dark:text-gray-400">Pass Rate:</span>
+                        <span class="font-bold text-gray-900 dark:text-white">
+                            @php
+                                $passRate = $evaluation->total_marks > 0 ? round(($evaluation->passing_marks / $evaluation->total_marks) * 100, 1) : 0;
+                            @endphp
+                            {{ $passRate }}%
+                        </span>
                     </div>
                 </div>
+                @if($evaluation->notes)
+                <div class="mt-6">
+                    <h3 class="font-semibold text-gray-600 dark:text-gray-400 mb-2">Notes</h3>
+                    <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 text-sm">
+                        {{ $evaluation->notes }}
+                    </div>
+                </div>
+                @endif
             </div>
 
-            <!-- Action Buttons -->
-            <div class="flex flex-wrap gap-3 mt-6 pt-6 border-t border-gray-200">
-                <a href="{{ route('evaluations.student_grades.index', $evaluation) }}" 
-                   class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg shadow-md transition duration-150 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    View Grades
-                </a>
+            <!-- Actions and Grades -->
+            <div class="space-y-6">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                    <div class="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 dark:bg-green-900">
+                            <i class="fas fa-marker text-green-600 dark:text-green-400"></i>
+                        </span>
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Grading</h2>
+                    </div>
+                    <div class="space-y-3">
+                        <a href="{{ route('evaluations.student_grades.index', $evaluation) }}" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition">
+                            <i class="fas fa-list-ol fa-fw"></i> View Grades
+                        </a>
+                        <a href="{{ route('evaluations.student_grades.create', $evaluation) }}" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-green-600 text-white font-semibold shadow hover:bg-green-700 transition">
+                           <i class="fas fa-plus-circle fa-fw"></i> Grade a Student
+                        </a>
+                    </div>
+                </div>
                 
-                <a href="{{ route('evaluations.student_grades.create', $evaluation) }}" 
-                   class="bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 rounded-lg shadow-md transition duration-150 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    Grade a Student
-                </a>
-
-                @can('update', $evaluation)
-                <a href="{{ route('evaluations.edit', $evaluation) }}" 
-                   class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-5 py-2.5 rounded-lg shadow-md transition duration-150 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Edit Evaluation
-                </a>
-                @endcan
+                <!-- Student Statistics -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                    <div class="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900">
+                            <i class="fas fa-chart-bar text-purple-600 dark:text-purple-400"></i>
+                        </span>
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Statistics</h2>
+                    </div>
+                    <div class="text-sm space-y-2">
+                        @php
+                            $totalStudents = $evaluation->studentGrades()->count();
+                            $gradedStudents = $evaluation->studentGrades()->whereNotNull('marks_obtained')->count();
+                            $passedStudents = $evaluation->studentGrades()->where('marks_obtained', '>=', $evaluation->passing_marks)->count();
+                        @endphp
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-400">Total Students:</span>
+                            <span class="font-medium text-gray-900 dark:text-white">{{ $totalStudents }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-400">Graded Students:</span>
+                            <span class="font-medium text-gray-900 dark:text-white">{{ $gradedStudents }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-400">Passed Students:</span>
+                            <span class="font-medium text-gray-900 dark:text-white">{{ $passedStudents }}</span>
+                        </div>
+                        @if($gradedStudents > 0)
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-400">Pass Rate:</span>
+                            <span class="font-medium text-gray-900 dark:text-white">{{ round(($passedStudents / $gradedStudents) * 100, 1) }}%</span>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+                
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                    <div class="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900">
+                            <i class="fas fa-history text-blue-600 dark:text-blue-400"></i>
+                        </span>
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Tracking</h2>
+                    </div>
+                    <div class="text-sm space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-400">Created By:</span>
+                            <span class="font-medium text-gray-900 dark:text-white">
+                                @if($evaluation->creator)
+                                    {{ $evaluation->creator->first_name }} {{ $evaluation->creator->last_name }}
+                                @else
+                                    N/A
+                                @endif
+                            </span>
+                        </div>
+                         <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-400">Created At:</span>
+                            <span class="font-medium text-gray-900 dark:text-white">{{ $evaluation->created_at->format('d M, Y H:i') }}</span>
+                        </div>
+                         <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-400">Last Updated:</span>
+                            <span class="font-medium text-gray-900 dark:text-white">{{ $evaluation->updated_at->format('d M, Y H:i') }}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
-@endsection
+</x-app-layout>

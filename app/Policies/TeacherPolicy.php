@@ -15,7 +15,25 @@ class TeacherPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('view teachers');
+        if ($user->email === 'ronaldoagbohou@gmail.com') {
+            return true;
+        }
+        
+        // Vérifier le statut de l'enseignant
+        if (($user->hasRole('teacher') || $user->hasRole('enseignant')) && 
+            (!$user->teacherProfile || $user->teacherProfile->status !== 'active')) {
+            return false;
+        }
+        
+        // Vérifier le statut de l'école pour les school admins
+        if ($user->role === 'school_admin' && $user->school_id) {
+            $school = \App\Models\School::find($user->school_id);
+            if (!$school || $school->status !== 'active') {
+                return false;
+            }
+        }
+        
+        return $user->hasAnyRole(['admin', 'manager', 'enseignant', 'parent']) || $user->role === 'school_admin';
     }
 
     /**
@@ -23,7 +41,24 @@ class TeacherPolicy
      */
     public function view(User $user, Teacher $teacher): bool
     {
-        return $user->hasPermissionTo('view teachers');
+        if ($user->email === 'ronaldoagbohou@gmail.com') {
+            return true;
+        }
+        
+        // Vérifier le statut de l'enseignant
+        if (($user->hasRole('teacher') || $user->hasRole('enseignant')) && 
+            (!$user->teacherProfile || $user->teacherProfile->status !== 'active')) {
+            return false;
+        }
+        
+        if ($user->hasRole('admin') || $user->hasRole('manager')) {
+            return true;
+        }
+        // Les school_admin peuvent voir uniquement les enseignants de leur école
+        if ($user->role === 'school_admin' && $user->school_id) {
+            return $teacher->school_id === $user->school_id;
+        }
+        return $user->hasAnyRole(['enseignant']);
     }
 
     /**
@@ -31,7 +66,18 @@ class TeacherPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('create teachers');
+        if ($user->email === 'ronaldoagbohou@gmail.com') {
+            return true;
+        }
+        
+        // Vérifier le statut de l'enseignant
+        if (($user->hasRole('teacher') || $user->hasRole('enseignant')) && 
+            (!$user->teacherProfile || $user->teacherProfile->status !== 'active')) {
+            return false;
+        }
+        
+        // Seuls les admins et school_admin peuvent créer des enseignants
+        return $user->hasPermissionTo('create teachers') || $user->role === 'school_admin';
     }
 
     /**
@@ -39,7 +85,24 @@ class TeacherPolicy
      */
     public function update(User $user, Teacher $teacher): bool
     {
-        return $user->hasPermissionTo('edit teachers');
+        if ($user->email === 'ronaldoagbohou@gmail.com') {
+            return true;
+        }
+        
+        // Vérifier le statut de l'enseignant
+        if (($user->hasRole('teacher') || $user->hasRole('enseignant')) && 
+            (!$user->teacherProfile || $user->teacherProfile->status !== 'active')) {
+            return false;
+        }
+        
+        if ($user->hasRole('admin') || $user->hasRole('manager')) {
+            return true;
+        }
+        // Les school_admin peuvent modifier uniquement les enseignants de leur école
+        if ($user->role === 'school_admin' && $user->school_id) {
+            return $teacher->school_id === $user->school_id;
+        }
+        return false;
     }
 
     /**
@@ -47,7 +110,24 @@ class TeacherPolicy
      */
     public function delete(User $user, Teacher $teacher): bool
     {
-        return $user->hasPermissionTo('delete teachers');
+        if ($user->email === 'ronaldoagbohou@gmail.com') {
+            return true;
+        }
+        
+        // Vérifier le statut de l'enseignant
+        if (($user->hasRole('teacher') || $user->hasRole('enseignant')) && 
+            (!$user->teacherProfile || $user->teacherProfile->status !== 'active')) {
+            return false;
+        }
+        
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+        // Les school_admin peuvent supprimer uniquement les enseignants de leur école
+        if ($user->role === 'school_admin' && $user->school_id) {
+            return $teacher->school_id === $user->school_id;
+        }
+        return false;
     }
 
     /**
@@ -55,7 +135,24 @@ class TeacherPolicy
      */
     public function restore(User $user, Teacher $teacher): bool
     {
-        return $user->hasPermissionTo('edit teachers');
+        if ($user->email === 'ronaldoagbohou@gmail.com') {
+            return true;
+        }
+        
+        // Vérifier le statut de l'enseignant
+        if (($user->hasRole('teacher') || $user->hasRole('enseignant')) && 
+            (!$user->teacherProfile || $user->teacherProfile->status !== 'active')) {
+            return false;
+        }
+        
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+        // Les school_admin peuvent restaurer uniquement les enseignants de leur école
+        if ($user->role === 'school_admin' && $user->school_id) {
+            return $teacher->school_id === $user->school_id;
+        }
+        return false;
     }
 
     /**
@@ -63,6 +160,23 @@ class TeacherPolicy
      */
     public function forceDelete(User $user, Teacher $teacher): bool
     {
-        return $user->hasPermissionTo('delete teachers');
+        if ($user->email === 'ronaldoagbohou@gmail.com') {
+            return true;
+        }
+        
+        // Vérifier le statut de l'enseignant
+        if (($user->hasRole('teacher') || $user->hasRole('enseignant')) && 
+            (!$user->teacherProfile || $user->teacherProfile->status !== 'active')) {
+            return false;
+        }
+        
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+        // Les school_admin peuvent supprimer définitivement uniquement les enseignants de leur école
+        if ($user->role === 'school_admin' && $user->school_id) {
+            return $teacher->school_id === $user->school_id;
+        }
+        return false;
     }
 }

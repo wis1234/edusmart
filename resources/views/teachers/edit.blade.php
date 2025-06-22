@@ -137,96 +137,93 @@
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Teaching Assignments</h3>
                         <span id="assignment-counter" class="text-sm text-gray-600 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded-full">
-                            {{ count($teacher->taughtSubjects) > 0 ? count($teacher->taughtSubjects) . ' assignment(s)' : '1 assignment' }}
+                            {{ count($teacher->classRoomTeachers) > 0 ? count($teacher->classRoomTeachers) . ' assignment(s)' : '1 assignment' }}
                         </span>
                     </div>
                     <div id="assignments-container">
-                        @forelse ($teacher->taughtSubjects as $subject)
-                            @foreach($teacher->teachingClassRooms->where('pivot.subject_id', $subject->id) as $classRoom)
-                                <div class="assignment-entry grid grid-cols-1 md:grid-cols-5 gap-4 mb-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 shadow-sm" data-assignment-id="existing_{{ $subject->id }}_{{ $classRoom->id }}">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">School <span class="text-red-500">*</span></label>
-                                        <select name="schools[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
-                                            <option value="">Select School</option>
-                                            @foreach($schools as $school)
-                                                <option value="{{ $school->id }}" {{ old('schools.0', $classRoom->school_id ?? '') == $school->id ? 'selected' : '' }}>{{ $school->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Subject <span class="text-red-500">*</span></label>
-                                        <select name="subjects[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
-                                            <option value="">Select Subject</option>
-                                            @foreach($subjects as $s)
-                                                @if($s->is_active)
-                                                    <option value="{{ $s->id }}" {{ old('subjects.0', $subject->id) == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
-                                                @endif
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Class Room <span class="text-red-500">*</span></label>
-                                        <select name="class_rooms[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
-                                            <option value="">Select Class Room</option>
-                                            @foreach($classRooms as $cr)
-                                                <option value="{{ $cr->id }}" {{ old('class_rooms.0', $classRoom->id) == $cr->id ? 'selected' : '' }}>{{ $cr->name }} ({{ $cr->grade_level }})</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Academic Year <span class="text-red-500">*</span></label>
-                                        <select name="years[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
-                                            @for($year = date('Y') + 2; $year >= date('Y') - 5; $year--)
-                                                <option value="{{ $year }}" {{ old('years.0', $classRoom->pivot->year ?? date('Y')) == $year ? 'selected' : '' }}>
-                                                    {{ $year }}-{{ $year + 1 }}
-                                                </option>
-                                            @endfor
-                                        </select>
-                                    </div>
-                                    <div class="flex items-end">
-                                        <button type="button" class="remove-assignment bg-red-500 hover:bg-red-700 text-white text-sm font-bold py-2 px-3 rounded-lg transition w-full" 
-                                                onclick="window.removeAssignment('existing_{{ $subject->id }}_{{ $classRoom->id }}')" title="Remove this assignment">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-            </div>
-                            @endforeach
-                        @empty
-                            <div class="assignment-entry grid grid-cols-1 md:grid-cols-5 gap-4 mb-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 shadow-sm" data-assignment-id="initial">
+                        @php $assignmentIndex = 0; @endphp
+                        @forelse ($teacher->classRoomTeachers as $assignment)
+                            <div class="assignment-entry grid grid-cols-1 md:grid-cols-5 gap-4 mb-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 shadow-sm" data-assignment-id="{{ $assignmentIndex }}">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">School <span class="text-red-500">*</span></label>
-                                    <select name="schools[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                    <select name="schools[]" class="school-select mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
                                         <option value="">Select School</option>
                                         @foreach($schools as $school)
-                                            <option value="{{ $school->id }}" {{ old('schools.0') == $school->id ? 'selected' : '' }}>{{ $school->name }}</option>
+                                            <option value="{{ $school->id }}" {{ $assignment->classRoom && $assignment->classRoom->school_id == $school->id ? 'selected' : '' }}>{{ $school->name }}</option>
                                         @endforeach
                                     </select>
-            </div>
+                                </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Subject <span class="text-red-500">*</span></label>
-                                    <select name="subjects[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
-                                        <option value="">Select Subject</option>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Subjects <span class="text-red-500">*</span></label>
+                                    <select name="subjects[{{ $assignmentIndex }}][]" class="subject-select mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" multiple required>
                                         @foreach($subjects as $subject)
-                                            @if($subject->is_active==1)
-                                            <option value="{{ $subject->id }}" {{ old('subjects.0') == $subject->id ? 'selected' : '' }}>{{ $subject->name }}</option>
-                                            @endif
+                                            <option value="{{ $subject->id }}" data-school="{{ $subject->school_id }}" @if($assignment->subject_id == $subject->id) selected @endif>{{ $subject->name }}</option>
                                         @endforeach
                                     </select>
-            </div>
+                                    <small class="text-xs text-gray-500">Hold Ctrl (Windows) or Cmd (Mac) to select multiple subjects</small>
+                                </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Class Room <span class="text-red-500">*</span></label>
                                     <select name="class_rooms[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
                                         <option value="">Select Class Room</option>
                                         @foreach($classRooms as $classRoom)
-                                            <option value="{{ $classRoom->id }}" {{ old('class_rooms.0') == $classRoom->id ? 'selected' : '' }}>{{ $classRoom->name }} ({{ $classRoom->grade_level }})</option>
-                    @endforeach
-                </select>
-            </div>
+                                            <option value="{{ $classRoom->id }}" data-school="{{ $classRoom->school_id }}" {{ $assignment->class_room_id == $classRoom->id ? 'selected' : '' }}>{{ $classRoom->name }} ({{ $classRoom->grade_level }})</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Academic Year <span class="text-red-500">*</span></label>
                                     <select name="years[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
                                         @for($year = date('Y') + 2; $year >= date('Y') - 5; $year--)
-                                            <option value="{{ $year }}" {{ old('years.0', date('Y')) == $year ? 'selected' : '' }}>
+                                            <option value="{{ $year }}" {{ $assignment->year == $year ? 'selected' : '' }}>
+                                                {{ $year }}-{{ $year + 1 }}
+                                            </option>
+                                        @endfor
+                                    </select>
+                                </div>
+                                <div class="flex items-end">
+                                    <button type="button" class="remove-assignment bg-red-500 hover:bg-red-700 text-white text-sm font-bold py-2 px-3 rounded-lg transition w-full" 
+                                            onclick="this.closest('.assignment-entry').remove();" title="Remove this assignment">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            @php $assignmentIndex++; @endphp
+                        @empty
+                            <!-- If no assignments, show a blank row -->
+                            <div class="assignment-entry grid grid-cols-1 md:grid-cols-5 gap-4 mb-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 shadow-sm" data-assignment-id="0">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">School <span class="text-red-500">*</span></label>
+                                    <select name="schools[]" class="school-select mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                        <option value="">Select School</option>
+                                        @foreach($schools as $school)
+                                            <option value="{{ $school->id }}">{{ $school->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Subjects <span class="text-red-500">*</span></label>
+                                    <select name="subjects[0][]" class="subject-select mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" multiple required>
+                                        @foreach($subjects as $subject)
+                                            <option value="{{ $subject->id }}" data-school="{{ $subject->school_id }}">{{ $subject->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <small class="text-xs text-gray-500">Hold Ctrl (Windows) or Cmd (Mac) to select multiple subjects</small>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Class Room <span class="text-red-500">*</span></label>
+                                    <select name="class_rooms[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                        <option value="">Select Class Room</option>
+                                        @foreach($classRooms as $classRoom)
+                                            <option value="{{ $classRoom->id }}" data-school="{{ $classRoom->school_id }}">{{ $classRoom->name }} ({{ $classRoom->grade_level }})</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Academic Year <span class="text-red-500">*</span></label>
+                                    <select name="years[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                        @for($year = date('Y') + 2; $year >= date('Y') - 5; $year--)
+                                            <option value="{{ $year }}">
                                                 {{ $year }}-{{ $year + 1 }}
                                             </option>
                                         @endfor
@@ -234,7 +231,7 @@
                                 </div>
                                 <div class="flex items-end">
                                     <button type="button" class="remove-assignment bg-red-500 hover:bg-red-700 text-white text-sm font-bold py-2 px-3 rounded-lg transition w-full opacity-50 cursor-not-allowed" 
-                                            onclick="window.removeAssignment('initial')" title="Remove this assignment" disabled>
+                                            onclick="this.closest('.assignment-entry').remove();" title="Remove this assignment" disabled>
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
@@ -351,5 +348,58 @@
         }
             
         })();
+
+        // Helper to filter subjects by school
+        function filterSubjectsBySchool(subjectSelect, schoolId) {
+            Array.from(subjectSelect.options).forEach(option => {
+                option.style.display = (option.getAttribute('data-school') == schoolId) ? '' : 'none';
+            });
+        }
+
+        // Assignment row management
+        let assignmentIndex = {{ $assignmentIndex ?? 1 }};
+        document.getElementById('add-assignment').addEventListener('click', function() {
+            const container = document.getElementById('assignments-container');
+            const firstEntry = container.querySelector('.assignment-entry');
+            const newEntry = firstEntry.cloneNode(true);
+            // Update names and clear values
+            newEntry.setAttribute('data-assignment-id', assignmentIndex);
+            newEntry.querySelectorAll('select, input').forEach(el => {
+                if (el.name && el.name.startsWith('subjects[')) {
+                    el.name = `subjects[${assignmentIndex}][]`;
+                    el.selectedIndex = -1;
+                } else if (el.name === 'schools[]') {
+                    el.selectedIndex = 0;
+                } else if (el.name === 'class_rooms[]') {
+                    el.selectedIndex = 0;
+                } else if (el.name === 'years[]') {
+                    el.selectedIndex = 0;
+                }
+            });
+            // Enable remove button
+            const removeBtn = newEntry.querySelector('.remove-assignment');
+            removeBtn.disabled = false;
+            removeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            removeBtn.onclick = function() { newEntry.remove(); };
+            container.appendChild(newEntry);
+            assignmentIndex++;
+        });
+
+        // School select change event to filter subjects
+        function updateSubjectDropdowns() {
+            document.querySelectorAll('.assignment-entry').forEach(entry => {
+                const schoolSelect = entry.querySelector('.school-select');
+                const subjectSelect = entry.querySelector('.subject-select');
+                if (schoolSelect && subjectSelect) {
+                    schoolSelect.addEventListener('change', function() {
+                        filterSubjectsBySchool(subjectSelect, this.value);
+                    });
+                    // Initial filter
+                    filterSubjectsBySchool(subjectSelect, schoolSelect.value);
+                }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', updateSubjectDropdowns);
+        document.getElementById('assignments-container').addEventListener('DOMNodeInserted', updateSubjectDropdowns);
 </script>
 </x-app-layout>

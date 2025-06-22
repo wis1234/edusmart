@@ -48,6 +48,7 @@
                         <option value="on_leave" @if(request('status')=='on_leave') selected @endif>On Leave</option>
                     </select>
                 </div>
+                @if(auth()->user()->isAdmin())
                 <div>
                     <select name="school" id="school" class="rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-indigo-500">
                         <option value="">All Schools</option>
@@ -58,6 +59,7 @@
                         @endisset
                     </select>
                 </div>
+                @endif
                 <div>
                     <select name="subject" id="subject" class="rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-indigo-500">
                         <option value="">All Subjects</option>
@@ -131,8 +133,8 @@
                                     </div>
                                 </td>
                                 <td class="px-2 py-3 max-w-xs truncate">
-                                    @if($teacher->teachingClassRooms->isNotEmpty())
-                                        {{ $teacher->teachingClassRooms->first()->school->name }}
+                                    @if($teacher->school)
+                                        {{ $teacher->school->name }}
                                     @else
                                         <span class="text-gray-400">Not assigned</span>
                                     @endif
@@ -215,7 +217,7 @@
                         </div>
                         <div class="text-xs text-gray-500 dark:text-gray-400 mb-1 break-all truncate max-w-xs">{{ $teacher->email }}</div>
                         <div class="flex flex-col gap-1 text-sm">
-                            <span class="truncate max-w-xs"><i class="fas fa-school mr-1"></i> @if($teacher->teachingClassRooms->isNotEmpty()){{ $teacher->teachingClassRooms->first()->school->name }}@else Not assigned @endif</span>
+                            <span class="truncate max-w-xs"><i class="fas fa-school mr-1"></i> @if($teacher->school) {{ $teacher->school->name }}@else Not assigned @endif</span>
                             <span class="truncate max-w-xs"><i class="fas fa-chalkboard mr-1"></i> @if($teacher->teachingClassRooms->isNotEmpty()){{ $teacher->teachingClassRooms->first()->name }}@else Not assigned @endif</span>
                             <span class="truncate max-w-xs"><i class="fas fa-phone mr-1"></i> {{ $teacher->phone }}</span>
                         </div>

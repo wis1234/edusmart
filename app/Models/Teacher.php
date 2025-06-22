@@ -14,7 +14,18 @@ class Teacher extends Model
     use HasFactory, LogsActivity;
 
     protected $fillable = [
+        'teacher_firstname',
+        'teacher_lastname',
+        'teacher_email',
+        'teacher_phone',
+        'date_of_birth',
+        'gender',
+        'address',
         'grade',
+        'speciality',
+        'subject_title',
+        'status',
+        'profile_photo',
         'experience',
         'qualification',
         'user_id',
@@ -57,7 +68,7 @@ class Teacher extends Model
      */
     public function subjects(): BelongsToMany
     {
-        return $this->belongsToMany(Subject::class);
+        return $this->belongsToMany(Subject::class, 'subject_teacher', 'teacher_id', 'subject_id')->distinct();
     }
 
     /**
@@ -65,7 +76,7 @@ class Teacher extends Model
      */
     public function classRooms(): BelongsToMany
     {
-        return $this->belongsToMany(ClassRoom::class);
+        return $this->belongsToMany(ClassRoom::class, 'subject_teacher', 'teacher_id', 'class_room_id')->distinct();
     }
 
     /**

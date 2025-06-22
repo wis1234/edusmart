@@ -17,14 +17,32 @@ class StudentGradeController extends Controller
         $this->authorizeResource(StudentGrade::class, 'student_grade');
     }
 
-    public function index(Evaluation $evaluation)
+    public function index(Evaluation $evaluation, Request $request)
     {
-        $grades = StudentGrade::with(['student.user', 'evaluation'])
-            ->where('evaluation_id', $evaluation->id)
-            ->get();
+        $query = StudentGrade::with(['student.user', 'evaluation'])
+            ->where('evaluation_id', $evaluation->id);
+
+        // Search
+        if ($search = $request->input('search')) {
+            $query->whereHas('student', function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%");
+            });
+        }
+        
+        // Filter by status (pass/fail)
+        if ($request->filled('status')) {
+            if ($request->status == 'passed') {
+                $query->where('marks_obtained', '>=', $evaluation->passing_marks);
+            } elseif ($request->status == 'failed') {
+                $query->where('marks_obtained', '<', $evaluation->passing_marks);
+            }
+        }
+
+        $grades = $query->paginate(10)->withQueryString();
 
         // Calculate performance metrics
-        $performanceMetrics = $this->calculatePerformanceMetrics($grades, $evaluation);
+        $performanceMetrics = $this->calculatePerformanceMetrics($evaluation->studentGrades, $evaluation);
 
         return view('student_grades.index', compact('evaluation', 'grades', 'performanceMetrics'));
     }
@@ -35,9 +53,26 @@ class StudentGradeController extends Controller
             ->pluck('student_id')
             ->toArray();
 
-        $students = Student::where('class_room_id', $evaluation->class_room_id)
+        $schoolId = $evaluation->subject->school_id ?? $evaluation->classRoom->school_id;
+
+        $user = Auth::user();
+        // Un enseignant ne peut donner de note que pour une évaluation qu'il a créée
+        if (($user->hasRole('enseignant') || $user->hasRole('teacher')) && $evaluation->teacher_id !== $user->teacherProfile?->id) {
+            abort(403, "Vous n'êtes pas autorisé à noter cette évaluation.");
+        }
+
+        $studentsQuery = Student::where('class_room_id', $evaluation->class_room_id)
+            ->where('school_id', $schoolId)
             ->whereNotIn('id', $gradedStudentIds)
-            ->get();
+            ->with('user');
+
+        // Les admins et school admins peuvent voir tous les étudiants (actifs et inactifs)
+        // Les autres rôles ne voient que les étudiants actifs
+        if (!($user->hasRole('admin') || $user->hasRole('manager') || $user->role === 'school_admin')) {
+            $studentsQuery->where('status', 'active');
+        }
+
+        $students = $studentsQuery->get();
 
         return view('student_grades.create', compact('evaluation', 'students'));
     }
@@ -49,6 +84,19 @@ class StudentGradeController extends Controller
             'marks_obtained' => 'required|numeric|min:0|max:' . $evaluation->total_marks,
             'remarks' => 'nullable|string|max:500',
         ]);
+
+        // Vérifier que l'étudiant appartient à la bonne école et classe
+        $schoolId = $evaluation->subject->school_id ?? $evaluation->classRoom->school_id;
+        $student = Student::where('id', $validated['student_id'])
+            ->where('class_room_id', $evaluation->class_room_id)
+            ->where('school_id', $schoolId)
+            ->first();
+
+        if (!$student) {
+            return redirect()->back()
+                ->withErrors(['student_id' => 'The selected student does not belong to this evaluation\'s class and school.'])
+                ->withInput();
+        }
 
         $validated['evaluation_id'] = $evaluation->id;
 
@@ -63,14 +111,29 @@ class StudentGradeController extends Controller
             Mail::to($student->parent->user->email)->send(new EvaluationPublishedMail($studentGrade));
         }
 
-        return redirect()->route('evaluations.show', $evaluation)
-            ->with('success', 'Grade recorded successfully.');
+        return redirect()->back()->with('success', 'Grade recorded successfully.');
     }
 
     public function edit(StudentGrade $student_grade)
     {
         $evaluation = $student_grade->evaluation;
-        $students = Student::where('class_room_id', $evaluation->class_room_id)->get();
+        
+        // Récupérer l'école de l'évaluation
+        $schoolId = $evaluation->subject->school_id ?? $evaluation->classRoom->school_id;
+        
+        $user = Auth::user();
+        $studentsQuery = Student::where('class_room_id', $evaluation->class_room_id)
+            ->where('school_id', $schoolId) // Filtrer par école
+            ->with('user'); // Charger la relation user pour afficher le nom
+
+        // Les admins et school admins peuvent voir tous les étudiants (actifs et inactifs)
+        // Les autres rôles ne voient que les étudiants actifs
+        if (!($user->hasRole('admin') || $user->hasRole('manager') || $user->role === 'school_admin')) {
+            $studentsQuery->where('status', 'active');
+        }
+            
+        $students = $studentsQuery->get();
+            
         return view('student_grades.edit', compact('student_grade', 'evaluation', 'students'));
     }
 
@@ -85,7 +148,7 @@ class StudentGradeController extends Controller
 
         $student_grade->update($validated);
 
-        return redirect()->route('evaluations.show', $evaluation)
+        return redirect()->route('evaluations.student_grades.index', $evaluation)
             ->with('success', 'Grade updated successfully.');
     }
 
@@ -96,6 +159,59 @@ class StudentGradeController extends Controller
 
         return redirect()->route('evaluations.show', $evaluation)
             ->with('success', 'Grade deleted successfully.');
+    }
+
+    public function indexAll(Request $request)
+    {
+        $this->authorize('viewAny', StudentGrade::class);
+
+        $user = Auth::user();
+        $query = StudentGrade::with([
+            'student.user',
+            'evaluation.subject',
+            'evaluation.evaluationType',
+            'evaluation.classRoom'
+        ])->latest('updated_at');
+
+        // Si l'utilisateur est un enseignant, filtrer par ses matières enseignées
+        if ($user->role === 'enseignant') {
+            $query->whereHas('evaluation.subject', function($q) use ($user) {
+                $q->whereIn('id', $user->taughtSubjects()->pluck('subjects.id'));
+            });
+        }
+
+        if ($search = $request->input('search')) {
+            $query->whereHas('student.user', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%");
+            });
+        }
+
+        if ($subjectId = $request->input('subject_id')) {
+            $query->whereHas('evaluation.subject', function ($q) use ($subjectId) {
+                $q->where('id', $subjectId);
+            });
+        }
+
+        if ($classRoomId = $request->input('class_room_id')) {
+            $query->whereHas('evaluation.classRoom', function ($q) use ($classRoomId) {
+                $q->where('id', $classRoomId);
+            });
+        }
+        
+        $grades = $query->paginate(15)->withQueryString();
+        
+        // Filtrer les matières et classes par matières enseignées pour les enseignants
+        if ($user->role === 'enseignant') {
+            $subjects = $user->taughtSubjects()->orderBy('name')->get();
+            $classRooms = $user->teachingClassRooms()->orderBy('name')->get();
+        } else {
+            $subjects = \App\Models\Subject::orderBy('name')->get();
+            $classRooms = \App\Models\ClassRoom::orderBy('name')->get();
+        }
+
+        return view('student_grades.index_all', compact('grades', 'subjects', 'classRooms'));
     }
 
     protected function calculatePerformanceMetrics($grades, $evaluation)

@@ -17,7 +17,16 @@ class ParentPolicy
         if ($user->email === 'ronaldoagbohou@gmail.com') {
             return true;
         }
-        return $user->hasRole('admin') || $user->hasRole('parent');
+        
+        // Vérifier le statut de l'école pour les school admins
+        if ($user->role === 'school_admin' && $user->school_id) {
+            $school = \App\Models\School::find($user->school_id);
+            if (!$school || $school->status !== 'active') {
+                return false;
+            }
+        }
+        
+        return $user->hasRole('admin') || $user->hasRole('parent') || $user->role === 'school_admin';
     }
 
     /**
@@ -28,7 +37,16 @@ class ParentPolicy
         if ($user->email === 'ronaldoagbohou@gmail.com') {
             return true;
         }
-        return $user->hasRole('admin') || $user->hasRole('parent');
+        
+        // Vérifier le statut de l'école pour les school admins
+        if ($user->role === 'school_admin' && $user->school_id) {
+            $school = \App\Models\School::find($user->school_id);
+            if (!$school || $school->status !== 'active') {
+                return false;
+            }
+        }
+        
+        return $user->hasRole('admin') || $user->hasRole('parent') || $user->role === 'school_admin';
     }
 
     /**
@@ -39,7 +57,16 @@ class ParentPolicy
         if ($user->email === 'ronaldoagbohou@gmail.com') {
             return true;
         }
-        return $user->hasRole('admin') || $user->hasRole('parent');
+        
+        // Vérifier le statut de l'école pour les school admins
+        if ($user->role === 'school_admin' && $user->school_id) {
+            $school = \App\Models\School::find($user->school_id);
+            if (!$school || $school->status !== 'active') {
+                return false;
+            }
+        }
+        
+        return $user->hasRole('admin') || $user->hasRole('parent') || $user->role === 'school_admin';
     }
 
     /**
@@ -50,7 +77,16 @@ class ParentPolicy
         if ($user->email === 'ronaldoagbohou@gmail.com') {
             return true;
         }
-        return $user->hasRole('admin') || $user->hasRole('parent');
+        
+        // Vérifier le statut de l'école pour les school admins
+        if ($user->role === 'school_admin' && $user->school_id) {
+            $school = \App\Models\School::find($user->school_id);
+            if (!$school || $school->status !== 'active') {
+                return false;
+            }
+        }
+        
+        return $user->hasRole('admin') || $user->hasRole('parent') || $user->role === 'school_admin';
     }
 
     /**
@@ -61,6 +97,15 @@ class ParentPolicy
         if ($user->email === 'ronaldoagbohou@gmail.com') {
             return true;
         }
-        return $user->hasRole('admin') || $user->hasRole('parent');
+        
+        // Vérifier le statut de l'école pour les school admins
+        if ($user->role === 'school_admin' && $user->school_id) {
+            $school = \App\Models\School::find($user->school_id);
+            if (!$school || $school->status !== 'active') {
+                return false;
+            }
+        }
+        
+        return $user->hasRole('admin') || $user->hasRole('parent') || $user->role === 'school_admin';
     }
 }

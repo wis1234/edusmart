@@ -137,31 +137,36 @@
                     <div id="assignments-container">
                         <div class="assignment-entry grid grid-cols-1 md:grid-cols-5 gap-4 mb-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 shadow-sm" data-assignment-id="initial">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">School <span class="text-red-500">*</span></label>
-                                <select name="schools[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
-                                    <option value="">Select School</option>
-                                    @foreach($schools as $school)
-                                        <option value="{{ $school->id }}" {{ old('schools.0') == $school->id ? 'selected' : '' }}>{{ $school->name }}</option>
-                                    @endforeach
-                                </select>
+                                @if(auth()->user()->role === 'school_admin')
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">School</label>
+                                    <input type="text" value="{{ auth()->user()->school->name }}" readonly
+                                        class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+                                    <input type="hidden" name="schools[]" value="{{ auth()->user()->school_id }}">
+                                @else
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">School <span class="text-red-500">*</span></label>
+                                    <select name="schools[]" class="school-select mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                        <option value="">Select School</option>
+                                        @foreach($schools as $school)
+                                            <option value="{{ $school->id }}" {{ old('schools.0') == $school->id ? 'selected' : '' }}>{{ $school->name }}</option>
+                                        @endforeach
+                                    </select>
+                                @endif
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Subject <span class="text-red-500">*</span></label>
-                                <select name="subjects[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
-                             <option value="">Select Subject</option>
-                             @foreach($subjects as $subject)
-                              @if($subject->is_active==1)
-                                        <option value="{{ $subject->id }}" {{ old('subjects.0') == $subject->id ? 'selected' : '' }}>{{ $subject->name }}</option>
-                              @endif
-                              @endforeach
-                            </select>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Subjects <span class="text-red-500">*</span></label>
+                                <select name="subjects[0][]" class="subject-select mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" multiple required>
+                                    @foreach($subjects as $subject)
+                                        <option value="{{ $subject->id }}" data-school="{{ $subject->school_id }}">{{ $subject->name }}</option>
+                                    @endforeach
+                                </select>
+                                <small class="text-xs text-gray-500">Hold Ctrl (Windows) or Cmd (Mac) to select multiple subjects</small>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Class Room <span class="text-red-500">*</span></label>
                                 <select name="class_rooms[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
                                     <option value="">Select Class Room</option>
                                     @foreach($classRooms as $classRoom)
-                                        <option value="{{ $classRoom->id }}" {{ old('class_rooms.0') == $classRoom->id ? 'selected' : '' }}>{{ $classRoom->name }} ({{ $classRoom->grade_level }})</option>
+                                        <option value="{{ $classRoom->id }}" data-school="{{ $classRoom->school_id }}">{{ $classRoom->name }} ({{ $classRoom->grade_level }})</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -312,33 +317,50 @@
                     yearOptions.push(`<option value="${year}">${year}-${year + 1}</option>`);
                 }
                 
+                // Vérifier si l'utilisateur est un school_admin
+                const isSchoolAdmin = {{ auth()->user()->role === 'school_admin' ? 'true' : 'false' }};
+                const schoolName = '{{ auth()->user()->role === "school_admin" ? auth()->user()->school->name : "" }}';
+                const schoolId = '{{ auth()->user()->role === "school_admin" ? auth()->user()->school_id : "" }}';
+                
                 const newAssignment = document.createElement('div');
                 newAssignment.className = 'assignment-entry grid grid-cols-1 md:grid-cols-5 gap-4 mb-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 shadow-sm';
                 newAssignment.setAttribute('data-assignment-id', assignmentId);
                 newAssignment.style.opacity = '0';
                 newAssignment.style.transform = 'translateY(-20px) scale(0.95)';
                 
-                newAssignment.innerHTML = `
-                    <div>
+                const schoolField = isSchoolAdmin 
+                    ? `<div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">School</label>
+                        <input type="text" value="${schoolName}" readonly
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+                        <input type="hidden" name="schools[]" value="${schoolId}">
+                       </div>`
+                    : `<div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">School <span class="text-red-500">*</span></label>
                         <select name="schools[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
-                <option value="">Select School</option>
-                ${schools.map(s => `<option value="${s.value}">${s.text}</option>`).join('')}
-            </select>
-                    </div>
+                            <option value="">Select School</option>
+                            ${schools.map(s => `<option value="${s.value}">${s.text}</option>`).join('')}
+                        </select>
+                       </div>`;
+                
+                newAssignment.innerHTML = `
+                    ${schoolField}
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Subject <span class="text-red-500">*</span></label>
-                        <select name="subjects[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
-                <option value="">Select Subject</option>
-                ${subjects.map(s => `<option value="${s.value}">${s.text}</option>`).join('')}
-            </select>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Subjects <span class="text-red-500">*</span></label>
+                        <select name="subjects[${assignmentIndex}][]" class="subject-select mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" multiple required>
+                            @foreach($subjects as $subject)
+                                <option value="{{ $subject->id }}" data-school="{{ $subject->school_id }}">{{ $subject->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Class Room <span class="text-red-500">*</span></label>
                         <select name="class_rooms[]" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500" required>
-                <option value="">Select Class Room</option>
-                ${classRooms.map(cr => `<option value="${cr.value}">${cr.text}</option>`).join('')}
-            </select>
+                            <option value="">Select Class Room</option>
+                            @foreach($classRooms as $classRoom)
+                                <option value="{{ $classRoom->id }}" data-school="{{ $classRoom->school_id }}">{{ $classRoom->name }} ({{ $classRoom->grade_level }})</option>
+                            @endforeach
+                        </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Academic Year <span class="text-red-500">*</span></label>
@@ -454,11 +476,15 @@
                 
                 assignments.forEach((assignment, index) => {
                     const school = assignment.querySelector('select[name="schools[]"]');
+                    const schoolHidden = assignment.querySelector('input[name="schools[]"]');
                     const subject = assignment.querySelector('select[name="subjects[]"]');
                     const classRoom = assignment.querySelector('select[name="class_rooms[]"]');
                     const year = assignment.querySelector('select[name="years[]"]');
                     
-                    if (!school.value || !subject.value || !classRoom.value || !year.value) {
+                    // Vérifier l'école (select ou input hidden pour school_admin)
+                    const schoolValue = school ? school.value : (schoolHidden ? schoolHidden.value : '');
+                    
+                    if (!schoolValue || !subject.value || !classRoom.value || !year.value) {
                         isValid = false;
                         assignment.classList.add('border-red-500', 'bg-red-50', 'dark:bg-red-900/20');
                         errorMessage = 'Please fill out all required fields for each assignment.';
@@ -563,6 +589,28 @@
                         animateOut(notification, () => notification.remove());
                     }
                 }, 4000);
+            }
+            
+            // Helper to filter subjects by school
+            function filterSubjectsBySchool(subjectSelect, schoolId) {
+                Array.from(subjectSelect.options).forEach(option => {
+                    option.style.display = (option.getAttribute('data-school') == schoolId) ? '' : 'none';
+                });
+            }
+            
+            // School select change event to filter subjects
+            function updateSubjectDropdowns() {
+                document.querySelectorAll('.assignment-entry').forEach(entry => {
+                    const schoolSelect = entry.querySelector('.school-select');
+                    const subjectSelect = entry.querySelector('.subject-select');
+                    if (schoolSelect && subjectSelect) {
+                        schoolSelect.addEventListener('change', function() {
+                            filterSubjectsBySchool(subjectSelect, this.value);
+                        });
+                        // Initial filter
+                        filterSubjectsBySchool(subjectSelect, schoolSelect.value);
+                    }
+                });
             }
             
             // Initialisation

@@ -18,7 +18,9 @@ class Subject extends Model
         'credits',
         'level',
         'hours_per_week',
-        'is_active'
+        'is_active',
+        'user_id',
+        'school_id'
     ];
 
     protected $casts = [
@@ -26,6 +28,22 @@ class Subject extends Model
         'credits' => 'integer',
         'hours_per_week' => 'integer'
     ];
+
+    /**
+     * Get the user who created this subject
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the school that owns this subject
+     */
+    public function school()
+    {
+        return $this->belongsTo(School::class);
+    }
 
     /**
      * Get the classrooms where this subject is taught

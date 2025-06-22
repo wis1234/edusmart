@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use App\Traits\LogsActivity;
@@ -25,6 +26,7 @@ class User extends Authenticatable
         'gender',
         'profile_photo',
         'status',
+        'role',
         'school_id',
         'selected_parent_id',
         'two_factor_enabled',
@@ -72,7 +74,13 @@ class User extends Authenticatable
      */
     public function taughtSubjects()
     {
+        if (!$this->teacherProfile) {
+            return $this->belongsToMany(Subject::class, 'subject_teacher', 'teacher_id', 'subject_id')
+                ->whereRaw('1 = 0'); // Retourne une collection vide si pas de profil enseignant
+        }
+        
         return $this->belongsToMany(Subject::class, 'subject_teacher', 'teacher_id', 'subject_id')
+            ->where('teacher_id', $this->teacherProfile->id)
             ->withPivot('year')
             ->withTimestamps();
     }
@@ -82,7 +90,13 @@ class User extends Authenticatable
      */
     public function teachingClassRooms()
     {
+        if (!$this->teacherProfile) {
+            return $this->belongsToMany(ClassRoom::class, 'subject_teacher', 'teacher_id', 'class_room_id')
+                ->whereRaw('1 = 0'); // Retourne une collection vide si pas de profil enseignant
+        }
+        
         return $this->belongsToMany(ClassRoom::class, 'subject_teacher', 'teacher_id', 'class_room_id')
+            ->where('teacher_id', $this->teacherProfile->id)
             ->withPivot('subject_id', 'year')
             ->withTimestamps();
     }
@@ -101,6 +115,14 @@ class User extends Authenticatable
     public function children()
     {
         return $this->hasMany(Student::class, 'parent_id');
+    }
+
+    /**
+     * Get the students associated with this parent (using selected_parent_id)
+     */
+    public function students()
+    {
+        return $this->hasMany(Student::class, 'selected_parent_id');
     }
 
     /**
@@ -133,6 +155,14 @@ class User extends Authenticatable
     public function isAdmin()
     {
         return $this->hasRole('admin');
+    }
+
+    /**
+     * Check if user is a school admin
+     */
+    public function isSchoolAdmin()
+    {
+        return $this->role === 'school_admin';
     }
 
     /**

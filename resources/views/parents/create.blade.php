@@ -1,94 +1,224 @@
-@extends('layouts.app')
-
-@section('content')
-<div class="container mx-auto px-4 py-6">
-    <a href="{{ route('parents.index') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded mb-4 inline-block">← Back to Parents</a>
-    <h1 class="text-3xl font-bold text-center mb-8">Add New Parent</h1>
-
-    @if ($errors->any())
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-            <ul class="list-disc pl-5">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    <form action="{{ route('parents.store') }}" method="POST" class="bg-white max-w-5xl mx-auto p-8 rounded-xl shadow-xl">
-        @csrf
-
-        {{-- Personal Info --}}
-        <div class="mb-8">
-            <h2 class="text-xl font-semibold mb-4 border-b pb-2">👤 Personal Info</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="relative">
-                    <label for="first_name" class="block font-medium mb-1">First Name</label>
-                    <input type="text" name="first_name" id="first_name" value="{{ old('first_name') }}" class="w-full pl-10 border border-gray-300 rounded-lg px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400" required>
-                    <span class="absolute left-3 top-9 text-gray-400"><i class="fas fa-user"></i></span>
+<x-app-layout>
+    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <!-- Header modernisé -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-4">
+                <span class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 shadow-lg">
+                    <i class="fas fa-users text-white text-2xl"></i>
+                </span>
+                <div>
+                    <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Add New Parent</h1>
+                    <p class="text-gray-500 dark:text-gray-300">Register a new parent in the system</p>
                 </div>
-
-                <div class="relative">
-                    <label for="last_name" class="block font-medium mb-1">Last Name</label>
-                    <input type="text" name="last_name" id="last_name" value="{{ old('last_name') }}" class="w-full pl-10 border border-gray-300 rounded-lg px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
-                    <span class="absolute left-3 top-9 text-gray-400"><i class="fas fa-user-tag"></i></span>
-                </div>
-
-                <div class="relative">
-                    <label for="profession" class="block font-medium mb-1">Profession</label>
-                    <input type="text" name="profession" id="profession" value="{{ old('profession') }}" class="w-full pl-10 border border-gray-300 rounded-lg px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
-                    <span class="absolute left-3 top-9 text-gray-400"><i class="fas fa-briefcase"></i></span>
-                </div>
-
-                <div class="relative">
-                    <label for="address" class="block font-medium mb-1">Address</label>
-                    <input type="text" name="address" id="address" value="{{ old('address') }}" class="w-full pl-10 border border-gray-300 rounded-lg px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
-                    <span class="absolute left-3 top-9 text-gray-400"><i class="fas fa-map-marker-alt"></i></span>
-                </div>
+            </div>
+            <div class="flex gap-2">
+                <a href="{{ route('parents.index') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    <i class="fas fa-arrow-left"></i> Back to List
+                </a>
             </div>
         </div>
 
-        {{-- Contact Info --}}
-        <div class="mb-8">
-            <h2 class="text-xl font-semibold mb-4 border-b pb-2">📞 Contact Info</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="relative">
-                    <label for="phone" class="block font-medium mb-1">Phone</label>
-                    <input type="text" name="phone" id="phone" value="{{ old('phone') }}" class="w-full pl-10 border border-gray-300 rounded-lg px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
-                    <span class="absolute left-3 top-9 text-gray-400"><i class="fas fa-phone"></i></span>
-                </div>
-
-                <div class="relative">
-                    <label for="email" class="block font-medium mb-1">Email</label>
-                    <input type="email" name="email" id="email" value="{{ old('email') }}" class="w-full pl-10 border border-gray-300 rounded-lg px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400" required>
-                    <span class="absolute left-3 top-9 text-gray-400"><i class="fas fa-envelope"></i></span>
-                </div>
+        <!-- Messages de session et erreurs -->
+        @if(session('success'))
+            <div class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
+                <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
             </div>
-        </div>
+        @endif
 
-        {{-- Security Info --}}
-        <div class="mb-8">
-            <h2 class="text-xl font-semibold mb-4 border-b pb-2">🔒 Security</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="relative">
-                    <label for="password" class="block font-medium mb-1">Password</label>
-                    <input type="password" name="password" id="password" class="w-full pl-10 border border-gray-300 rounded-lg px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400" required>
-                    <span class="absolute left-3 top-9 text-gray-400"><i class="fas fa-lock"></i></span>
-                </div>
-
-                <div class="relative">
-                    <label for="password_confirmation" class="block font-medium mb-1">Confirm Password</label>
-                    <input type="password" name="password_confirmation" id="password_confirmation" class="w-full pl-10 border border-gray-300 rounded-lg px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400" required>
-                    <span class="absolute left-3 top-9 text-gray-400"><i class="fas fa-lock"></i></span>
-                </div>
+        @if(session('error'))
+            <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+                <i class="fas fa-exclamation-circle mr-2"></i> {{ session('error') }}
             </div>
-        </div>
+        @endif
 
-        <div class="text-center">
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition duration-300">
-                ➕ Add Parent
-            </button>
+        @if ($errors->any())
+            <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+                <div class="flex items-center mb-2">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <strong>Please fix the following errors:</strong>
+                </div>
+                <ul class="list-disc pl-5 space-y-1">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <!-- Formulaire modernisé -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+            <form action="{{ route('parents.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+                @csrf
+
+                <!-- Basic Information -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="first_name" class="block text-sm font-medium text-gray-700 dark:text-gray-200">First Name <span class="text-red-500">*</span></label>
+                        <input type="text" id="first_name" name="first_name" value="{{ old('first_name') }}" required maxlength="255"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('first_name') border-red-500 @enderror">
+                        @error('first_name')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label for="last_name" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Last Name</label>
+                        <input type="text" id="last_name" name="last_name" value="{{ old('last_name') }}" maxlength="255"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('last_name') border-red-500 @enderror">
+                        @error('last_name')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Email Address <span class="text-red-500">*</span></label>
+                        <input type="email" id="email" name="email" value="{{ old('email') }}" required
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('email') border-red-500 @enderror">
+                        @error('email')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" value="{{ old('phone') }}" maxlength="20"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('phone') border-red-500 @enderror">
+                        @error('phone')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Password <span class="text-red-500">*</span></label>
+                        <input type="password" id="password" name="password" required minlength="8"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('password') border-red-500 @enderror">
+                        @error('password')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label for="password_confirmation" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Confirm Password <span class="text-red-500">*</span></label>
+                        <input type="password" id="password_confirmation" name="password_confirmation" required minlength="8"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="profession" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Profession</label>
+                        <input type="text" id="profession" name="profession" value="{{ old('profession') }}" maxlength="255"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('profession') border-red-500 @enderror">
+                        @error('profession')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Status <span class="text-red-500">*</span></label>
+                        <select id="status" name="status" required
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('status') border-red-500 @enderror">
+                            <option value="">Select Status</option>
+                            <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>Active</option>
+                            <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                        </select>
+                        @error('status')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="role" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Role <span class="text-red-500">*</span></label>
+                        <select id="role" name="role" required disabled
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('role') border-red-500 @enderror">
+                            <option value="parent" selected>Parent</option>
+                        </select>
+                        <input type="hidden" name="role" value="parent">
+                        @error('role')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                        <p class="mt-1 text-xs text-gray-500">Role is automatically set to Parent for new parent accounts</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="profile_photo" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Profile Photo</label>
+                        <input type="file" id="profile_photo" name="profile_photo" accept="image/*"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('profile_photo') border-red-500 @enderror"
+                            onchange="previewImage(this)">
+                        @error('profile_photo')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                        <div id="image-preview" class="mt-2 hidden">
+                            <img src="" alt="Profile Preview" class="w-32 h-32 object-cover rounded-lg border-2 border-gray-200 dark:border-gray-600">
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">Accepted formats: JPEG, PNG, JPG, GIF (max 2MB)</p>
+                    </div>
+                    <div>
+                        <label for="date_of_birth" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Date of Birth</label>
+                        <input type="date" id="date_of_birth" name="date_of_birth" value="{{ old('date_of_birth') }}"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('date_of_birth') border-red-500 @enderror">
+                        @error('date_of_birth')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
+                <div>
+                    <label for="address" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Address</label>
+                    <textarea id="address" name="address" rows="3"
+                        class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('address') border-red-500 @enderror">{{ old('address') }}</textarea>
+                    @error('address')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="flex justify-end gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <a href="{{ route('parents.index') }}" class="px-6 py-2.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                        Cancel
+                    </a>
+                    <button type="submit" class="px-6 py-2.5 rounded-lg bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700 transition">
+                        <i class="fas fa-save mr-2"></i> Create Parent
+                    </button>
+                </div>
+            </form>
         </div>
-    </form>
-</div>
-@endsection
+    </div>
+
+    <script>
+        function previewImage(input) {
+            const preview = document.getElementById('image-preview');
+            const file = input.files[0];
+            
+            if (file) {
+                // Validate file size (2MB max)
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('File size must be less than 2MB');
+                    input.value = '';
+                    return;
+                }
+                
+                // Validate file type
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Please select a valid image file (JPEG, PNG, JPG, GIF)');
+                    input.value = '';
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.querySelector('img').src = e.target.result;
+                    preview.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            } else {
+                preview.classList.add('hidden');
+            }
+        }
+    </script>
+</x-app-layout>

@@ -13,45 +13,51 @@ class PermissionSeeder extends Seeder
     public function run(): void
     {
         // Student permissions
-        Permission::create(['name' => 'view students']);
-        Permission::create(['name' => 'create students']);
-        Permission::create(['name' => 'edit students']);
-        Permission::create(['name' => 'delete students']);
+        Permission::firstOrCreate(['name' => 'view students']);
+        Permission::firstOrCreate(['name' => 'create students']);
+        Permission::firstOrCreate(['name' => 'edit students']);
+        Permission::firstOrCreate(['name' => 'delete students']);
 
         // Teacher permissions
-        Permission::create(['name' => 'view teachers']);
-        Permission::create(['name' => 'create teachers']);
-        Permission::create(['name' => 'edit teachers']);
-        Permission::create(['name' => 'delete teachers']);
+        Permission::firstOrCreate(['name' => 'view teachers']);
+        Permission::firstOrCreate(['name' => 'create teachers']);
+        Permission::firstOrCreate(['name' => 'edit teachers']);
+        Permission::firstOrCreate(['name' => 'delete teachers']);
 
         // School permissions
-        Permission::create(['name' => 'view schools']);
-        Permission::create(['name' => 'create schools']);
-        Permission::create(['name' => 'edit schools']);
-        Permission::create(['name' => 'delete schools']);
+        Permission::firstOrCreate(['name' => 'view schools']);
+        Permission::firstOrCreate(['name' => 'create schools']);
+        Permission::firstOrCreate(['name' => 'edit schools']);
+        Permission::firstOrCreate(['name' => 'delete schools']);
 
         // Class Room permissions
-        Permission::create(['name' => 'view class_rooms']);
-        Permission::create(['name' => 'create class_rooms']);
-        Permission::create(['name' => 'edit class_rooms']);
-        Permission::create(['name' => 'delete class_rooms']);
+        Permission::firstOrCreate(['name' => 'view class_rooms']);
+        Permission::firstOrCreate(['name' => 'create class_rooms']);
+        Permission::firstOrCreate(['name' => 'edit class_rooms']);
+        Permission::firstOrCreate(['name' => 'delete class_rooms']);
 
         // Subject permissions
-        Permission::create(['name' => 'view subjects']);
-        Permission::create(['name' => 'create subjects']);
-        Permission::create(['name' => 'edit subjects']);
-        Permission::create(['name' => 'delete subjects']);
+        Permission::firstOrCreate(['name' => 'view subjects']);
+        Permission::firstOrCreate(['name' => 'create subjects']);
+        Permission::firstOrCreate(['name' => 'edit subjects']);
+        Permission::firstOrCreate(['name' => 'delete subjects']);
 
         // Evaluation permissions
-        Permission::create(['name' => 'view evaluations']);
-        Permission::create(['name' => 'create evaluations']);
-        Permission::create(['name' => 'edit evaluations']);
-        Permission::create(['name' => 'delete evaluations']);
+        Permission::firstOrCreate(['name' => 'view evaluations']);
+        Permission::firstOrCreate(['name' => 'create evaluations']);
+        Permission::firstOrCreate(['name' => 'edit evaluations']);
+        Permission::firstOrCreate(['name' => 'delete evaluations']);
 
         // Grade permissions
-        Permission::create(['name' => 'view grades']);
-        Permission::create(['name' => 'create grades']);
-        Permission::create(['name' => 'edit grades']);
-        Permission::create(['name' => 'delete grades']);
+        Permission::firstOrCreate(['name' => 'view grades']);
+        Permission::firstOrCreate(['name' => 'create grades']);
+        Permission::firstOrCreate(['name' => 'edit grades']);
+        Permission::firstOrCreate(['name' => 'delete grades']);
+
+        // User permissions
+        Permission::firstOrCreate(['name' => 'view users']);
+        Permission::firstOrCreate(['name' => 'create users']);
+        Permission::firstOrCreate(['name' => 'edit users']);
+        Permission::firstOrCreate(['name' => 'delete users']);
     }
 }

@@ -21,7 +21,8 @@ class Evaluation extends Model
         'evaluation_date',
         'total_marks',
         'passing_marks',
-        'notes'
+        'notes',
+        'created_by'
     ];
 
     protected $casts = [
@@ -52,6 +53,14 @@ class Evaluation extends Model
     public function teacher()
     {
         return $this->belongsTo(User::class, 'teacher_id');
+    }
+
+    /**
+     * Get the teacher profile who conducted this evaluation
+     */
+    public function teacherProfile()
+    {
+        return $this->belongsTo(Teacher::class, 'teacher_id', 'user_id');
     }
 
     /**

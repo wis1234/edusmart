@@ -1,6 +1,6 @@
 /.phpunit.cache
 /node_modules
-/electron
+/electron/
 /public/build
 /public/hot
 /public/storage

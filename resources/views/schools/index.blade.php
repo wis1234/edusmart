@@ -11,9 +11,11 @@
                     <p class="text-gray-500 dark:text-gray-300">Manage your educational institutions</p>
                 </div>
             </div>
+            @if(auth()->user()->hasRole('admin') || auth()->user()->role === 'admin')
             <a href="{{ route('schools.create') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700 transition">
                 <i class="fas fa-plus"></i> Add Institution
             </a>
+            @endif
         </div>
 
         <!-- Search and Filters + View Toggle -->
@@ -105,10 +107,10 @@
                                 <td class="px-4 py-3 text-right">
                                     <x-action-icons
                                         :viewRoute="route('schools.show', $school)"
-                                        :editRoute="route('schools.edit', $school)"
-                                        :deleteRoute="route('schools.destroy', $school)"
-                                        :canEdit="true"
-                                        :canDelete="true"
+                                        :editRoute="(auth()->user()->hasRole('admin') || auth()->user()->role === 'admin') ? route('schools.edit', $school) : null"
+                                        :deleteRoute="(auth()->user()->hasRole('admin') || auth()->user()->role === 'admin') ? route('schools.destroy', $school) : null"
+                                        :canEdit="auth()->user()->hasRole('admin') || auth()->user()->role === 'admin'"
+                                        :canDelete="auth()->user()->hasRole('admin') || auth()->user()->role === 'admin'"
                                         deleteConfirmMessage="Are you sure you want to delete this institution?"
                                     />
                                 </td>
@@ -120,9 +122,11 @@
                                         <i class="fas fa-university fa-3x text-gray-300 dark:text-gray-600 mb-3"></i>
                                         <h5 class="text-gray-400 dark:text-gray-500">No institutions found</h5>
                                         <p class="text-gray-400 dark:text-gray-500 mb-0">Get started by adding your first institution</p>
+                                        @if(auth()->user()->hasRole('admin') || auth()->user()->role === 'admin')
                                         <a href="{{ route('schools.create') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700 transition mt-3">
                                             <i class="fas fa-plus"></i> Add Institution
                                         </a>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -168,10 +172,10 @@
                         <div class="flex gap-2 mt-3 justify-end">
                             <x-action-icons
                                 :viewRoute="route('schools.show', $school)"
-                                :editRoute="route('schools.edit', $school)"
-                                :deleteRoute="route('schools.destroy', $school)"
-                                :canEdit="true"
-                                :canDelete="true"
+                                :editRoute="(auth()->user()->hasRole('admin') || auth()->user()->role === 'admin') ? route('schools.edit', $school) : null"
+                                :deleteRoute="(auth()->user()->hasRole('admin') || auth()->user()->role === 'admin') ? route('schools.destroy', $school) : null"
+                                :canEdit="auth()->user()->hasRole('admin') || auth()->user()->role === 'admin'"
+                                :canDelete="auth()->user()->hasRole('admin') || auth()->user()->role === 'admin'"
                                 deleteConfirmMessage="Are you sure you want to delete this institution?"
                             />
                         </div>
@@ -181,9 +185,11 @@
                         <i class="fas fa-university fa-3x text-gray-300 dark:text-gray-600 mb-3"></i>
                         <h5 class="text-gray-400 dark:text-gray-500">No institutions found</h5>
                         <p class="text-gray-400 dark:text-gray-500 mb-0">Get started by adding your first institution</p>
+                        @if(auth()->user()->hasRole('admin') || auth()->user()->role === 'admin')
                         <a href="{{ route('schools.create') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700 transition mt-3">
                             <i class="fas fa-plus"></i> Add Institution
                         </a>
+                        @endif
                     </div>
                 @endforelse
             </div>

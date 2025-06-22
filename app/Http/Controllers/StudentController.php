@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class StudentController extends Controller
 {
@@ -20,7 +21,35 @@ class StudentController extends Controller
 
     public function index(Request $request)
     {
+        $user = Auth::user();
         $query = Student::with(['user', 'classRoom', 'school', 'parent']);
+
+        // Les admins et school admins peuvent voir tous les étudiants (actifs et inactifs)
+        // Les autres rôles ne voient que les étudiants actifs
+        if (!($user->hasRole('admin') || $user->hasRole('manager') || $user->role === 'school_admin')) {
+            $query->where('status', 'active');
+        }
+
+        // Si l'utilisateur est un school_admin, filtrer par son école
+        if ($user->role === 'school_admin' && $user->school_id) {
+            $query->where('school_id', $user->school_id);
+        }
+        
+        // Si l'utilisateur est un enseignant, filtrer par ses classes via class_room_teacher
+        if ($user->role === 'enseignant') {
+            $teacher = $user->teacherProfile;
+            if ($teacher) {
+                $classRoomIds = DB::table('class_room_teacher')
+                    ->where('teacher_id', $teacher->id)
+                    ->pluck('class_room_id')
+                    ->unique()
+                    ->filter()
+                    ->all();
+                $query->whereIn('class_room_id', $classRoomIds);
+            } else {
+                $query->whereRaw('1=0');
+            }
+        }
 
         // Search
         if ($request->filled('search')) {
@@ -56,16 +85,37 @@ class StudentController extends Controller
             $query->where('selected_parent_id', $request->input('parent'));
         }
 
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
         $students = $query->orderBy('admission_number')->paginate(10)->appends($request->except('page'));
-        $classRooms = \App\Models\ClassRoom::orderBy('name')->get();
-        $users = \App\Models\User::orderBy('first_name')->get();
+        
+        // Filtrer les salles de classe par école pour les school_admin
+        if ($user->role === 'school_admin' && $user->school_id) {
+            $classRooms = ClassRoom::where('school_id', $user->school_id)->orderBy('name')->get();
+        } else {
+            $classRooms = ClassRoom::orderBy('name')->get();
+        }
+        
+        $users = User::orderBy('first_name')->get();
         return view('students.index', compact('students', 'classRooms', 'users'));
     }
 
     public function create()
     {
-        $classRooms = ClassRoom::orderBy('name')->get();
-        $schools = School::orderBy('name')->get();
+        $user = Auth::user();
+        
+        // Si l'utilisateur est un school_admin, filtrer par son école
+        if ($user->role === 'school_admin' && $user->school_id) {
+            $classRooms = ClassRoom::where('school_id', $user->school_id)->orderBy('name')->get();
+            $schools = School::where('id', $user->school_id)->orderBy('name')->get();
+        } else {
+            $classRooms = ClassRoom::orderBy('name')->get();
+            $schools = School::orderBy('name')->get();
+        }
+        
         $parents = User::where('role', 'parent')->orderBy('first_name')->get();
         $users = User::orderBy('first_name')->get();
 
@@ -74,6 +124,8 @@ class StudentController extends Controller
 
     public function store(Request $request)
     {
+        $user = Auth::user();
+        
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
@@ -93,6 +145,11 @@ class StudentController extends Controller
             'status' => ['required', Rule::in(['active', 'inactive', 'graduated', 'transferred'])],
             'profile_photo' => ['nullable', 'image', 'max:2048'],
         ]);
+
+        // Si l'utilisateur est un school_admin, forcer l'école
+        if ($user->role === 'school_admin' && $user->school_id) {
+            $validated['school_id'] = $user->school_id;
+        }
 
         // Set user_id to the currently authenticated user if not provided
         if (empty($validated['user_id'])) {
@@ -131,6 +188,8 @@ class StudentController extends Controller
             $parentModel = \App\Models\ParentModel::where('user_id', $parentUserId)->first();
             if ($parentModel) {
                 $validated['parent_id'] = $parentModel->id;
+            } else {
+                $validated['parent_id'] = null;
             }
         }
 
@@ -143,7 +202,7 @@ class StudentController extends Controller
             'success',
             route('students.show', $student)
         );
-        return redirect()->route('students.show', $student)->with('success', 'Student created successfully.');
+        return redirect()->route('students.index')->with('success', 'Student created successfully.');
     }
 
     public function show(Student $student)
@@ -173,7 +232,7 @@ class StudentController extends Controller
             'class_room_id' => ['nullable', 'exists:class_rooms,id'],
             'school_id' => ['required', 'exists:schools,id'],
             'selected_parent_id' => ['nullable'],
-            'parent_id' => ['nullable', 'exists:users,id'],
+            'parent_id' => ['nullable', 'exists:parents,id'],
             'admission_date' => ['required', 'date'],
             'date_of_birth' => ['required', 'date'],
             'gender' => ['nullable', Rule::in(['male', 'female', 'other'])],
@@ -202,6 +261,21 @@ class StudentController extends Controller
             }
             $path = $request->file('profile_photo')->store('profile_photos', 'public');
             $validated['profile_photo'] = $path;
+        }
+
+        // Fill parent_email and parent_id based on selected_parent_id
+        if (!empty($validated['selected_parent_id'])) {
+            $parentUserId = $validated['selected_parent_id'];
+            $parentUser = \App\Models\User::find($parentUserId);
+            if ($parentUser) {
+                $validated['parent_email'] = $parentUser->email;
+            }
+            $parentModel = \App\Models\ParentModel::where('user_id', $parentUserId)->first();
+            if ($parentModel) {
+                $validated['parent_id'] = $parentModel->id;
+            } else {
+                $validated['parent_id'] = null;
+            }
         }
 
         $student->update($validated);

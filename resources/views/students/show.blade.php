@@ -43,18 +43,83 @@
             <!-- Contact Information -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
                 <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="fas fa-address-book text-indigo-500"></i> Contact Information</h2>
-                <div class="mb-2"><span class="text-gray-500">Parent:</span> <span class="font-semibold">
-                     @php $parent = $users->firstWhere('id', $student->selected_parent_id); @endphp
-                                    @if($parent)
-                                        {{ $parent->first_name }} {{ $parent->last_name }}
-                                    @else
-                                        <span class="text-gray-400">Not assigned</span>
-                                    @endif
-                                </span>
+                @php $parent = $users->firstWhere('id', $student->selected_parent_id); @endphp
+                @if($parent)
+                <div class="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0">
+                            @if($parent->profile_photo)
+                                <img src="{{ asset('storage/' . $parent->profile_photo) }}" alt="Parent Photo" class="w-10 h-10 rounded-full object-cover border-2 border-indigo-200 dark:border-indigo-600">
+                            @else
+                                <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
+                                    <i class="fas fa-user text-indigo-600 dark:text-indigo-400 text-sm"></i>
+                                </div>
+                            @endif
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <a href="{{ route('parents.show', $parent) }}" class="block group">
+                                <h3 class="font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                    {{ $parent->first_name }} {{ $parent->last_name }}
+                                </h3>
+                            </a>
+                            <div class="mt-1 space-y-1 text-sm">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-envelope text-gray-400 w-4"></i>
+                                    <a href="mailto:{{ $parent->email }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                                        {{ $parent->email }}
+                                    </a>
+                                </div>
+                                @if($parent->phone)
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-phone text-gray-400 w-4"></i>
+                                    <a href="tel:{{ $parent->phone }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                                        {{ $parent->phone }}
+                                    </a>
+                                </div>
+                                @endif
+                                @if($parent->profession)
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-briefcase text-gray-400 w-4"></i>
+                                    <span class="text-gray-600 dark:text-gray-300">{{ $parent->profession }}</span>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-gray-200 dark:border-gray-600">
+                        <div class="flex gap-2">
+                            <a href="{{ route('parents.show', $parent) }}" class="flex-1 text-center px-2 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded text-xs font-medium hover:bg-indigo-200 dark:hover:bg-indigo-800 transition-colors">
+                                <i class="fas fa-eye mr-1"></i> View Parent
+                            </a>
+                            @can('update', $parent)
+                            <a href="{{ route('parents.edit', $parent) }}" class="flex-1 text-center px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded text-xs font-medium hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors">
+                                <i class="fas fa-edit mr-1"></i> Edit Parent
+                            </a>
+                            @endcan
+                        </div>
+                    </div>
                 </div>
-                <div class="mb-2"><span class="text-gray-500">Parent Email:</span> <span class="font-semibold">{{ $parent?->email ?? 'N/A' }}</span></div>
-                <div class="mb-2"><span class="text-gray-500">Emergency Contact:</span> <span>{{ $student->emergency_contact ?? 'N/A' }}</span></div>
-                <div class="mb-2"><span class="text-gray-500">Medical Conditions:</span> <span>{{ $student->medical_conditions ?? 'N/A' }}</span></div>
+                @else
+                <div class="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg border border-yellow-200 dark:border-yellow-700">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-exclamation-triangle text-yellow-600 dark:text-yellow-400"></i>
+                        <span class="text-yellow-800 dark:text-yellow-200 font-medium">No parent assigned</span>
+                    </div>
+                    <p class="text-yellow-700 dark:text-yellow-300 text-sm mt-1">This student doesn't have a parent assigned yet.</p>
+                </div>
+                @endif
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-phone-alt text-gray-400 w-4"></i>
+                        <span class="text-gray-600 dark:text-gray-300">{{ $student->emergency_contact ?? 'No emergency contact' }}</span>
+                    </div>
+                    @if($student->medical_conditions)
+                    <div class="flex items-start gap-2">
+                        <i class="fas fa-heartbeat text-gray-400 w-4 mt-1"></i>
+                        <span class="text-gray-600 dark:text-gray-300 text-sm">{{ $student->medical_conditions }}</span>
+                    </div>
+                    @endif
+                </div>
             </div>
             <!-- School/Class Information -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
@@ -71,8 +136,26 @@
                 <h2 class="text-lg font-bold flex items-center gap-2"><i class="fas fa-clipboard-check text-indigo-500"></i> Evaluations and Grades</h2>
                 <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">{{ $student->grades->count() }} Evaluations</span>
             </div>
-            @if($student->grades->isEmpty())
-                <p class="text-gray-400 text-center my-4">No evaluations or grades found for this student.</p>
+            @php
+                $grades = $student->grades;
+                if(auth()->user()->hasRole('enseignant') || auth()->user()->hasRole('teacher')) {
+                    $grades = $grades->filter(function($grade) {
+                        return $grade->evaluation && $grade->evaluation->teacher_id == auth()->user()->teacherProfile?->id;
+                    });
+                }
+                // Les admins et school admins peuvent voir les évaluations même pour les étudiants inactifs
+                if($student->status !== 'active' && !(auth()->user()->hasRole('admin') || auth()->user()->hasRole('manager') || auth()->user()->role === 'school_admin')) {
+                    $grades = collect();
+                }
+            @endphp
+            @if($grades->isEmpty())
+                <p class="text-gray-400 text-center my-4">
+                    @if($student->status !== 'active' && !(auth()->user()->hasRole('admin') || auth()->user()->hasRole('manager') || auth()->user()->role === 'school_admin'))
+                        Cet étudiant n'est pas actif.
+                    @else
+                        No evaluations or grades found for this student.
+                    @endif
+                </p>
             @else
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
@@ -85,7 +168,7 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white dark:bg-gray-800">
-                        @foreach($student->grades as $grade)
+                        @foreach($grades as $grade)
                         <tr class="hover:bg-indigo-50 dark:hover:bg-indigo-900 transition">
                             <td class="px-4 py-2">{{ $grade->evaluation->subject->name ?? 'N/A' }}</td>
                             <td class="px-4 py-2">{{ $grade->evaluation->evaluationType->name ?? 'N/A' }}</td>

@@ -32,50 +32,22 @@ class TeacherController extends Controller
      */
     public function index()
     {
-        $query = Teacher::with(['subjects', 'teachingClassRooms.school'])
-            ->orderBy('teacher_firstname');
+        $user = Auth::user();
+        $query = Teacher::with(['user', 'school', 'subjects', 'classRooms']);
 
-        // Recherche
-        if (request()->filled('search')) {
-            $search = request('search');
-            $query->where(function($q) use ($search) {
-                $q->where('teacher_firstname', 'like', "%$search%")
-                  ->orWhere('teacher_lastname', 'like', "%$search%")
-                  ->orWhere('teacher_email', 'like', "%$search%")
-                  ->orWhere('teacher_phone', 'like', "%$search%")
-                  ->orWhere('address', 'like', "%$search%")
-                  ->orWhere('grade', 'like', "%$search%")
-                  ->orWhere('speciality', 'like', "%$search%")
-                  ;
-            });
+        // Si l'utilisateur est un school_admin, filtrer par son école
+        if ($user->role === 'school_admin' && $user->school_id) {
+            $query->where('school_id', $user->school_id);
+        }
+        
+        // Si l'utilisateur est un enseignant, filtrer par son école (lecture seule)
+        if ($user->role === 'enseignant' && $user->school_id) {
+            $query->where('school_id', $user->school_id);
         }
 
-        // Filtre statut
-        if (request()->filled('status')) {
-            $query->where('status', request('status'));
-        }
-
-        // Filtre école
-        if (request()->filled('school')) {
-            $query->whereHas('teachingClassRooms.school', function($q) {
-                $q->where('id', request('school'));
-            });
-        }
-
-        // Filtre matière
-        if (request()->filled('subject')) {
-            $query->whereHas('subjects', function($q) {
-                $q->where('subjects.id', request('subject'));
-            });
-        }
-
-        $teachers = $query->paginate(12)->appends(request()->except('page'));
-
-        // Pour les filtres dropdown
-        $schools = \App\Models\School::orderBy('name')->get();
-        $subjects = \App\Models\Subject::orderBy('name')->get();
-
-        return view('teachers.index', compact('teachers', 'schools', 'subjects'));
+        $teachers = $query->orderBy('created_at', 'desc')->paginate(10);
+        
+        return view('teachers.index', compact('teachers'));
     }
 
     /**
@@ -83,11 +55,20 @@ class TeacherController extends Controller
      */
     public function create()
     {
+        $user = Auth::user();
         $subjects = Subject::orderBy('name')->get();
-        $classRooms = ClassRoom::orderBy('name')->get();
-        $schools = School::orderBy('name')->get();
+        $subjectsBySchool = $subjects->groupBy('school_id');
+        
+        // Si l'utilisateur est un school_admin, filtrer les salles de classe par son école
+        if ($user->role === 'school_admin' && $user->school_id) {
+            $classRooms = ClassRoom::where('school_id', $user->school_id)->orderBy('name')->get();
+            $schools = School::where('id', $user->school_id)->orderBy('name')->get();
+        } else {
+            $classRooms = ClassRoom::orderBy('name')->get();
+            $schools = School::orderBy('name')->get();
+        }
 
-        return view('teachers.create', compact('subjects', 'classRooms', 'schools'));
+        return view('teachers.create', compact('subjects', 'subjectsBySchool', 'classRooms', 'schools'));
     }
 
     /**
@@ -95,9 +76,16 @@ class TeacherController extends Controller
      */
     public function store(TeacherRequest $request)
     {
+        $user = Auth::user();
+        
         DB::beginTransaction();
 
         $validated = $request->validated();
+
+        // Si l'utilisateur est un school_admin, forcer l'école
+        if ($user->role === 'school_admin' && $user->school_id) {
+            $validated['schools'] = [$user->school_id];
+        }
 
         // Handle profile photo upload
         if ($request->hasFile('profile_photo')) {
@@ -116,6 +104,7 @@ class TeacherController extends Controller
             'status' => $validated['status'],
             'password' => bcrypt($validated['password']),
             'profile_photo' => $validated['profile_photo'] ?? null,
+            'role' => 'enseignant',
         ];
         $user = \App\Models\User::create($userData);
 
@@ -137,20 +126,31 @@ class TeacherController extends Controller
             'user_id' => $user->id,
         ]);
 
-        // Attach subjects with years
-        foreach ($validated['subjects'] as $index => $subjectId) {
-            $teacher->subjects()->attach($subjectId, [
-                'year' => $validated['years'][$index]
-            ]);
+        // Sync subjects and classrooms
+        $assignments = [];
+        if (!empty($validated['class_rooms'])) {
+            foreach ($validated['class_rooms'] as $index => $classRoomId) {
+                if (!empty($classRoomId) && !empty($validated['subjects'][$index])) {
+                    foreach ($validated['subjects'][$index] as $subjectId) {
+                        $assignment = [
+                            'class_room_id' => $classRoomId,
+                            'subject_id' => $subjectId,
+                            'year' => $validated['years'][$index] ?? Carbon::now()->year,
+                        ];
+                        unset($assignment['teacher_id']);
+                        $assignments[] = $assignment;
+                    }
+                }
+            }
         }
 
-        // Attach classrooms with subjects and years
-        foreach ($validated['class_rooms'] as $index => $classRoomId) {
-            $teacher->classRooms()->attach($classRoomId, [
-                'subject_id' => $validated['subjects'][$index],
-                'year' => $validated['years'][$index]
-            ]);
+        if (!empty($assignments)) {
+            $teacher->classRoomTeachers()->delete(); // Clear old assignments
+            $teacher->classRoomTeachers()->createMany($assignments); // Create new ones
         }
+
+        // Assign teacher role to user
+        $user->assignRole('enseignant');
 
         DB::commit();
 
@@ -162,9 +162,7 @@ class TeacherController extends Controller
             'success',
             route('teachers.show', $teacher)
         );
-        return redirect()
-            ->route('teachers.show', $teacher)
-            ->with('success', 'Teacher created successfully.');
+        return redirect()->route('teachers.index')->with('success', 'Teacher created successfully.');
     }
 
     /**
@@ -194,12 +192,13 @@ class TeacherController extends Controller
     public function edit(Teacher $teacher)
     {
         $subjects = Subject::orderBy('name')->get();
+        $subjectsBySchool = $subjects->groupBy('school_id');
         $classRooms = ClassRoom::orderBy('name')->get();
         $schools = School::orderBy('name')->get();
 
         $teacher->load(['subjects', 'classRooms', 'school']);
 
-        return view('teachers.edit', compact('teacher', 'subjects', 'classRooms', 'schools'));
+        return view('teachers.edit', compact('teacher', 'subjects', 'subjectsBySchool', 'classRooms', 'schools'));
     }
 
     /**
@@ -270,18 +269,27 @@ class TeacherController extends Controller
             $teacher->subjects()->detach();
             $teacher->classRooms()->detach();
 
-            // Attach new assignments
-            foreach ($validated['subjects'] as $index => $subjectId) {
-                $teacher->subjects()->attach($subjectId, [
-                    'year' => $validated['years'][$index]
-                ]);
+            // Sync subjects and classrooms
+            $assignments = [];
+            if (!empty($validated['class_rooms'])) {
+                foreach ($validated['class_rooms'] as $index => $classRoomId) {
+                    if (!empty($classRoomId) && !empty($validated['subjects'][$index])) {
+                        foreach ($validated['subjects'][$index] as $subjectId) {
+                            $assignment = [
+                                'class_room_id' => $classRoomId,
+                                'subject_id' => $subjectId,
+                                'year' => $validated['years'][$index] ?? Carbon::now()->year,
+                            ];
+                            unset($assignment['teacher_id']);
+                            $assignments[] = $assignment;
+                        }
+                    }
+                }
             }
 
-            foreach ($validated['class_rooms'] as $index => $classRoomId) {
-                $teacher->classRooms()->attach($classRoomId, [
-                    'subject_id' => $validated['subjects'][$index],
-                    'year' => $validated['years'][$index]
-                ]);
+            if (!empty($assignments)) {
+                $teacher->classRoomTeachers()->delete(); // Clear old assignments
+                $teacher->classRoomTeachers()->createMany($assignments); // Create new ones
             }
 
             DB::commit();

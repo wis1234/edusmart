@@ -59,6 +59,14 @@ class Student extends Model
     }
 
     /**
+     * Get the selected parent of the student
+     */
+    public function selectedParent()
+    {
+        return $this->belongsTo(User::class, 'selected_parent_id');
+    }
+
+    /**
      * Get the classroom of the student
      */
     public function classRoom()

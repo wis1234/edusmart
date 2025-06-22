@@ -117,7 +117,29 @@
                             {{ Auth::user()->first_name }} {{ Auth::user()->last_name }}
                         </div>
                         <div class="text-xs text-gray-500 dark:text-gray-400">
-                            {{ ucfirst(Auth::user()->roles->first()?->name ?? 'User') }}
+                            @php
+                                $spatieRole = Auth::user()->roles->first()?->name ?? null;
+                                $dbRole = Auth::user()->role ?? null;
+                                $role = $spatieRole ?: $dbRole;
+                                switch ($role) {
+                                    case 'school_admin':
+                                        $roleLabel = 'School Admin';
+                                        break;
+                                    case 'enseignant':
+                                        $roleLabel = 'Teacher';
+                                        break;
+                                  
+                                    case 'parent':
+                                        $roleLabel = 'Parent';
+                                        break;
+                                    case 'admin':
+                                        $roleLabel = 'Admin';
+                                        break;
+                                    default:
+                                        $roleLabel = 'User';
+                                }
+                            @endphp
+                            {{ $roleLabel }}
                         </div>
                     </div>
                     <i class="fas fa-chevron-down text-gray-400 dark:text-gray-500 transition-transform duration-200"></i>
@@ -395,6 +417,24 @@
                 });
             }
         });
+
+        // Gestion des erreurs Laravel avec popup élégant
+        document.addEventListener('DOMContentLoaded', function() {
+            // Vérifier s'il y a des erreurs de validation
+            @if($errors->any())
+                const errorMessages = [];
+                @foreach($errors->all() as $error)
+                    errorMessages.push('{{ addslashes($error) }}');
+                @endforeach
+                
+                // Afficher chaque erreur dans un popup
+                errorMessages.forEach(function(error) {
+                    showErrorPopup(error);
+                });
+            @endif
+        });
+
+    
     </script>
 </header>
 

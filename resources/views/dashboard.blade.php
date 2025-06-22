@@ -98,7 +98,13 @@
                             </span>
                             <div class="ml-2">
                                 <div class="flex items-center gap-2">
-                                    <span class="font-semibold text-gray-900 dark:text-white">{{ __('messages.profile_photo') }}</span>
+                                    <span class="font-semibold text-gray-900 dark:text-white">
+                                        @if($activity->user)
+                                            {{ $activity->user->first_name }} {{ $activity->user->last_name }}
+                                        @else
+                                            <span class="italic text-gray-400">System</span>
+                                        @endif
+                                    </span>
                                     <span class="text-xs px-2 py-1 rounded-full font-bold"
                                         style="background: {{ $activity->type === 'create' ? '#dbeafe' : ($activity->type === 'update' ? '#ede9fe' : ($activity->type === 'delete' ? '#fee2e2' : '#f3f4f6')) }}; color: {{ $activity->type === 'create' ? '#2563eb' : ($activity->type === 'update' ? '#7c3aed' : ($activity->type === 'delete' ? '#dc2626' : '#374151')) }};">
                                         <i class="fas {{ $activity->type === 'create' ? 'fa-plus-circle' : ($activity->type === 'update' ? 'fa-edit' : ($activity->type === 'delete' ? 'fa-trash-alt' : 'fa-info-circle')) }} mr-1"></i>

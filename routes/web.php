@@ -59,6 +59,8 @@ Route::resource('calendars', CalendarController::class)->middleware('auth');
 Route::resource('evaluations', EvaluationController::class)->middleware('auth');
 Route::resource('evaluations.student_grades', StudentGradeController::class)->shallow()->middleware('auth');
 
+Route::get('student_grades', [StudentGradeController::class, 'indexAll'])->name('student_grades.index')->middleware('auth');
+
 use App\Http\Controllers\SubjectController;
 
 Route::middleware(['auth'])->group(function () {
@@ -105,3 +107,14 @@ Route::get('lang/{locale}', function ($locale) {
 Route::get('/two-factor', [App\Http\Controllers\Auth\TwoFactorController::class, 'index'])->name('two-factor.index');
 Route::post('/two-factor', [App\Http\Controllers\Auth\TwoFactorController::class, 'store'])->name('two-factor.verify');
 Route::post('/two-factor/resend', [App\Http\Controllers\Auth\TwoFactorController::class, 'resend'])->name('two-factor.resend');
+
+Route::resource('schools.hosts', App\Http\Controllers\SchoolHostController::class)->shallow()->only(['store']);
+Route::delete('schools/{school}/hosts/{host}', [App\Http\Controllers\SchoolHostController::class, 'destroy'])->name('schools.hosts.destroy');
+
+// Add route model binding for hosts as User
+Route::bind('host', function ($value) {
+    return \App\Models\User::findOrFail($value);
+});
+
+// API endpoint for classrooms by subject (for evaluation creation)
+Route::get('/api/classrooms', [App\Http\Controllers\ClassRoomController::class, 'apiBySubject'])->middleware('auth');

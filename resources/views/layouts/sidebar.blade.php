@@ -55,12 +55,14 @@
                     <span>{{ __('messages.evaluations') }}</span>
                 </a>
             </li>
+            @can('viewAny', App\Models\StudentGrade::class)
             <li class="nav-item">
-                <a href="{{ route('evaluations.index') }}" class="nav-link {{ request()->routeIs('evaluations.student_grades.*') ? 'active' : '' }}">
+                <a href="{{ route('student_grades.index') }}" class="nav-link {{ request()->routeIs('student_grades.*') ? 'active' : '' }}">
                     <i class="fas fa-chart-bar me-2"></i>
                     <span>{{ __('messages.grades') }}</span>
                 </a>
             </li>
+            @endcan
             <li class="nav-item">
                 <a href="{{ route('calendars.index') }}" class="nav-link {{ request()->routeIs('calendars.*') ? 'active' : '' }}">
                     <i class="fas fa-calendar-alt me-2"></i>

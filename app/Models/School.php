@@ -72,4 +72,20 @@ class School extends Model
     {
         return $this->hasMany(Student::class);
     }
+
+    /**
+     * Get the host users for the school.
+     */
+    public function hosts()
+    {
+        return $this->hasMany(User::class)->where('role', 'school_admin');
+    }
+
+    /**
+     * Get the subjects for the school.
+     */
+    public function subjects()
+    {
+        return $this->hasMany(Subject::class);
+    }
 }
