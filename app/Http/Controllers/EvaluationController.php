@@ -37,77 +37,65 @@ class EvaluationController extends Controller
         $user = Auth::user();
         $query = Evaluation::with(['subject', 'classRoom', 'evaluationType', 'teacher']);
 
-        // Si l'utilisateur est un enseignant, filtrer par son école, ses classes et ses matières
+        // Si l'utilisateur est un enseignant, filtrer par ses matières enseignées
         if ($user->role === 'enseignant') {
-            // Récupérer le profil enseignant
             $teacher = \App\Models\Teacher::where('user_id', $user->id)->first();
             
             if ($teacher && $teacher->school_id) {
-                // Filtrer par école
+                // Filtrer les évaluations par école et matières enseignées
                 $query->whereHas('subject', function($q) use ($teacher) {
-                    $q->where('school_id', $teacher->school_id);
+                    $q->where('school_id', $teacher->school_id)
+                      ->where('is_active', 1); // Ne montrer que les évaluations des matières actives
                 });
                 
-                // Filtrer par classes où l'enseignant enseigne
-                $query->whereHas('classRoom', function($q) use ($teacher) {
-                    $q->where('school_id', $teacher->school_id);
-                });
-                
-                // Filtrer par matières que l'enseignant enseigne
-                $query->whereHas('subject', function($q) use ($teacher) {
-                    $q->whereIn('id', $teacher->taughtSubjects()->pluck('subjects.id'));
-                });
-                // Filtrer par enseignant connecté
-                $query->where('teacher_id', $teacher->id);
+                // Filtrer par matières enseignées
+                $query->whereIn('subject_id', $teacher->taughtSubjects()->pluck('subjects.id'));
             } else {
-                // Si pas d'école assignée, ne montrer aucune évaluation
-                $query->where('id', null);
+                $query->whereRaw('1=0'); // Aucune évaluation si pas d'école assignée
             }
-        }
-
-        // Handle search
-        if ($search = $request->input('search')) {
-            $query->where(function($q) use ($search) {
-                $q->whereHas('subject', fn($sq) => $sq->where('name', 'like', "%$search%"))
-                  ->orWhereHas('classRoom', fn($cq) => $cq->where('name', 'like', "%$search%"))
-                  ->orWhereHas('evaluationType', fn($tq) => $tq->where('name', 'like', "%$search%"))
-                  ->orWhere('term', 'like', "%$search%");
+        } else {
+            // Pour les admins et autres rôles, filtrer par matières actives
+            $query->whereHas('subject', function($q) {
+                $q->where('is_active', 1);
             });
         }
 
-        // Handle filters
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhereHas('subject', function($q2) use ($search) {
+                      $q2->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('classRoom', function($q2) use ($search) {
+                      $q2->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('evaluationType', function($q2) use ($search) {
+                      $q2->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Filter by subject
         if ($request->filled('subject_id')) {
             $query->where('subject_id', $request->subject_id);
         }
+
+        // Filter by class room
         if ($request->filled('class_room_id')) {
             $query->where('class_room_id', $request->class_room_id);
         }
+
+        // Filter by evaluation type
         if ($request->filled('evaluation_type_id')) {
             $query->where('evaluation_type_id', $request->evaluation_type_id);
         }
-        if ($request->filled('academic_year')) {
-            $query->where('academic_year', $request->academic_year);
-        }
-        if ($request->filled('term')) {
-            $query->where('term', $request->term);
-        }
-        if ($request->filled('date_from')) {
-            $query->where('evaluation_date', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->where('evaluation_date', '<=', $request->date_to);
-        }
 
-        $evaluations = $query->with([
-            'subject.school', 
-            'classRoom.school', 
-            'evaluationType', 
-            'teacher', 
-            'teacherProfile',
-            'creator'
-        ])->orderBy('evaluation_date', 'desc')->paginate(10)->withQueryString();
-        
-        // Data for filters - filtrer par école, classes et matières de l'enseignant
+        $evaluations = $query->latest()->paginate(10)->withQueryString();
+
+        // Filtrer les matières et classes par matières enseignées pour les enseignants
         if ($user->role === 'enseignant') {
             $teacher = \App\Models\Teacher::where('user_id', $user->id)->first();
             
@@ -115,6 +103,7 @@ class EvaluationController extends Controller
                 // Filtrer les matières par école
                 $subjects = $teacher->taughtSubjects()
                     ->where('school_id', $teacher->school_id)
+                    ->where('is_active', 1) // Ne montrer que les matières actives
                     ->orderBy('name')->get();
                 
                 // Filtrer les classes par école
@@ -126,7 +115,7 @@ class EvaluationController extends Controller
                 $classRooms = collect();
             }
         } else {
-            $subjects = Subject::orderBy('name')->get();
+            $subjects = Subject::where('is_active', 1)->orderBy('name')->get();
             $classRooms = ClassRoom::orderBy('name')->get();
         }
         $evaluationTypes = EvaluationType::orderBy('name')->get();
@@ -140,7 +129,7 @@ class EvaluationController extends Controller
         $evaluationTypes = EvaluationType::all();
 
         if ($user->isAdmin() || $user->email === 'ronaldoagbohou@gmail.com') {
-            $subjects = Subject::all();
+            $subjects = Subject::where('is_active', 1)->get();
             $classRooms = ClassRoom::all();
             $teachers = Teacher::with('user')->get();
         } else {
@@ -150,6 +139,7 @@ class EvaluationController extends Controller
             if ($teacher && $teacher->school_id) {
                 $subjects = $teacher->taughtSubjects()
                     ->where('school_id', $teacher->school_id)
+                    ->where('is_active', 1) // Ne montrer que les matières actives
                     ->orderBy('name')->get();
                 
                 $classRooms = $teacher->teachingClassRooms()
@@ -177,6 +167,12 @@ class EvaluationController extends Controller
     {
         $validated = $this->validateEvaluation($request);
 
+        // Vérifier que la matière est active
+        $subject = Subject::find($validated['subject_id']);
+        if (!$subject || $subject->is_active !== 1) {
+            abort(403, 'You can only create evaluations for active subjects.');
+        }
+
         // Handle evaluation_type as free text, link to evaluation_types table
         $evaluationTypeName = $request->input('evaluation_type');
         $code = strtoupper(Str::slug($evaluationTypeName, '_'));
@@ -192,7 +188,7 @@ class EvaluationController extends Controller
         if ($user->role === 'enseignant') {
             $teacher = \App\Models\Teacher::where('user_id', $user->id)->first();
             
-            if (!$teacher || $teacher->school_id !== Subject::find($validated['subject_id'])->school_id) {
+            if (!$teacher || $teacher->school_id !== $subject->school_id) {
                 abort(403, 'You can only create evaluations for your assigned school.');
             }
             
@@ -263,16 +259,17 @@ class EvaluationController extends Controller
             
             $subjects = $teacher->taughtSubjects()
                 ->where('school_id', $teacher->school_id)
+                ->where('is_active', 1) // Ne montrer que les matières actives
                 ->orderBy('name')->get();
             
             $classRooms = $teacher->teachingClassRooms()
                 ->where('school_id', $teacher->school_id)
                 ->orderBy('name')->get();
         } elseif ($user->isAdmin() || $user->email === 'ronaldoagbohou@gmail.com') {
-            $subjects = Subject::all();
+            $subjects = Subject::where('is_active', 1)->get();
             $classRooms = ClassRoom::all();
         } else {
-            $subjects = $user->taughtSubjects()->get();
+            $subjects = $user->taughtSubjects()->where('is_active', 1)->get();
             $classRooms = $user->teachingClassRooms()
                 ->wherePivot('subject_id', $evaluation->subject_id)
                 ->get();
@@ -287,16 +284,22 @@ class EvaluationController extends Controller
     {
         $validated = $this->validateEvaluation($request, $evaluation);
 
+        // Vérifier que la matière est active
+        $subject = Subject::find($validated['subject_id']);
+        if (!$subject || $subject->is_active !== 1) {
+            abort(403, 'You can only update evaluations for active subjects.');
+        }
+
         // Vérification supplémentaire pour les enseignants
         $user = Auth::user();
         if ($user->role === 'enseignant') {
             $teacher = \App\Models\Teacher::where('user_id', $user->id)->first();
             
-            if (!$teacher || $teacher->school_id !== $evaluation->subject->school_id) {
+            if (!$teacher || $teacher->school_id !== $subject->school_id) {
                 abort(403, 'You can only update evaluations from your assigned school.');
             }
             
-            if (!$teacher->taughtSubjects()->where('subjects.id', $evaluation->subject_id)->exists()) {
+            if (!$teacher->taughtSubjects()->where('subjects.id', $validated['subject_id'])->exists()) {
                 abort(403, 'You can only update evaluations for subjects you teach.');
             }
             

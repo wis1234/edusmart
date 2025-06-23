@@ -85,6 +85,14 @@ class EvaluationPolicy
             return false;
         }
         
+        // Vérifier le statut de l'école pour les school admins
+        if ($user->role === 'school_admin' && $user->school_id) {
+            $school = \App\Models\School::find($user->school_id);
+            if (!$school || $school->status !== 'active') {
+                return false;
+            }
+        }
+        
         return $user->hasRole('admin') || $user->hasRole('teacher') || $user->hasRole('enseignant');
     }
 
@@ -100,6 +108,11 @@ class EvaluationPolicy
         // Vérifier le statut de l'enseignant
         if (($user->hasRole('teacher') || $user->hasRole('enseignant')) && 
             (!$user->teacherProfile || $user->teacherProfile->status !== 'active')) {
+            return false;
+        }
+        
+        // Vérifier le statut de la matière - si pas active, personne ne peut modifier l'évaluation
+        if ($evaluation->subject && $evaluation->subject->is_active !== 1) {
             return false;
         }
         
@@ -129,6 +142,11 @@ class EvaluationPolicy
         // Vérifier le statut de l'enseignant
         if (($user->hasRole('teacher') || $user->hasRole('enseignant')) && 
             (!$user->teacherProfile || $user->teacherProfile->status !== 'active')) {
+            return false;
+        }
+        
+        // Vérifier le statut de la matière - si pas active, personne ne peut supprimer l'évaluation
+        if ($evaluation->subject && $evaluation->subject->is_active !== 1) {
             return false;
         }
         

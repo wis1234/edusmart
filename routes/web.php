@@ -29,6 +29,7 @@ Route::middleware('auth')->group(function () {
     // Settings routes
     Route::get('/settings', [App\Http\Controllers\SettingsController::class, 'index'])->name('settings.index');
     Route::post('/settings/toggle-two-factor', [App\Http\Controllers\SettingsController::class, 'toggleTwoFactor'])->name('settings.toggle-two-factor');
+    Route::post('/settings/toggle-profile-lock', [App\Http\Controllers\SettingsController::class, 'toggleProfileLock'])->name('settings.toggle-profile-lock');
 });
 
 // Notifications routes - ensure they are accessible

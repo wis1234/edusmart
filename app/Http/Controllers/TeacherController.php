@@ -170,6 +170,13 @@ class TeacherController extends Controller
      */
     public function show(Teacher $teacher)
     {
+        $user = Auth::user();
+        
+        // Vérifier si l'utilisateur peut voir le profil selon la logique de verrouillage
+        if (!$user->canViewProfile($teacher->user)) {
+            abort(403, 'This user has locked his profile.');
+        }
+        
         $teacher->load([
             'school',
             'subjects',

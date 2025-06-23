@@ -30,6 +30,7 @@ class User extends Authenticatable
         'school_id',
         'selected_parent_id',
         'two_factor_enabled',
+        'profile_locked',
     ];
 
     protected $hidden = [
@@ -41,6 +42,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'date_of_birth' => 'date',
+        'profile_locked' => 'boolean',
     ];
 
     protected $appends = ['name'];
@@ -75,13 +77,13 @@ class User extends Authenticatable
     public function taughtSubjects()
     {
         if (!$this->teacherProfile) {
-            return $this->belongsToMany(Subject::class, 'subject_teacher', 'teacher_id', 'subject_id')
+            return $this->belongsToMany(Subject::class, 'class_room_teacher', 'teacher_id', 'subject_id')
                 ->whereRaw('1 = 0'); // Retourne une collection vide si pas de profil enseignant
         }
         
-        return $this->belongsToMany(Subject::class, 'subject_teacher', 'teacher_id', 'subject_id')
+        return $this->belongsToMany(Subject::class, 'class_room_teacher', 'teacher_id', 'subject_id')
             ->where('teacher_id', $this->teacherProfile->id)
-            ->withPivot('year')
+            ->withPivot(['class_room_id', 'year', 'start_time', 'end_time', 'days_of_week'])
             ->withTimestamps();
     }
 
@@ -91,13 +93,12 @@ class User extends Authenticatable
     public function teachingClassRooms()
     {
         if (!$this->teacherProfile) {
-            return $this->belongsToMany(ClassRoom::class, 'subject_teacher', 'teacher_id', 'class_room_id')
+            return $this->belongsToMany(ClassRoom::class, 'class_room_teacher', 'teacher_id', 'class_room_id')
                 ->whereRaw('1 = 0'); // Retourne une collection vide si pas de profil enseignant
         }
         
-        return $this->belongsToMany(ClassRoom::class, 'subject_teacher', 'teacher_id', 'class_room_id')
-            ->where('teacher_id', $this->teacherProfile->id)
-            ->withPivot('subject_id', 'year')
+        return $this->belongsToMany(ClassRoom::class, 'class_room_teacher', 'teacher_id', 'class_room_id')
+            ->withPivot(['subject_id', 'year', 'start_time', 'end_time', 'days_of_week'])
             ->withTimestamps();
     }
 
@@ -266,8 +267,50 @@ class User extends Authenticatable
      */
     public function resetTwoFactorCode()
     {
-        $this->two_factor_code = null;
-        $this->two_factor_expires_at = null;
-        $this->save();
+        $this->update([
+            'two_factor_code' => null,
+            'two_factor_expires_at' => null,
+        ]);
+    }
+
+    /**
+     * Check if the user's profile is locked
+     */
+    public function isProfileLocked(): bool
+    {
+        return $this->profile_locked === true;
+    }
+
+    /**
+     * Check if the current user can view another user's profile
+     */
+    public function canViewProfile(User $otherUser): bool
+    {
+        // L'utilisateur peut toujours voir son propre profil
+        if ($this->id === $otherUser->id) {
+            return true;
+        }
+
+        // Les admins et school admins peuvent voir tous les profils
+        if ($this->hasRole('admin') || $this->role === 'school_admin') {
+            return true;
+        }
+
+        // Si le profil de l'autre utilisateur est verrouillé, personne d'autre ne peut le voir
+        if ($otherUser->isProfileLocked()) {
+            return false;
+        }
+
+        // Pour les autres cas, la logique existante s'applique
+        return true;
+    }
+
+    /**
+     * Toggle profile lock status
+     */
+    public function toggleProfileLock(): bool
+    {
+        $this->update(['profile_locked' => !$this->profile_locked]);
+        return $this->profile_locked;
     }
 }

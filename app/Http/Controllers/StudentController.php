@@ -207,9 +207,24 @@ class StudentController extends Controller
 
     public function show(Student $student)
     {
-        $student->load(['user', 'classRoom', 'school', 'parent', 'grades.evaluation.evaluationType']);
-        $users = User::all(); // ou User::where('role', 'parent')->get(); selon ce que tu veux
-
+        $user = Auth::user();
+        
+        // Vérifier si l'utilisateur peut voir le profil selon la logique de verrouillage
+        if ($student->user && !$user->canViewProfile($student->user)) {
+            abort(403, 'This user has locked his profile.');
+        }
+        
+        $student->load([
+            'user', 
+            'classRoom', 
+            'school', 
+            'parent', 
+            'grades.evaluation.subject',
+            'grades.evaluation.evaluationType'
+        ]);
+        
+        $users = User::orderBy('first_name')->get();
+        
         return view('students.show', compact('student', 'users'));
     }
 

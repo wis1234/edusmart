@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ParentController extends Controller
 {
@@ -134,25 +135,14 @@ class ParentController extends Controller
      */
     public function show(User $parent)
     {
-        $this->authorize('view', $parent);
+        $user = Auth::user();
         
-        $user = auth()->user();
-        
-        // Si l'utilisateur est un school_admin, vérifier que le parent a des étudiants dans son école
-        if ($user->role === 'school_admin' && $user->school_id) {
-            $hasStudentsInSchool = $parent->students()->where('school_id', $user->school_id)->exists();
-            if (!$hasStudentsInSchool) {
-                abort(403, 'You can only view parents of students in your school.');
-            }
+        // Vérifier si l'utilisateur peut voir le profil selon la logique de verrouillage
+        if (!$user->canViewProfile($parent)) {
+            abort(403, 'This user has locked his profile.');
         }
         
-        // Load the students relationship for the parent with additional data
-        $parent->load(['students' => function($query) use ($user) {
-            if ($user->role === 'school_admin' && $user->school_id) {
-                $query->where('school_id', $user->school_id);
-            }
-            $query->with(['classRoom', 'school']);
-        }]);
+        $parent->load(['students.classRoom', 'students.school']);
         
         return view('parents.show', compact('parent'));
     }

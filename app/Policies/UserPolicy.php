@@ -51,6 +51,11 @@ class UserPolicy
             }
         }
         
+        // Vérifier si l'utilisateur peut voir le profil selon la logique de verrouillage
+        if (!$user->canViewProfile($model)) {
+            return false;
+        }
+        
         // Les admins peuvent voir tous les utilisateurs
         if ($user->hasRole('admin') || $user->role === 'admin') {
             return true;

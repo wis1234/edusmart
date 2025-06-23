@@ -38,57 +38,41 @@ class SettingsController extends Controller
      */
     public function toggleTwoFactor(Request $request)
     {
-        try {
-            $user = Auth::user();
-            $enabled = $request->input('enabled', false);
+        $user = Auth::user();
+        
+        if ($user->two_factor_enabled) {
+            $user->two_factor_enabled = false;
+            $user->two_factor_code = null;
+            $user->two_factor_expires_at = null;
+            $user->save();
             
-            if ($enabled) {
-                // Activer le 2FA
-                $user->two_factor_enabled = true;
-                $user->save();
-                
-                // Envoyer notification d'activation
-                try {
-                    $user->notify(new \App\Notifications\TwoFactorEnabled());
-                } catch (\Exception $e) {
-                    Log::error('Failed to send 2FA enabled notification: ' . $e->getMessage());
-                    // Continue even if notification fails
-                }
-                
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Two-factor authentication has been enabled for your account.',
-                    'enabled' => true
-                ]);
-            } else {
-                // Désactiver le 2FA
-                $user->two_factor_enabled = false;
-                $user->two_factor_code = null;
-                $user->two_factor_expires_at = null;
-                $user->save();
-                
-                // Envoyer notification de désactivation
-                try {
-                    $user->notify(new \App\Notifications\TwoFactorDisabled());
-                } catch (\Exception $e) {
-                    Log::error('Failed to send 2FA disabled notification: ' . $e->getMessage());
-                    // Continue even if notification fails
-                }
-                
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Two-factor authentication has been disabled for your account.',
-                    'enabled' => false
-                ]);
-            }
-        } catch (\Exception $e) {
-            Log::error('Error toggling 2FA: ' . $e->getMessage());
+            $user->notify(new \App\Notifications\TwoFactorDisabled());
             
-            return response()->json([
-                'success' => false,
-                'message' => 'An error occurred while updating your settings. Please try again.',
-                'error' => $e->getMessage()
-            ], 500);
+            return back()->with('success', 'Two-factor authentication has been disabled.');
+        } else {
+            $user->two_factor_enabled = true;
+            $user->save();
+            
+            $user->generateTwoFactorCode();
+            $user->notify(new \App\Notifications\TwoFactorEnabled());
+            
+            return back()->with('success', 'Two-factor authentication has been enabled. Please check your email for the verification code.');
+        }
+    }
+
+    /**
+     * Toggle profile lock.
+     */
+    public function toggleProfileLock(Request $request)
+    {
+        $user = Auth::user();
+        
+        $isLocked = $user->toggleProfileLock();
+        
+        if ($isLocked) {
+            return back()->with('success', 'Your profile has been locked. Only admins and school admins can view your profile details.');
+        } else {
+            return back()->with('success', 'Your profile has been unlocked. Other users can now view your profile details.');
         }
     }
 }

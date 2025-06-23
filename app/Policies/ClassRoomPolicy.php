@@ -61,7 +61,7 @@ class ClassRoomPolicy
             // Les enseignants peuvent voir uniquement leurs classes assignées
             $teacherId = $user->teacherProfile ? $user->teacherProfile->id : null;
             if ($teacherId) {
-                return $user->teachingClassRooms()->where('class_room_id', $classRoom->id)->exists();
+                return $classRoom->classRoomTeachers()->where('teacher_id', $teacherId)->exists();
             }
             return false;
         }
