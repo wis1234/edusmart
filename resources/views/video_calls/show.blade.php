@@ -1,0 +1,124 @@
+<x-app-layout>
+    <div class="min-h-screen bg-gray-900 text-white">
+        <!-- Header -->
+        <div class="bg-gray-800 border-b border-gray-700">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center">
+                        <a href="{{ route('video-calls.index') }}" class="text-gray-300 hover:text-white mr-4">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                            </svg>
+                        </a>
+                        <div>
+                            <h1 class="text-lg font-semibold">{{ $videoCall->title ?: 'Appel sans titre' }}</h1>
+                            <p class="text-sm text-gray-400">
+                                {{ $videoCall->type === 'video' ? 'Vidéo' : ($videoCall->type === 'audio' ? 'Audio' : 'Vidéo/Audio') }} • 
+                                {{ $videoCall->participants()->count() }} participant(s)
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <div id="call-timer" class="text-sm text-gray-300">00:00</div>
+                        <div id="connection-status" class="flex items-center">
+                            <div class="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
+                            <span class="text-sm">Déconnecté</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <!-- Video Area -->
+                <div class="lg:col-span-3">
+                    <div class="bg-gray-800 rounded-lg p-4">
+                        <!-- Video Grid -->
+                        <div id="video-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                            <!-- Local Video -->
+                            <div class="relative bg-gray-700 rounded-lg overflow-hidden aspect-video">
+                                <video id="local-video" autoplay muted playsinline class="w-full h-full object-cover"></video>
+                                <div class="absolute bottom-2 left-2 bg-black bg-opacity-50 px-2 py-1 rounded text-sm">
+                                    Vous ({{ Auth::user()->name }})
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Controls -->
+                        <div class="flex items-center justify-center space-x-4">
+                            <!-- Mute/Unmute -->
+                            <button id="mute-btn" class="bg-gray-700 hover:bg-gray-600 p-3 rounded-full transition-colors">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+                                </svg>
+                            </button>
+
+                            <!-- Video On/Off -->
+                            <button id="video-btn" class="bg-gray-700 hover:bg-gray-600 p-3 rounded-full transition-colors">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                </svg>
+                            </button>
+
+                            <!-- End Call -->
+                            <button id="end-call-btn" class="bg-red-600 hover:bg-red-700 p-3 rounded-full transition-colors">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 3l18 18"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="lg:col-span-1">
+                    <!-- Participants -->
+                    <div class="bg-gray-800 rounded-lg p-4 mb-4">
+                        <h3 class="text-lg font-semibold mb-3">Participants</h3>
+                        <div id="participants-list" class="space-y-2">
+                            <!-- Participants will be added here dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Chat -->
+                    <div class="bg-gray-800 rounded-lg p-4">
+                        <h3 class="text-lg font-semibold mb-3">Chat</h3>
+                        <div id="chat-messages" class="h-64 overflow-y-auto mb-3 space-y-2">
+                            <!-- Messages will be added here dynamically -->
+                        </div>
+                        <div class="flex">
+                            <input type="text" id="chat-input" placeholder="Tapez votre message..." 
+                                   class="flex-1 bg-gray-700 border border-gray-600 rounded-l px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500">
+                            <button id="send-message-btn" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-r transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration data for JavaScript -->
+    <script>
+        window.videoCallConfig = {
+            signalServerUrl: '{{ $signalServerUrl }}',
+            roomId: '{{ $videoCall->room_id }}',
+            userId: {{ Auth::id() }},
+            userName: '{{ Auth::user()->name }}',
+            isHost: {{ $isHost ? 'true' : 'false' }},
+            csrfToken: '{{ csrf_token() }}',
+            indexUrl: '{{ route("video-calls.index") }}'
+        };
+    </script>
+
+    @push('scripts')
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script src="{{ asset('js/video-call.js') }}"></script>
+    @endpush
+</x-app-layout> 

@@ -187,6 +187,12 @@
                 </a>
             </div>
             @endauth
+            <!-- Bouton création appel vidéo/audio -->
+            @auth
+            <a href="{{ route('video-calls.create') }}" title="Nouvel appel vidéo/audio" class="p-2 rounded-full bg-green-100 dark:bg-green-900 hover:bg-green-200 dark:hover:bg-green-800 transition flex items-center justify-center">
+                <i class="fas fa-video text-green-600 dark:text-green-300 text-xl"></i>
+            </a>
+            @endauth
         </div>
     </div>
     <script>
@@ -431,6 +437,33 @@
 
         // Gestion des erreurs Laravel avec popup élégant
         document.addEventListener('DOMContentLoaded', function() {
+            // Fonction pour afficher les erreurs
+            window.showErrorPopup = function(error) {
+                console.error('Error:', error);
+                
+                // Create error popup
+                const popup = document.createElement('div');
+                popup.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg z-50';
+                popup.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        <span>${error.message || error || 'Une erreur est survenue'}</span>
+                        <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                
+                document.body.appendChild(popup);
+                
+                // Auto remove after 5 seconds
+                setTimeout(() => {
+                    if (popup.parentNode) {
+                        popup.remove();
+                    }
+                }, 5000);
+            };
+
             // Vérifier s'il y a des erreurs de validation
             @if($errors->any())
                 const errorMessages = [];

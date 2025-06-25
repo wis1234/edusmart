@@ -1,6 +1,7 @@
 /.phpunit.cache
 /node_modules
 /electron/
+/signal-server/
 /public/build
 /public/hot
 /public/storage

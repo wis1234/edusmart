@@ -147,3 +147,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::get('/registration-success', function () {
     return view('auth.registration-success');
 })->name('registration.success');
+
+use App\Http\Controllers\VideoCallController;
+
+Route::middleware(['auth'])->group(function () {
+    // Video Calls Routes
+    Route::resource('video-calls', VideoCallController::class);
+    Route::get('video-calls/{roomId}/join', [VideoCallController::class, 'join'])->name('video-calls.join');
+    Route::post('video-calls/{roomId}/leave', [VideoCallController::class, 'leave'])->name('video-calls.leave');
+    Route::post('video-calls/{roomId}/decline', [VideoCallController::class, 'decline'])->name('video-calls.decline');
+    Route::post('video-calls/{roomId}/end', [VideoCallController::class, 'end'])->name('video-calls.end');
+    Route::post('video-calls/{roomId}/cancel', [VideoCallController::class, 'cancel'])->name('video-calls.cancel');
+    Route::get('video-calls/{roomId}/participants', [VideoCallController::class, 'getActiveParticipants'])->name('video-calls.participants');
+    Route::post('video-calls/{roomId}/status', [VideoCallController::class, 'updateParticipantStatus'])->name('video-calls.status');
+});

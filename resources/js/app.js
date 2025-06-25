@@ -1,33 +1,35 @@
-// Notifications
-Echo.private(`user.${userId}`)
-    .listen('NewNotification', (e) => {
-        // Mettre à jour le compteur de notifications
-        updateNotificationCount();
+// Notifications - Only if Echo is available
+if (typeof Echo !== 'undefined' && typeof userId !== 'undefined') {
+    Echo.private(`user.${userId}`)
+        .listen('NewNotification', (e) => {
+            // Mettre à jour le compteur de notifications
+            updateNotificationCount();
 
-        // Ajouter la nouvelle notification à la liste
-        const notificationsList = document.querySelector('.notifications-list');
-        if (notificationsList) {
-            const notificationHtml = `
-                <a href="${e.link || '#'}" 
-                   class="dropdown-item notification-item bg-light"
-                   data-notification-id="${e.id}">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            ${getNotificationIcon(e.type)}
+            // Ajouter la nouvelle notification à la liste
+            const notificationsList = document.querySelector('.notifications-list');
+            if (notificationsList) {
+                const notificationHtml = `
+                    <a href="${e.link || '#'}" 
+                       class="dropdown-item notification-item bg-light"
+                       data-notification-id="${e.id}">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                ${getNotificationIcon(e.type)}
+                            </div>
+                            <div class="flex-grow-1 ms-2">
+                                <p class="mb-0 text-sm">${e.title}</p>
+                                <small class="text-muted">${e.created_at}</small>
+                            </div>
                         </div>
-                        <div class="flex-grow-1 ms-2">
-                            <p class="mb-0 text-sm">${e.title}</p>
-                            <small class="text-muted">${e.created_at}</small>
-                        </div>
-                    </div>
-                </a>
-            `;
-            notificationsList.insertAdjacentHTML('afterbegin', notificationHtml);
-        }
+                    </a>
+                `;
+                notificationsList.insertAdjacentHTML('afterbegin', notificationHtml);
+            }
 
-        // Afficher une notification toast
-        showNotificationToast(e);
-    });
+            // Afficher une notification toast
+            showNotificationToast(e);
+        });
+}
 
 function getNotificationIcon(type) {
     switch (type) {
@@ -57,22 +59,21 @@ function showNotificationToast(notification) {
     `;
 
     document.body.appendChild(toast);
-    const bsToast = new bootstrap.Toast(toast, {
-        autohide: true,
-        delay: 5000
-    });
-    bsToast.show();
-
-    toast.addEventListener('hidden.bs.toast', () => {
-        toast.remove();
-    });
-} 
+    
+    // Simple timeout to remove toast instead of bootstrap
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 5000);
+}
 
 // Preloader logic
 function showPreloader() {
     const preloader = document.getElementById('preloader-overlay');
     if (preloader) preloader.style.display = 'flex';
 }
+
 function hidePreloader() {
     const preloader = document.getElementById('preloader-overlay');
     if (preloader) preloader.style.display = 'none';
