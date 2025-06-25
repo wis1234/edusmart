@@ -210,12 +210,14 @@ class EvaluationController extends Controller
             'teacher_id' => $teacherId,
             'created_by' => Auth::id(),
         ]);
-        // Notification
-        $this->notificationService->sendToRole(
-            'admin',
+        // Notification to all school_admins of the evaluation's school
+        $schoolId = $evaluation->subject->school_id;
+        $schoolAdmins = \App\Models\User::where('role', 'school_admin')->where('school_id', $schoolId)->get();
+        $this->notificationService->sendToMany(
+            $schoolAdmins,
+            'success',
             'New Evaluation Created',
             'A new evaluation has been created in the system.',
-            'success',
             route('evaluations.show', $evaluation)
         );
         // Rediriger vers la vue de l'évaluation créée avec gestion d'URL robuste
@@ -346,12 +348,14 @@ class EvaluationController extends Controller
         unset($validated['evaluation_type']);
 
         $evaluation->update($validated);
-        // Notification
-        $this->notificationService->sendToRole(
-            'admin',
+        // Notification to all school_admins of the evaluation's school
+        $schoolId = $evaluation->subject->school_id;
+        $schoolAdmins = \App\Models\User::where('role', 'school_admin')->where('school_id', $schoolId)->get();
+        $this->notificationService->sendToMany(
+            $schoolAdmins,
+            'warning',
             'Evaluation Updated',
             'An evaluation has been updated in the system.',
-            'warning',
             route('evaluations.show', $evaluation)
         );
         return redirect()->route('evaluations.index')->with('success', 'Evaluation updated successfully.');
@@ -362,12 +366,14 @@ class EvaluationController extends Controller
         $this->authorize('delete', $evaluation);
         try {
             $evaluation->delete();
-            // Notification
-            $this->notificationService->sendToRole(
-                'admin',
+            // Notification to all school_admins of the evaluation's school
+            $schoolId = $evaluation->subject->school_id;
+            $schoolAdmins = \App\Models\User::where('role', 'school_admin')->where('school_id', $schoolId)->get();
+            $this->notificationService->sendToMany(
+                $schoolAdmins,
+                'error',
                 'Evaluation Deleted',
-                'An evaluation has been deleted from the system.',
-                'error'
+                'An evaluation has been deleted from the system.'
             );
             return redirect()->route('evaluations.index')->with('success', 'Evaluation deleted successfully.');
         } catch (\Exception $e) {

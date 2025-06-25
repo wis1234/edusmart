@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->foreignId('school_id')->constrained()->onDelete('cascade');
             $table->string('grade_level');
-            $table->string('section')->default('A');
+            $table->string('section', 8);
             $table->string('academic_year');
             $table->integer('capacity')->default(30);
             $table->time('start_time')->nullable();
@@ -26,11 +26,9 @@ return new class extends Migration
             $table->string('building')->nullable();
             $table->string('floor')->nullable();
             $table->boolean('is_active')->default(true);
+            $table->unique(['school_id', 'grade_level', 'section', 'academic_year'], 'unique_class_in_school');
             $table->timestamps();
             $table->softDeletes();
-
-            // Unique constraint for grade level, section, and academic year within a school
-            $table->unique(['school_id', 'grade_level', 'section', 'academic_year'], 'unique_class_in_school');
         });
     }
 

@@ -169,12 +169,14 @@ class StudentGradeController extends Controller
         ]);
 
         $student_grade->update($validated);
-        // Notification
-        $this->notificationService->sendToRole(
-            'admin',
+        // Notification to all school_admins of the grade's school
+        $schoolId = $evaluation->subject->school_id ?? $evaluation->classRoom->school_id;
+        $schoolAdmins = \App\Models\User::where('role', 'school_admin')->where('school_id', $schoolId)->get();
+        $this->notificationService->sendToMany(
+            $schoolAdmins,
+            'warning',
             'Student Grade Updated',
             'A student grade has been updated in the system.',
-            'warning',
             route('evaluations.student_grades.index', $evaluation)
         );
         return redirect()->route('evaluations.student_grades.index', $evaluation)
@@ -186,12 +188,14 @@ class StudentGradeController extends Controller
         $evaluation = $student_grade->evaluation;
         try {
             $student_grade->delete();
-            // Notification
-            $this->notificationService->sendToRole(
-                'admin',
+            // Notification to all school_admins of the grade's school
+            $schoolId = $evaluation->subject->school_id ?? $evaluation->classRoom->school_id;
+            $schoolAdmins = \App\Models\User::where('role', 'school_admin')->where('school_id', $schoolId)->get();
+            $this->notificationService->sendToMany(
+                $schoolAdmins,
+                'error',
                 'Student Grade Deleted',
-                'A student grade has been deleted from the system.',
-                'error'
+                'A student grade has been deleted from the system.'
             );
             return redirect()->route('evaluations.show', $evaluation)
                 ->with('success', 'Grade deleted successfully.');

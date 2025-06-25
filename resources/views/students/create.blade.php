@@ -160,10 +160,8 @@
                         <select id="selected_parent_id" name="selected_parent_id"
                             class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('selected_parent_id') border-red-500 @enderror">
                             <option value="">Select Parent</option>
-                            @foreach($users as $parent)
-                                @if($parent->role === 'parent')
-                                    <option value="{{ $parent->id }}" {{ old('selected_parent_id') == $parent->id ? 'selected' : '' }}>{{ $parent->first_name }} {{ $parent->last_name }}</option>
-                                @endif
+                            @foreach($parents as $parent)
+                                <option value="{{ $parent->id }}" {{ old('selected_parent_id') == $parent->id ? 'selected' : '' }}>{{ $parent->first_name }} {{ $parent->last_name }}</option>
                             @endforeach
                         </select>
                         @error('selected_parent_id')

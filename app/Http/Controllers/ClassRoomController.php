@@ -123,25 +123,21 @@ class ClassRoomController extends Controller
     {
         $validated = $request->validated();
 
-        // Vérifier unicité de la combinaison grade_level + section + academic_year + school_id
-        $exists = \App\Models\ClassRoom::where('school_id', $validated['school_id'])
-            ->where('academic_year', $validated['academic_year'])
-            ->where('grade_level', $validated['grade_level'])
-            ->where('section', $validated['section'])
-            ->exists();
-        if ($exists) {
-            return back()->withErrors(['section' => 'This grade level and section already exists for this school and academic year.'])->withInput();
-        }
+        // Générer une section unique de 8 caractères MAJUSCULES
+        do {
+            $validated['section'] = strtoupper(substr(bin2hex(random_bytes(8)), 0, 8));
+        } while (\App\Models\ClassRoom::where('section', $validated['section'])->exists());
 
         $validated['created_by'] = auth()->id();
         $validated['updated_by'] = auth()->id();
         $classRoom = ClassRoom::create($validated);
-        // Notification
-        $this->notificationService->sendToRole(
-            'admin',
+        // Notification to all school_admins of the classroom's school
+        $schoolAdmins = \App\Models\User::where('role', 'school_admin')->where('school_id', $validated['school_id'])->get();
+        $this->notificationService->sendToMany(
+            $schoolAdmins,
+            'success',
             'New Class Created',
             'A new class has been created in the system.',
-            'success',
             route('class_rooms.show', $classRoom)
         );
         return redirect()
@@ -192,14 +188,14 @@ class ClassRoomController extends Controller
     {
         $validated = $request->validated();
         $validated['updated_by'] = auth()->id();
-
         $classRoom->update($validated);
-        // Notification
-        $this->notificationService->sendToRole(
-            'admin',
+        // Notification to all school_admins of the classroom's school
+        $schoolAdmins = \App\Models\User::where('role', 'school_admin')->where('school_id', $validated['school_id'])->get();
+        $this->notificationService->sendToMany(
+            $schoolAdmins,
+            'warning',
             'Class Updated',
             'A class has been updated in the system.',
-            'warning',
             route('class_rooms.show', $classRoom)
         );
         return redirect()
@@ -217,12 +213,13 @@ class ClassRoomController extends Controller
         }
         try {
             $classRoom->delete();
-            // Notification
-            $this->notificationService->sendToRole(
-                'admin',
+            // Notification to all school_admins of the classroom's school
+            $schoolAdmins = \App\Models\User::where('role', 'school_admin')->where('school_id', $classRoom->school_id)->get();
+            $this->notificationService->sendToMany(
+                $schoolAdmins,
+                'error',
                 'Class Deleted',
-                'A class has been deleted from the system.',
-                'error'
+                'A class has been deleted from the system.'
             );
             return redirect()
                 ->route('class_rooms.index')

@@ -60,7 +60,7 @@ class ParentController extends Controller
     public function create()
     {
         $this->authorize('create', User::class);
-        return view('parents.create');
+        return view('parents.index');
     }
 
     /**
@@ -123,12 +123,13 @@ class ParentController extends Controller
                 'status' => $parentUser->status,
             ]);
 
-            // Notification
-            $this->notificationService->sendToRole(
-                'admin',
+            // Notification to all school_admins of the parent's school
+            $schoolAdmins = \App\Models\User::where('role', 'school_admin')->where('school_id', $validated['school_id'])->get();
+            $this->notificationService->sendToMany(
+                $schoolAdmins,
+                'success',
                 'New Parent Created',
                 'A new parent profile has been created in the system.',
-                'success',
                 route('parents.show', $parentUser)
             );
 
@@ -244,12 +245,13 @@ class ParentController extends Controller
             $parentModel->status = $parent->status;
             $parentModel->save();
 
-            // Notification
-            $this->notificationService->sendToRole(
-                'admin',
+            // Notification to all school_admins of the parent's school
+            $schoolAdmins = \App\Models\User::where('role', 'school_admin')->where('school_id', $validated['school_id'])->get();
+            $this->notificationService->sendToMany(
+                $schoolAdmins,
+                'warning',
                 'Parent Updated',
                 'A parent profile has been updated in the system.',
-                'warning',
                 route('parents.show', $parent)
             );
 
@@ -285,12 +287,13 @@ class ParentController extends Controller
 
         try {
             $parent->delete();
-            // Notification
-            $this->notificationService->sendToRole(
-                'admin',
+            // Notification to all school_admins of the parent's school
+            $schoolAdmins = \App\Models\User::where('role', 'school_admin')->where('school_id', $parent->school_id)->get();
+            $this->notificationService->sendToMany(
+                $schoolAdmins,
+                'error',
                 'Parent Deleted',
-                'A parent profile has been deleted from the system.',
-                'error'
+                'A parent profile has been deleted from the system.'
             );
             return redirect()->route('parents.index')->with('success', 'Parent deleted successfully.');
         } catch (\Exception $e) {

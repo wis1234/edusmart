@@ -110,7 +110,6 @@
                                 <th class="px-4 py-3 text-left">Classroom</th>
                                 <th class="px-4 py-3 text-left">School</th>
                                 <!-- <th class="px-4 py-3 text-left">Grade Level</th> -->
-                                <th class="px-4 py-3 text-left">Section</th>
                                 <th class="px-4 py-3 text-left">Academic Year</th>
                                 <th class="px-4 py-3 text-left">Capacity</th>
                                 <th class="px-4 py-3 text-left">Status</th>
@@ -134,7 +133,6 @@
                                             Grade {{ $classRoom->grade_level }}
                                         </span>
                                     </td> -->
-                                    <td class="px-4 py-3">{{ $classRoom->section ?? 'N/A' }}</td>
                                     <td class="px-4 py-3">{{ $classRoom->academic_year ?? 'N/A' }}</td>
                                     <td class="px-4 py-3">
                                         <div class="flex items-center gap-2">
@@ -219,7 +217,6 @@
                             <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold {{ $classRoom->is_active ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' }}">
                                 {{ $classRoom->is_active ? 'Active' : 'Inactive' }}
                             </span>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">{{ $classRoom->section ?? 'No Section' }}</span>
                         </div>
                         <div class="flex gap-2 mt-3 justify-end">
                             <x-action-icons

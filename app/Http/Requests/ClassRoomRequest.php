@@ -25,7 +25,6 @@ class ClassRoomRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'school_id' => ['required', 'exists:schools,id'],
             'grade_level' => ['required', 'string', 'max:50'],
-            'section' => ['required', 'string', 'max:50'],
             'academic_year' => ['required', 'string', 'max:20'],
             'capacity' => ['required', 'integer', 'min:1'],
             'start_time' => ['required', 'date_format:H:i'],

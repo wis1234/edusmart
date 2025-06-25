@@ -76,36 +76,6 @@
                     </div>
 
                     <div>
-                        <label for="section" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                            Section <span class="text-red-500">*</span>
-                        </label>
-                        <select name="section" id="section" required
-                            class="w-full px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-indigo-500 transition">
-                            <option value="">Select Section</option>
-                            <option value="A" {{ old('section') == 'A' ? 'selected' : '' }}>A</option>
-                            <option value="B" {{ old('section') == 'B' ? 'selected' : '' }}>B</option>
-                            <option value="C" {{ old('section') == 'C' ? 'selected' : '' }}>C</option>
-                            <option value="D" {{ old('section') == 'D' ? 'selected' : '' }}>D</option>
-                            <option value="E" {{ old('section') == 'E' ? 'selected' : '' }}>E</option>
-                            <option value="F" {{ old('section') == 'F' ? 'selected' : '' }}>F</option>
-                            <option value="G" {{ old('section') == 'G' ? 'selected' : '' }}>G</option>
-                            <option value="H" {{ old('section') == 'H' ? 'selected' : '' }}>H</option>
-                            <option value="I" {{ old('section') == 'I' ? 'selected' : '' }}>I</option>
-                            <option value="J" {{ old('section') == 'J' ? 'selected' : '' }}>J</option>
-                            <option value="K" {{ old('section') == 'K' ? 'selected' : '' }}>K</option>
-                            <option value="1" {{ old('section') == '1' ? 'selected' : '' }}>1</option>
-                            <option value="2" {{ old('section') == '2' ? 'selected' : '' }}>2</option>
-                            <option value="3" {{ old('section') == '3' ? 'selected' : '' }}>3</option>
-                            <option value="4" {{ old('section') == '4' ? 'selected' : '' }}>4</option>
-                            <option value="5" {{ old('section') == '5' ? 'selected' : '' }}>5</option>
-                            <option value="6" {{ old('section') == '6' ? 'selected' : '' }}>6</option>
-                            <option value="7" {{ old('section') == '7' ? 'selected' : '' }}>7</option>
-                            <option value="8" {{ old('section') == '8' ? 'selected' : '' }}>8</option>
-                            <option value="9" {{ old('section') == '9' ? 'selected' : '' }}>9</option>
-                        </select>
-                    </div>
-
-                    <div>
                         <label for="academic_year" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                             Academic Year <span class="text-red-500">*</span>
                         </label>

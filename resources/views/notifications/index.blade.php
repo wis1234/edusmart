@@ -1,7 +1,7 @@
 <x-app-layout>
     <div class="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
         <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-            <!-- Header modernisé -->
+            <!-- Header modernized -->
             <div class="flex items-center justify-between mb-8">
                 <div class="flex items-center gap-4">
                     <span class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 shadow-lg">
@@ -9,19 +9,19 @@
                     </span>
                     <div>
                         <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Notifications</h1>
-                        <p class="text-gray-500 dark:text-gray-300">Gérez vos notifications et restez informé des dernières activités</p>
+                        <p class="text-gray-500 dark:text-gray-300">Manage your notifications and stay informed about the latest activities</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button id="refreshNotificationsBtn" class="p-2 rounded-full bg-white dark:bg-gray-800 shadow hover:bg-gray-100 dark:hover:bg-gray-700 transition" title="Actualiser">
+                    <button id="refreshNotificationsBtn" class="p-2 rounded-full bg-white dark:bg-gray-800 shadow hover:bg-gray-100 dark:hover:bg-gray-700 transition" title="Refresh">
                         <i class="fas fa-sync-alt text-indigo-500"></i>
                     </button>
                     @php $unreadCount = auth()->user()->notifications()->whereNull('read_at')->count(); @endphp
                     @if($unreadCount > 0)
                         <button id="markAllAsReadBtn" class="px-4 py-2 rounded-lg bg-indigo-500 text-white hover:bg-indigo-600 transition font-medium">
-                                <i class="fas fa-check-double mr-2"></i>
-                                Tout marquer comme lu
-                            </button>
+                            <i class="fas fa-check-double mr-2"></i>
+                            Mark all as read
+                        </button>
                     @endif
                 </div>
             </div>
@@ -34,49 +34,49 @@
                         <div class="text-gray-500 dark:text-gray-300 text-sm">Total</div>
                         <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ $notifications->total() }}</div>
                         <div class="text-blue-600 dark:text-blue-400 text-xs flex items-center gap-1">
-                            <i class="fas fa-chart-line"></i> Toutes les notifications
+                            <i class="fas fa-chart-line"></i> All notifications
                         </div>
                     </div>
                 </div>
                 <div class="bg-gradient-to-br from-red-100 to-red-50 dark:from-red-900 dark:to-red-700 rounded-xl shadow-lg p-6 flex items-center gap-4">
                     <i class="fas fa-exclamation-circle text-red-500 dark:text-red-300 text-3xl"></i>
                     <div>
-                        <div class="text-gray-500 dark:text-gray-300 text-sm">Non lues</div>
+                        <div class="text-gray-500 dark:text-gray-300 text-sm">Unread</div>
                         <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ $unreadCount }}</div>
                         <div class="text-red-600 dark:text-red-400 text-xs flex items-center gap-1">
-                            <i class="fas fa-clock"></i> En attente
+                            <i class="fas fa-clock"></i> Pending
                         </div>
                     </div>
                 </div>
                 <div class="bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900 dark:to-green-700 rounded-xl shadow-lg p-6 flex items-center gap-4">
                     <i class="fas fa-check-circle text-green-500 dark:text-green-300 text-3xl"></i>
                     <div>
-                        <div class="text-gray-500 dark:text-gray-300 text-sm">Lues</div>
+                        <div class="text-gray-500 dark:text-gray-300 text-sm">Read</div>
                         <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ $notifications->total() - $unreadCount }}</div>
                         <div class="text-green-600 dark:text-green-400 text-xs flex items-center gap-1">
-                            <i class="fas fa-check"></i> Traitées
+                            <i class="fas fa-check"></i> Processed
                         </div>
                     </div>
                 </div>
                 <div class="bg-gradient-to-br from-purple-100 to-purple-50 dark:from-purple-900 dark:to-purple-700 rounded-xl shadow-lg p-6 flex items-center gap-4">
                     <i class="fas fa-clock text-purple-500 dark:text-purple-300 text-3xl"></i>
                     <div>
-                        <div class="text-gray-500 dark:text-gray-300 text-sm">Aujourd'hui</div>
+                        <div class="text-gray-500 dark:text-gray-300 text-sm">Today</div>
                         <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ auth()->user()->notifications()->whereDate('created_at', today())->count() }}</div>
                         <div class="text-purple-600 dark:text-purple-400 text-xs flex items-center gap-1">
-                            <i class="fas fa-calendar-day"></i> Récentes
+                            <i class="fas fa-calendar-day"></i> Recent
                         </div>
                     </div>
-                        </div>
-                    </div>
+                </div>
+            </div>
 
             <!-- Recent Notifications -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">Liste des notifications</h2>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">Notification List</h2>
                     <div class="flex gap-2">
                         <button class="px-3 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition" id="markAllReadBtn">
-                            <i class="fas fa-check-double mr-1"></i>Marquer tout comme lu
+                            <i class="fas fa-check-double mr-1"></i>Mark all as read
                         </button>
                         <a href="{{ route('dashboard') }}" class="px-3 py-1 rounded bg-indigo-500 text-white hover:bg-indigo-600 transition">
                             <i class="fas fa-home mr-1"></i>Dashboard
@@ -88,10 +88,10 @@
                         <thead class="bg-gray-100 dark:bg-gray-700">
                             <tr>
                                 <th class="px-4 py-3 text-left">Type</th>
-                                <th class="px-4 py-3 text-left">Titre</th>
+                                <th class="px-4 py-3 text-left">Title</th>
                                 <th class="px-4 py-3 text-left">Message</th>
                                 <th class="px-4 py-3 text-left">Date</th>
-                                <th class="px-4 py-3 text-left">Statut</th>
+                                <th class="px-4 py-3 text-left">Status</th>
                                 <th class="px-4 py-3 text-end">Actions</th>
                             </tr>
                         </thead>
@@ -127,18 +127,18 @@
                                     </td>
                                     <td class="px-4 py-3">
                                         <div class="text-sm text-gray-500 dark:text-gray-400">
-                                                    {{ $notification->created_at->diffForHumans() }}
+                                            {{ $notification->created_at->diffForHumans() }}
                                         </div>
                                     </td>
                                     <td class="px-4 py-3">
                                         @if($notification->isUnread())
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
-                                                <i class="fas fa-circle mr-1 text-xs"></i>Non lue
+                                                <i class="fas fa-circle mr-1 text-xs"></i>Unread
                                             </span>
                                         @else
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                                <i class="fas fa-check mr-1 text-xs"></i>Lue
-                                                </span>
+                                                <i class="fas fa-check mr-1 text-xs"></i>Read
+                                            </span>
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 text-end">
@@ -146,21 +146,21 @@
                                             @if($notification->link)
                                                 <a href="{{ $notification->link }}" 
                                                    class="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition" 
-                                                   title="Voir plus">
+                                                   title="View more">
                                                     <i class="fas fa-external-link-alt"></i>
                                                 </a>
                                             @endif
                                             @if($notification->isUnread())
                                                 <button type="button" 
                                                         class="mark-as-read-btn px-2 py-1 rounded bg-green-200 dark:bg-green-700 text-green-700 dark:text-green-200 hover:bg-green-300 dark:hover:bg-green-600 transition" 
-                                                        title="Marquer comme lu"
+                                                        title="Mark as read"
                                                         data-notification-id="{{ $notification->id }}">
                                                     <i class="fas fa-check"></i>
                                                 </button>
                                             @endif
                                             <button type="button" 
                                                     class="delete-notification-btn px-2 py-1 rounded bg-red-200 dark:bg-red-700 text-red-700 dark:text-red-200 hover:bg-red-300 dark:hover:bg-red-600 transition" 
-                                                    title="Supprimer"
+                                                    title="Delete"
                                                     data-notification-id="{{ $notification->id }}">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -174,25 +174,25 @@
                                             <div class="mx-auto w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
                                                 <i class="fas fa-bell-slash text-gray-400 dark:text-gray-500 text-3xl"></i>
                                             </div>
-                                            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Aucune notification</h3>
-                                            <p class="text-gray-500 dark:text-gray-400">Vous n'avez pas encore reçu de notifications.</p>
-                                </div>
+                                            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No notifications</h3>
+                                            <p class="text-gray-500 dark:text-gray-400">You have not received any notifications yet.</p>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforelse
                         </tbody>
                     </table>
-                        </div>
+                </div>
 
                 <!-- Pagination -->
-                        @if($notifications->hasPages())
+                @if($notifications->hasPages())
                     <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-                                {{ $notifications->links() }}
-                            </div>
-                        @endif
+                        {{ $notifications->links() }}
                     </div>
-                </div>
+                @endif
             </div>
+        </div>
+    </div>
 </x-app-layout>
 
 @push('styles')
@@ -366,7 +366,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (statusCell) {
                         statusCell.innerHTML = `
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                <i class="fas fa-check mr-1 text-xs"></i>Lue
+                                <i class="fas fa-check mr-1 text-xs"></i>Read
                             </span>
                         `;
                     }
@@ -486,7 +486,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             if (statusCell) {
                                 statusCell.innerHTML = `
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                        <i class="fas fa-check mr-1 text-xs"></i>Lue
+                                        <i class="fas fa-check mr-1 text-xs"></i>Read
                                     </span>
                                 `;
                             }
@@ -506,21 +506,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Mettre à jour les statistiques
                         updateNotificationStats();
                         
-                        showToast('Toutes les notifications ont été marquées comme lues', 'success');
+                        showToast('All notifications have been marked as read', 'success');
                     } else {
-                        showToast('Erreur lors du marquage des notifications', 'error');
+                        showToast('Error marking notifications', 'error');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    showToast('Erreur lors du marquage des notifications', 'error');
+                    showToast('Error marking notifications', 'error');
                 })
                 .finally(() => {
                     // Restaurer les boutons
                     [markAllAsReadBtn, markAllReadBtn].forEach(btn => {
                         if (btn) {
                             btn.disabled = false;
-                            btn.innerHTML = '<i class="fas fa-check-double mr-2"></i>Tout marquer comme lu';
+                            btn.innerHTML = '<i class="fas fa-check-double mr-2"></i>Mark all as read';
                         }
                     });
                 });
@@ -581,7 +581,7 @@ function updateNotificationStats() {
                 unreadCountElement.textContent = data.count;
             }
             
-            // Masquer les boutons "Tout marquer comme lu" si plus de notifications non lues
+            // Masquer les boutons "Mark all as read" si plus de notifications non lues
             const markAllBtns = [document.getElementById('markAllAsReadBtn'), document.getElementById('markAllReadBtn')];
             markAllBtns.forEach(btn => {
                 if (btn && data.count === 0) {

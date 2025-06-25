@@ -99,12 +99,13 @@ class SubjectController extends Controller
 
         $subject = Subject::create($validated);
         
-        // Notification
-        $this->notificationService->sendToRole(
-            'admin',
+        // Notification to all school_admins of the subject's school
+        $schoolAdmins = \App\Models\User::where('role', 'school_admin')->where('school_id', $validated['school_id'])->get();
+        $this->notificationService->sendToMany(
+            $schoolAdmins,
+            'success',
             'New Subject Created',
             'A new subject has been created in the system.',
-            'success',
             route('subjects.show', $subject)
         );
         
@@ -168,12 +169,13 @@ class SubjectController extends Controller
         
         $subject->update($validated);
         
-        // Notification
-        $this->notificationService->sendToRole(
-            'admin',
+        // Notification to all school_admins of the subject's school
+        $schoolAdmins = \App\Models\User::where('role', 'school_admin')->where('school_id', $validated['school_id'])->get();
+        $this->notificationService->sendToMany(
+            $schoolAdmins,
+            'warning',
             'Subject Updated',
             'A subject has been updated in the system.',
-            'warning',
             route('subjects.show', $subject)
         );
         
@@ -195,12 +197,13 @@ class SubjectController extends Controller
         
         try {
             $subject->delete();
-            // Notification
-            $this->notificationService->sendToRole(
-                'admin',
+            // Notification to all school_admins of the subject's school
+            $schoolAdmins = \App\Models\User::where('role', 'school_admin')->where('school_id', $subject->school_id)->get();
+            $this->notificationService->sendToMany(
+                $schoolAdmins,
+                'error',
                 'Subject Deleted',
-                'A subject has been deleted from the system.',
-                'error'
+                'A subject has been deleted from the system.'
             );
             return redirect()->route('subjects.index')->with('success', 'Subject deleted successfully.');
         } catch (\Exception $e) {

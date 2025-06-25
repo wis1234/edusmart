@@ -342,7 +342,6 @@
                             badge.textContent = data.count;
                         }
                     }
-                    
                     // Masquer le bouton "Tout marquer comme lu" si plus de notifications non lues
                     const markAllBtn = document.getElementById('markAllAsReadBtn');
                     if (markAllBtn && data.count === 0) {
@@ -446,7 +445,8 @@
             @endif
         });
 
-    
+        // Real-time update: poll every 30 seconds
+        setInterval(updateNotificationCount, 30000);
     </script>
 </header>
 

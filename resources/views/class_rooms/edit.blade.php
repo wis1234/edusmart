@@ -78,24 +78,6 @@
                     </div>
 
                     <div>
-                        <label for="section" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                            Section <span class="text-red-500">*</span>
-                        </label>
-                        <select name="section" id="section" required
-                            class="w-full px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-indigo-500 transition">
-                            <option value="">Select Section</option>
-                            <option value="Commun" {{ old('section', $classRoom->section) == 'Commun' ? 'selected' : '' }}>TC (Tronc Commun)</option>
-                            <option value="A" {{ old('section', $classRoom->section) == 'A' ? 'selected' : '' }}>Section A (Littéraire)</option>
-                            <option value="B" {{ old('section', $classRoom->section) == 'B' ? 'selected' : '' }}>Section B (Économique)</option>
-                            <option value="C" {{ old('section', $classRoom->section) == 'C' ? 'selected' : '' }}>Section C (Scientifique - Maths/Physique)</option>
-                            <option value="D" {{ old('section', $classRoom->section) == 'D' ? 'selected' : '' }}>Section D (Scientifique - Bio/Physique)</option>
-                            <option value="E" {{ old('section', $classRoom->section) == 'E' ? 'selected' : '' }}>Section E (Technique Industrielle)</option>
-                            <option value="F" {{ old('section', $classRoom->section) == 'F' ? 'selected' : '' }}>Section F (Technique Commerciale)</option>
-                            <option value="G" {{ old('section', $classRoom->section) == 'G' ? 'selected' : '' }}>Section G (Gestion)</option>
-                        </select>
-                    </div>
-
-                    <div>
                         <label for="academic_year" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                             Academic Year <span class="text-red-500">*</span>
                         </label>

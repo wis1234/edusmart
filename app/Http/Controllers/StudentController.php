@@ -109,19 +109,17 @@ class StudentController extends Controller
     public function create()
     {
         $user = Auth::user();
-        
         // Si l'utilisateur est un school_admin, filtrer par son école
         if ($user->role === 'school_admin' && $user->school_id) {
             $classRooms = ClassRoom::where('school_id', $user->school_id)->orderBy('name')->get();
             $schools = School::where('id', $user->school_id)->orderBy('name')->get();
+            $parents = User::where('role', 'parent')->where('school_id', $user->school_id)->orderBy('first_name')->get();
         } else {
             $classRooms = ClassRoom::orderBy('name')->get();
             $schools = School::orderBy('name')->get();
+            $parents = User::where('role', 'parent')->orderBy('first_name')->get();
         }
-        
-        $parents = User::where('role', 'parent')->orderBy('first_name')->get();
         $users = User::orderBy('first_name')->get();
-
         return view('students.create', compact('classRooms', 'schools', 'parents', 'users'));
     }
 
@@ -207,12 +205,13 @@ class StudentController extends Controller
         }
 
         $student = Student::create($validated);
-        // Notification
-        $this->notificationService->sendToRole(
-            'admin',
+        // Notification to all school_admins of the student's school
+        $schoolAdmins = \App\Models\User::where('role', 'school_admin')->where('school_id', $validated['school_id'])->get();
+        $this->notificationService->sendToMany(
+            $schoolAdmins,
+            'success',
             'New Student Created',
             'A new student profile has been created in the system.',
-            'success',
             route('students.show', $student)
         );
         return redirect()->route('students.index')->with('success', 'Student created successfully.');
@@ -322,15 +321,16 @@ class StudentController extends Controller
         }
 
         $student->update($validated);
-        // Notification
-        $this->notificationService->sendToRole(
-            'admin',
+        // Notification to all school_admins of the student's school
+        $schoolAdmins = \App\Models\User::where('role', 'school_admin')->where('school_id', $validated['school_id'])->get();
+        $this->notificationService->sendToMany(
+            $schoolAdmins,
+            'warning',
             'Student Updated',
             'A student profile has been updated in the system.',
-            'warning',
             route('students.show', $student)
         );
-        return redirect()->route('students.show', $student)->with('success', 'Student updated successfully.');
+        return redirect()->route('students.index')->with('success', 'Student updated successfully.');
     }
 
     public function destroy(Student $student)
@@ -341,12 +341,13 @@ class StudentController extends Controller
         }
         try {
             $student->delete();
-            // Notification
-            $this->notificationService->sendToRole(
-                'admin',
+            // Notification to all school_admins of the student's school
+            $schoolAdmins = \App\Models\User::where('role', 'school_admin')->where('school_id', $student->school_id)->get();
+            $this->notificationService->sendToMany(
+                $schoolAdmins,
+                'error',
                 'Student Deleted',
-                'A student profile has been deleted from the system.',
-                'error'
+                'A student profile has been deleted from the system.'
             );
             return redirect()->route('students.index')->with('success', 'Student deleted successfully.');
         } catch (\Exception $e) {

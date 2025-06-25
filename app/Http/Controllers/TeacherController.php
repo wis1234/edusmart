@@ -58,7 +58,11 @@ class TeacherController extends Controller
     public function create()
     {
         $user = Auth::user();
-        $subjects = Subject::orderBy('name')->get();
+        if ($user->role === 'school_admin' && $user->school_id) {
+            $subjects = Subject::where('school_id', $user->school_id)->orderBy('name')->get();
+        } else {
+            $subjects = Subject::orderBy('name')->get();
+        }
         $subjectsBySchool = $subjects->groupBy('school_id');
         
         // Si l'utilisateur est un school_admin, filtrer les salles de classe par son école
@@ -158,12 +162,13 @@ class TeacherController extends Controller
 
         DB::commit();
 
-        // Notification
-        $this->notificationService->sendToRole(
-            'admin',
+        // Notification to all school_admins of the teacher's school
+        $schoolAdmins = \App\Models\User::where('role', 'school_admin')->where('school_id', $validated['schools'][0])->get();
+        $this->notificationService->sendToMany(
+            $schoolAdmins,
+            'success',
             'New Teacher Created',
             'A new teacher profile has been created in the system.',
-            'success',
             route('teachers.show', $teacher)
         );
         return redirect()->route('teachers.index')->with('success', 'Teacher created successfully.');
@@ -202,7 +207,12 @@ class TeacherController extends Controller
      */
     public function edit(Teacher $teacher)
     {
-        $subjects = Subject::orderBy('name')->get();
+        $user = Auth::user();
+        if ($user->role === 'school_admin' && $user->school_id) {
+            $subjects = Subject::where('school_id', $user->school_id)->orderBy('name')->get();
+        } else {
+            $subjects = Subject::orderBy('name')->get();
+        }
         $subjectsBySchool = $subjects->groupBy('school_id');
         $classRooms = ClassRoom::orderBy('name')->get();
         $schools = School::orderBy('name')->get();
@@ -315,12 +325,13 @@ class TeacherController extends Controller
 
             DB::commit();
 
-            // Notification
-            $this->notificationService->sendToRole(
-                'admin',
+            // Notification to all school_admins of the teacher's school
+            $schoolAdmins = \App\Models\User::where('role', 'school_admin')->where('school_id', $validated['schools'][0])->get();
+            $this->notificationService->sendToMany(
+                $schoolAdmins,
+                'warning',
                 'Teacher Updated',
                 'A teacher profile has been updated in the system.',
-                'warning',
                 route('teachers.show', $teacher)
             );
             return redirect()
@@ -415,12 +426,13 @@ class TeacherController extends Controller
 
             DB::commit();
 
-            // Notification
-            $this->notificationService->sendToRole(
-                'admin',
+            // Notification to all school_admins of the teacher's school
+            $schoolAdmins = \App\Models\User::where('role', 'school_admin')->where('school_id', $teacher->school_id)->get();
+            $this->notificationService->sendToMany(
+                $schoolAdmins,
+                'error',
                 'Teacher Deleted',
-                'A teacher profile has been deleted from the system.',
-                'error'
+                'A teacher profile has been deleted from the system.'
             );
             return redirect()
                 ->route('teachers.index')

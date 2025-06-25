@@ -9,7 +9,7 @@
                     </div>
                     <div>
                         <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $classRoom->name }}</h1>
-                        <p class="text-gray-600 dark:text-gray-300">Grade {{ $classRoom->grade_level }} - Section {{ $classRoom->section ?? 'N/A' }} | {{ $classRoom->school->name }}</p>
+                        <p class="text-gray-600 dark:text-gray-300">Grade {{ $classRoom->grade_level }} | {{ $classRoom->school->name }}</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
