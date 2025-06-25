@@ -88,14 +88,12 @@
                     </div>
                     <div class="mt-3 pt-2 border-t border-gray-200 dark:border-gray-600">
                         <div class="flex gap-2">
-                            <a href="{{ route('parents.show', $parent) }}" class="flex-1 text-center px-2 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded text-xs font-medium hover:bg-indigo-200 dark:hover:bg-indigo-800 transition-colors">
-                                <i class="fas fa-eye mr-1"></i> View Parent
-                            </a>
-                            @can('update', $parent)
-                            <a href="{{ route('parents.edit', $parent) }}" class="flex-1 text-center px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded text-xs font-medium hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors">
-                                <i class="fas fa-edit mr-1"></i> Edit Parent
-                            </a>
-                            @endcan
+                            <x-action-icons 
+                                :viewRoute="route('parents.show', $parent)"
+                                :editRoute="(auth()->user()->can('update', $parent) ? route('parents.edit', $parent) : null)"
+                                :canEdit="auth()->user()->can('update', $parent)"
+                                :canDelete="false"
+                            />
                         </div>
                     </div>
                 </div>
@@ -130,7 +128,41 @@
             </div>
         </div>
 
-        <!-- Evaluations and Grades -->
+        <!-- Compte Utilisateur -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="fas fa-user-circle text-indigo-500"></i> Compte Utilisateur</h2>
+            <div class="mb-2"><span class="text-gray-500">Email :</span> <span>{{ $student->user?->email ?? 'N/A' }}</span></div>
+            <div class="mb-2"><span class="text-gray-500">Rôle :</span> <span>{{ $student->user?->roles->first()?->name ?? 'student' }}</span></div>
+            <div class="mb-2"><span class="text-gray-500">Créé le :</span> <span>{{ $student->user?->created_at?->format('d/m/Y H:i') ?? 'N/A' }}</span></div>
+            <div class="mb-2"><span class="text-gray-500">Dernière connexion :</span> <span>{{ $student->user?->last_login_at?->diffForHumans() ?? 'N/A' }}</span></div>
+        </div>
+
+        <!-- Absences -->
+        @if(isset($student->absences) && $student->absences->count())
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="fas fa-calendar-times text-red-500"></i> Absences</h2>
+            <ul class="list-disc ml-6">
+                @foreach($student->absences as $absence)
+                    <li>{{ $absence->date->format('d/m/Y') }} - {{ $absence->reason ?? 'Non précisé' }}</li>
+                @endforeach
+            </ul>
+        </div>
+        @endif
+
+        <!-- Activité récente -->
+        @if(isset($student->activities) && $student->activities->count())
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="fas fa-history text-indigo-400"></i> Activité récente</h2>
+            <ul class="list-disc ml-6">
+                @foreach($student->activities->take(5) as $activity)
+                    <li>{{ $activity->description }} <span class="text-xs text-gray-400">({{ $activity->created_at->diffForHumans() }})</span></li>
+                @endforeach
+            </ul>
+        </div>
+        @endif
+
+
+                <!-- Evaluations and Grades -->
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-lg font-bold flex items-center gap-2"><i class="fas fa-clipboard-check text-indigo-500"></i> Evaluations and Grades</h2>
@@ -181,5 +213,6 @@
             </div>
             @endif
         </div>
+
     </div>
 </x-app-layout>

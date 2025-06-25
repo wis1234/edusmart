@@ -80,7 +80,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Subjects</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $classRoom->subjects->count() }}</p>
+                        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $classRoom->classRoomTeachers->unique('subject_id')->count() }}</p>
                     </div>
                 </div>
             </div>

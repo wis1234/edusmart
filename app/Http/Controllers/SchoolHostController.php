@@ -8,9 +8,17 @@ use App\Models\User;
 use App\Models\School;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role;
+use App\Services\NotificationService;
 
 class SchoolHostController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -47,7 +55,14 @@ class SchoolHostController extends Controller
 
         $user = User::create($data);
         $user->assignRole('school_admin');
-
+        // Notification
+        $this->notificationService->sendToRole(
+            'admin',
+            'New School Host Created',
+            'A new school host (school_admin) has been created.',
+            'success',
+            route('schools.show', $school)
+        );
         return redirect()->back()->with('success', 'Host created successfully.');
     }
 
@@ -87,6 +102,14 @@ class SchoolHostController extends Controller
         }
 
         $host->delete();
+        // Notification
+        $this->notificationService->sendToRole(
+            'admin',
+            'School Host Deleted',
+            'A school host (school_admin) has been deleted.',
+            'error',
+            route('schools.show', $school)
+        );
         return redirect()->back()->with('success', 'Host deleted successfully.');
     }
 }

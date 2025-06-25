@@ -15,6 +15,10 @@ class CalendarPolicy
      */
     public function viewAny(User $user)
     {
+        if ($user->hasRole('student')) {
+            // Peut voir tous les calendriers de son école/classe
+            return $user->studentProfile && ($user->studentProfile->school_id || $user->studentProfile->class_room_id);
+        }
         if ($user->email === 'ronaldoagbohou@gmail.com') {
             return true;
         }
@@ -35,6 +39,13 @@ class CalendarPolicy
      */
     public function view(User $user, Calendar $calendar)
     {
+        if ($user->hasRole('student')) {
+            // Peut voir le calendrier s'il concerne sa classe ou son école
+            return $user->studentProfile && (
+                $calendar->school_id === $user->studentProfile->school_id ||
+                $calendar->class_room_id === $user->studentProfile->class_room_id
+            );
+        }
         if ($user->email === 'ronaldoagbohou@gmail.com') {
             return true;
         }

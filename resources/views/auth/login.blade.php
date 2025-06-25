@@ -19,6 +19,12 @@
                 {{ session('status') }}
             </div>
         @endif
+        @if($errors->has('email'))
+            <div class="mb-4 flex items-center justify-center bg-yellow-50 border border-yellow-300 text-yellow-800 rounded-lg px-4 py-3 shadow">
+                <svg class="w-6 h-6 mr-2 text-yellow-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z"/></svg>
+                <span class="font-semibold">{{ $errors->first('email') == 'Your account is pending validation by an administrator.' ? 'Your account is pending validation by an administrator.' : $errors->first('email') }}</span>
+            </div>
+        @endif
         <form method="POST" action="{{ route('login') }}" class="space-y-6">
             @csrf
             <div>

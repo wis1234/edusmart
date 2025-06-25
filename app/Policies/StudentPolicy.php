@@ -19,6 +19,11 @@ class StudentPolicy
             return true;
         }
         
+        if ($user->hasRole('student')) {
+            // Peut accéder à l'index, mais ne verra que les élèves de sa classe côté contrôleur/vue
+            return $user->studentProfile && $user->studentProfile->class_room_id;
+        }
+        
         // Vérifier le statut de l'enseignant
         if (($user->hasRole('teacher') || $user->hasRole('enseignant')) && 
             (!$user->teacherProfile || $user->teacherProfile->status !== 'active')) {
@@ -43,6 +48,10 @@ class StudentPolicy
     {
         if ($user->email === 'ronaldoagbohou@gmail.com') {
             return true;
+        }
+        
+        if ($user->hasRole('student')) {
+            return $user->id === $student->user_id;
         }
         
         // Vérifier le statut de l'enseignant

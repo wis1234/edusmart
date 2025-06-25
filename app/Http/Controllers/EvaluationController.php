@@ -12,11 +12,15 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use App\Services\NotificationService;
+use Exception;
 
 class EvaluationController extends Controller
 {
-    public function __construct()
+    protected $notificationService;
+    public function __construct(NotificationService $notificationService)
     {
+        $this->notificationService = $notificationService;
         $this->authorizeResource(Evaluation::class, 'evaluation');
     }
 
@@ -185,48 +189,48 @@ class EvaluationController extends Controller
         
         // Vérification supplémentaire pour les enseignants
         $user = Auth::user();
+        $teacherId = null;
         if ($user->role === 'enseignant') {
             $teacher = \App\Models\Teacher::where('user_id', $user->id)->first();
-            
             if (!$teacher || $teacher->school_id !== $subject->school_id) {
                 abort(403, 'You can only create evaluations for your assigned school.');
             }
-            
             if (!$teacher->taughtSubjects()->where('subjects.id', $validated['subject_id'])->exists()) {
                 abort(403, 'You can only create evaluations for subjects you teach.');
             }
-            
             if (!$teacher->teachingClassRooms()->where('class_rooms.id', $validated['class_room_id'])->exists()) {
                 abort(403, 'You can only create evaluations for classes you teach.');
             }
+            $teacherId = $teacher->user_id;
+        } else if (isset($validated['teacher_id'])) {
+            $teacherId = $validated['teacher_id'];
         }
         
-        Evaluation::create($validated + [
-            'teacher_id' => $this->getTeacherId($request),
+        $evaluation = Evaluation::create($validated + [
+            'teacher_id' => $teacherId,
             'created_by' => Auth::id(),
         ]);
-
-        return redirect()->route('evaluations.index')
-            ->with('success', 'Evaluation created successfully.');
+        // Notification
+        $this->notificationService->sendToRole(
+            'admin',
+            'New Evaluation Created',
+            'A new evaluation has been created in the system.',
+            'success',
+            route('evaluations.show', $evaluation)
+        );
+        // Rediriger vers la vue de l'évaluation créée avec gestion d'URL robuste
+        try {
+            // Essayer d'abord avec la route nommée
+            return redirect()->route('evaluations.show', $evaluation)->with('success', 'Évaluation créée avec succès.');
+        } catch (Exception $e) {
+            // Fallback vers l'URL relative si la route échoue
+            return redirect('/evaluations/' . $evaluation->id)->with('success', 'Évaluation créée avec succès.');
+        }
     }
 
     public function show(Evaluation $evaluation)
     {
-        // Vérification supplémentaire pour les enseignants
-        $user = Auth::user();
-        if ($user->role === 'enseignant') {
-            $teacher = \App\Models\Teacher::where('user_id', $user->id)->first();
-            
-            if (!$teacher || $teacher->school_id !== $evaluation->subject->school_id) {
-                abort(403, 'You can only view evaluations from your assigned school.');
-            }
-            
-            if (!$teacher->taughtSubjects()->where('subjects.id', $evaluation->subject_id)->exists()) {
-                abort(403, 'You can only view evaluations for subjects you teach.');
-            }
-        }
-        
-        // Charger toutes les relations nécessaires
+        // Charger toutes les relations nécessaires AVANT les vérifications
         $evaluation->load([
             'subject.school', 
             'classRoom.school', 
@@ -236,6 +240,28 @@ class EvaluationController extends Controller
             'creator',
             'studentGrades.student'
         ]);
+        
+        // Vérification supplémentaire pour les enseignants
+        $user = Auth::user();
+        if ($user->role === 'enseignant') {
+            $teacher = \App\Models\Teacher::where('user_id', $user->id)->first();
+            
+            // Vérifier que l'enseignant existe et appartient à la même école que l'évaluation
+            if (!$teacher || $teacher->school_id !== $evaluation->subject->school_id) {
+                abort(403, 'You can only view evaluations from your assigned school.');
+            }
+            
+            // Vérifier que l'enseignant enseigne la matière de cette évaluation
+            if (!$teacher->taughtSubjects()->where('subjects.id', $evaluation->subject_id)->exists()) {
+                abort(403, 'You can only view evaluations for subjects you teach.');
+            }
+            
+            // Vérifier que l'évaluation a été créée par cet enseignant ou qu'il enseigne dans cette classe
+            if ($evaluation->teacher_id !== $user->id && 
+                !$teacher->teachingClassRooms()->where('class_rooms.id', $evaluation->class_room_id)->exists()) {
+                abort(403, 'You can only view evaluations you created or for classes you teach.');
+            }
+        }
         
         return view('evaluations.show', compact('evaluation'));
     }
@@ -282,6 +308,7 @@ class EvaluationController extends Controller
 
     public function update(Request $request, Evaluation $evaluation)
     {
+        $this->authorize('update', $evaluation);
         $validated = $this->validateEvaluation($request, $evaluation);
 
         // Vérifier que la matière est active
@@ -308,10 +335,6 @@ class EvaluationController extends Controller
             }
         }
 
-        if (!Gate::allows('update', $evaluation)) {
-            abort(403, 'You are not authorized to update this evaluation');
-        }
-
         // Handle evaluation_type as free text, link to evaluation_types table (for update)
         $evaluationTypeName = $request->input('evaluation_type');
         $code = strtoupper(Str::slug($evaluationTypeName, '_'));
@@ -323,31 +346,33 @@ class EvaluationController extends Controller
         unset($validated['evaluation_type']);
 
         $evaluation->update($validated);
-
-        return redirect()->route('evaluations.index')
-            ->with('success', 'Evaluation updated successfully.');
+        // Notification
+        $this->notificationService->sendToRole(
+            'admin',
+            'Evaluation Updated',
+            'An evaluation has been updated in the system.',
+            'warning',
+            route('evaluations.show', $evaluation)
+        );
+        return redirect()->route('evaluations.index')->with('success', 'Evaluation updated successfully.');
     }
 
     public function destroy(Evaluation $evaluation)
     {
-        // Vérification supplémentaire pour les enseignants
-        $user = Auth::user();
-        if ($user->role === 'enseignant') {
-            $teacher = \App\Models\Teacher::where('user_id', $user->id)->first();
-            
-            if (!$teacher || $teacher->school_id !== $evaluation->subject->school_id) {
-                abort(403, 'You can only delete evaluations from your assigned school.');
-            }
-            
-            if (!$teacher->taughtSubjects()->where('subjects.id', $evaluation->subject_id)->exists()) {
-                abort(403, 'You can only delete evaluations for subjects you teach.');
-            }
+        $this->authorize('delete', $evaluation);
+        try {
+            $evaluation->delete();
+            // Notification
+            $this->notificationService->sendToRole(
+                'admin',
+                'Evaluation Deleted',
+                'An evaluation has been deleted from the system.',
+                'error'
+            );
+            return redirect()->route('evaluations.index')->with('success', 'Evaluation deleted successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'An error occurred while deleting the evaluation. Please try again.');
         }
-
-        $evaluation->delete();
-
-        return redirect()->route('evaluations.index')
-            ->with('success', 'Evaluation deleted successfully.');
     }
 
     protected function validateEvaluation(Request $request, ?Evaluation $evaluation = null)

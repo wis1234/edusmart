@@ -49,4 +49,10 @@ class ParentModel extends Model
             'evaluation_id'   // Local key on student_grades table
         );
     }
+
+    // Relationship: Parent belongs to a User
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 }

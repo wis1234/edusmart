@@ -31,6 +31,7 @@ class User extends Authenticatable
         'selected_parent_id',
         'two_factor_enabled',
         'profile_locked',
+        'validated',
     ];
 
     protected $hidden = [
@@ -43,6 +44,7 @@ class User extends Authenticatable
         'password' => 'hashed',
         'date_of_birth' => 'date',
         'profile_locked' => 'boolean',
+        'validated' => 'boolean',
     ];
 
     protected $appends = ['name'];

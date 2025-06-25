@@ -254,6 +254,36 @@
                     @enderror
                 </div>
 
+                <!-- Compte utilisateur -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Email <span class="text-red-500">*</span></label>
+                        <input type="email" id="email" name="email" value="{{ old('email', $student->user?->email) }}" required maxlength="255"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('email') border-red-500 @enderror">
+                        @error('email')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-200">New Password <span class="text-gray-400">(optionnel)</span></label>
+                        <input type="password" id="password" name="password" minlength="8"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('password') border-red-500 @enderror" placeholder="Leave blank to keep current password">
+                        @error('password')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="password_confirmation" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Confirm New Password</label>
+                        <input type="password" id="password_confirmation" name="password_confirmation" minlength="8"
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('password_confirmation') border-red-500 @enderror" placeholder="Leave blank to keep current password">
+                        @error('password_confirmation')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
                 <!-- Hidden fields for compatibility -->
                 <input type="hidden" name="parent_id" value="{{ old('parent_id', $student->parent_id) }}">
 

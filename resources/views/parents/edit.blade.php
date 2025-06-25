@@ -76,6 +76,22 @@
                         @enderror
                     </div>
                     <div>
+                        <label for="school_id" class="block text-sm font-medium text-gray-700 dark:text-gray-200">School <span class="text-red-500">*</span></label>
+                        <select id="school_id" name="school_id" required
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('school_id') border-red-500 @enderror">
+                            <option value="">Select School</option>
+                            @foreach($schools as $school)
+                                <option value="{{ $school->id }}" {{ old('school_id', $parent->school_id) == $school->id ? 'selected' : '' }}>{{ $school->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('school_id')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
                         <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Phone Number</label>
                         <input type="tel" id="phone" name="phone" value="{{ old('phone', $parent->phone) }}" maxlength="20"
                             class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 @error('phone') border-red-500 @enderror">

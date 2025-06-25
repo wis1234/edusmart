@@ -45,6 +45,10 @@ class StudentGradePolicy
             return true;
         }
         
+        if ($user->hasRole('student')) {
+            return $user->studentProfile && $user->studentProfile->id === $studentGrade->student_id;
+        }
+        
         // Vérifier le statut de l'enseignant
         if (($user->hasRole('teacher') || $user->hasRole('enseignant')) && 
             (!$user->teacherProfile || $user->teacherProfile->status !== 'active')) {

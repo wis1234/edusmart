@@ -72,21 +72,6 @@ class DashboardController extends Controller
         return view('dashboard', $data);
     }
 
-    public function deleteActivity($id)
-    {
-        try {
-            $activity = Activity::findOrFail($id);
-            $activity->delete();
-            
-            // Log the deletion
-            Activity::log('delete', 'Deleted activity log entry');
-            
-            return response()->json(['message' => 'Activity deleted successfully']);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to delete activity'], 500);
-        }
-    }
-
     public function getContent($type)
     {
         switch ($type) {

@@ -45,6 +45,10 @@ class EvaluationPolicy
             return true;
         }
         
+        if ($user->hasRole('student')) {
+            return $user->studentProfile && $user->studentProfile->class_room_id === $evaluation->class_room_id;
+        }
+        
         // Vérifier le statut de l'enseignant
         if (($user->hasRole('teacher') || $user->hasRole('enseignant')) && 
             (!$user->teacherProfile || $user->teacherProfile->status !== 'active')) {
@@ -63,7 +67,7 @@ class EvaluationPolicy
         if ($user->hasRole('teacher') || $user->hasRole('enseignant')) {
             $teacher = \App\Models\Teacher::where('user_id', $user->id)->first();
             return $teacher
-                && $teacher->id === $evaluation->teacher_id
+                && $teacher->user_id === $evaluation->teacher_id
                 && $teacher->school_id === $evaluation->subject->school_id
                 && $teacher->taughtSubjects()->where('subjects.id', $evaluation->subject_id)->exists();
         }
@@ -112,7 +116,7 @@ class EvaluationPolicy
         }
         
         // Vérifier le statut de la matière - si pas active, personne ne peut modifier l'évaluation
-        if ($evaluation->subject && $evaluation->subject->is_active !== 1) {
+        if ($evaluation->subject && (int)$evaluation->subject->is_active !== 1) {
             return false;
         }
         
@@ -123,7 +127,7 @@ class EvaluationPolicy
         if ($user->hasRole('teacher') || $user->hasRole('enseignant')) {
             $teacher = \App\Models\Teacher::where('user_id', $user->id)->first();
             return $teacher
-                && $teacher->id === $evaluation->teacher_id
+                && $teacher->user_id === $evaluation->teacher_id
                 && $teacher->school_id === $evaluation->subject->school_id
                 && $teacher->taughtSubjects()->where('subjects.id', $evaluation->subject_id)->exists();
         }
@@ -146,7 +150,7 @@ class EvaluationPolicy
         }
         
         // Vérifier le statut de la matière - si pas active, personne ne peut supprimer l'évaluation
-        if ($evaluation->subject && $evaluation->subject->is_active !== 1) {
+        if ($evaluation->subject && (int)$evaluation->subject->is_active !== 1) {
             return false;
         }
         
@@ -157,7 +161,7 @@ class EvaluationPolicy
         if ($user->hasRole('teacher') || $user->hasRole('enseignant')) {
             $teacher = \App\Models\Teacher::where('user_id', $user->id)->first();
             return $teacher
-                && $teacher->id === $evaluation->teacher_id
+                && $teacher->user_id === $evaluation->teacher_id
                 && $teacher->school_id === $evaluation->subject->school_id
                 && $teacher->taughtSubjects()->where('subjects.id', $evaluation->subject_id)->exists();
         }

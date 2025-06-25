@@ -6,11 +6,14 @@ use App\Models\Subject;
 use App\Http\Requests\SubjectRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Services\NotificationService;
 
 class SubjectController extends Controller
 {
-    public function __construct()
+    protected $notificationService;
+    public function __construct(NotificationService $notificationService)
     {
+        $this->notificationService = $notificationService;
         $this->middleware('auth');
         $this->authorizeResource(Subject::class, 'subject');
     }
@@ -97,7 +100,7 @@ class SubjectController extends Controller
         $subject = Subject::create($validated);
         
         // Notification
-        app(\App\Services\NotificationService::class)->sendToRole(
+        $this->notificationService->sendToRole(
             'admin',
             'New Subject Created',
             'A new subject has been created in the system.',
@@ -166,7 +169,7 @@ class SubjectController extends Controller
         $subject->update($validated);
         
         // Notification
-        app(\App\Services\NotificationService::class)->sendToRole(
+        $this->notificationService->sendToRole(
             'admin',
             'Subject Updated',
             'A subject has been updated in the system.',
@@ -190,16 +193,18 @@ class SubjectController extends Controller
             abort(403, 'Teachers have read-only access to subjects.');
         }
         
-        $subject->delete();
-        
-        // Notification
-        app(\App\Services\NotificationService::class)->sendToRole(
-            'admin',
-            'Subject Deleted',
-            'A subject has been deleted from the system.',
-            'error'
-        );
-        
-        return redirect()->route('subjects.index')->with('success', 'Subject deleted successfully.');
+        try {
+            $subject->delete();
+            // Notification
+            $this->notificationService->sendToRole(
+                'admin',
+                'Subject Deleted',
+                'A subject has been deleted from the system.',
+                'error'
+            );
+            return redirect()->route('subjects.index')->with('success', 'Subject deleted successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'An error occurred while deleting the subject. Please try again.');
+        }
     }
 }

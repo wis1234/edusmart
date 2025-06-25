@@ -9,11 +9,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\EvaluationPublishedMail;
+use App\Services\NotificationService;
 
 class StudentGradeController extends Controller
 {
-    public function __construct()
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
     {
+        $this->notificationService = $notificationService;
         $this->authorizeResource(StudentGrade::class, 'student_grade');
     }
 
@@ -110,7 +114,25 @@ class StudentGradeController extends Controller
         if ($student && $student->parent && $student->parent->user && $student->parent->user->email) {
             Mail::to($student->parent->user->email)->send(new EvaluationPublishedMail($studentGrade));
         }
-
+        // Notification interne à l'élève et au parent
+        if ($student && $student->user) {
+            $this->notificationService->send(
+                $student->user,
+                'success',
+                'Nouvelle note publiée',
+                'Une nouvelle note a été publiée pour vous.',
+                route('student_grades.show', $studentGrade)
+            );
+        }
+        if ($student && $student->parent && $student->parent->user) {
+            $this->notificationService->send(
+                $student->parent->user,
+                'success',
+                'Nouvelle note pour votre enfant',
+                'Une nouvelle note a été publiée pour votre enfant.',
+                route('student_grades.show', $studentGrade)
+            );
+        }
         return redirect()->back()->with('success', 'Grade recorded successfully.');
     }
 
@@ -147,7 +169,14 @@ class StudentGradeController extends Controller
         ]);
 
         $student_grade->update($validated);
-
+        // Notification
+        $this->notificationService->sendToRole(
+            'admin',
+            'Student Grade Updated',
+            'A student grade has been updated in the system.',
+            'warning',
+            route('evaluations.student_grades.index', $evaluation)
+        );
         return redirect()->route('evaluations.student_grades.index', $evaluation)
             ->with('success', 'Grade updated successfully.');
     }
@@ -155,10 +184,20 @@ class StudentGradeController extends Controller
     public function destroy(StudentGrade $student_grade)
     {
         $evaluation = $student_grade->evaluation;
-        $student_grade->delete();
-
-        return redirect()->route('evaluations.show', $evaluation)
-            ->with('success', 'Grade deleted successfully.');
+        try {
+            $student_grade->delete();
+            // Notification
+            $this->notificationService->sendToRole(
+                'admin',
+                'Student Grade Deleted',
+                'A student grade has been deleted from the system.',
+                'error'
+            );
+            return redirect()->route('evaluations.show', $evaluation)
+                ->with('success', 'Grade deleted successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'An error occurred while deleting the grade. Please try again.');
+        }
     }
 
     public function indexAll(Request $request)

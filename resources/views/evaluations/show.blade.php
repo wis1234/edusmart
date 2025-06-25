@@ -53,18 +53,17 @@
                         <span class="inline-flex items-center px-2 py-1 rounded font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">{{ $evaluation->evaluationType->name ?? 'N/A' }}</span>
                     </div>
                     @php
-    $teacher = \App\Models\Teacher::find($evaluation->teacher_id);
-    $profile = $teacher?->profile;
+    $teacher = \App\Models\Teacher::where('user_id', $evaluation->teacher_id)->first();
+    $teacherUser = $evaluation->teacher;
 @endphp
 
 <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
     <span class="font-semibold text-gray-600 dark:text-gray-400">Teacher:</span>
     <span class="font-bold text-gray-900 dark:text-white">
-        @if($teacher)
-            {{ $profile->teacher_firstname ?? $teacher->teacher_firstname }}
-            {{ $profile->teacher_lastname ?? $teacher->teacher_lastname }}
-            @if($profile && $profile->specialization)
-                <span class="text-xs text-gray-500">({{ $profile->specialization }})</span>
+        @if($teacherUser)
+            {{ $teacherUser->first_name }} {{ $teacherUser->last_name }}
+            @if($teacher && $teacher->specialization)
+                <span class="text-xs text-gray-500">({{ $teacher->specialization }})</span>
             @endif
         @else
             N/A
@@ -74,7 +73,7 @@
 
 <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
     <span class="font-semibold text-gray-600 dark:text-gray-400">Teacher Email:</span>
-    <span class="font-bold text-gray-900 dark:text-white">{{ $teacher->email ?? 'N/A' }}</span>
+    <span class="font-bold text-gray-900 dark:text-white">{{ $teacherUser->email ?? 'N/A' }}</span>
 </div>
 
                     <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">

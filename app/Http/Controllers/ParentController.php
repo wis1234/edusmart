@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Services\NotificationService;
 
 class ParentController extends Controller
 {
-    public function __construct()
+    protected $notificationService;
+    public function __construct(NotificationService $notificationService)
     {
+        $this->notificationService = $notificationService;
         $this->authorizeResource(User::class, 'parent');
     }
 
@@ -81,6 +84,7 @@ class ParentController extends Controller
                 'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'date_of_birth' => 'nullable|date',
                 'gender' => 'nullable|in:male,female,other',
+                'school_id' => 'required|exists:schools,id',
             ]);
 
             $parentData = [
@@ -95,6 +99,8 @@ class ParentController extends Controller
                 'password' => bcrypt($validated['password']),
                 'date_of_birth' => $validated['date_of_birth'] ?? null,
                 'gender' => $validated['gender'] ?? null,
+                'school_id' => $validated['school_id'],
+                'validated' => true,
             ];
 
             // Handle profile photo upload
@@ -116,6 +122,15 @@ class ParentController extends Controller
                 'profile_photo' => $parentUser->profile_photo,
                 'status' => $parentUser->status,
             ]);
+
+            // Notification
+            $this->notificationService->sendToRole(
+                'admin',
+                'New Parent Created',
+                'A new parent profile has been created in the system.',
+                'success',
+                route('parents.show', $parentUser)
+            );
 
             return redirect()->route('parents.index')->with('success', 'Parent created successfully.');
 
@@ -153,9 +168,7 @@ class ParentController extends Controller
     public function edit(User $parent)
     {
         $this->authorize('update', $parent);
-        
         $user = auth()->user();
-        
         // Si l'utilisateur est un school_admin, vérifier que le parent a des étudiants dans son école
         if ($user->role === 'school_admin' && $user->school_id) {
             $hasStudentsInSchool = $parent->students()->where('school_id', $user->school_id)->exists();
@@ -163,8 +176,8 @@ class ParentController extends Controller
                 abort(403, 'You can only edit parents of students in your school.');
             }
         }
-        
-        return view('parents.edit', compact('parent'));
+        $schools = \App\Models\School::orderBy('name')->get(['id', 'name']);
+        return view('parents.edit', compact('parent', 'schools'));
     }
 
     /**
@@ -198,6 +211,7 @@ class ParentController extends Controller
                 'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'date_of_birth' => 'nullable|date',
                 'gender' => 'nullable|in:male,female,other',
+                'school_id' => 'required|exists:schools,id',
             ]);
 
             $parent->first_name = $validated['first_name'];
@@ -210,6 +224,7 @@ class ParentController extends Controller
             $parent->email = $validated['email'];
             $parent->date_of_birth = $validated['date_of_birth'] ?? null;
             $parent->gender = $validated['gender'] ?? null;
+            $parent->school_id = $validated['school_id'];
             if (!empty($validated['password'])) {
                 $parent->password = bcrypt($validated['password']);
             }
@@ -228,6 +243,15 @@ class ParentController extends Controller
             $parentModel->profile_photo = $parent->profile_photo;
             $parentModel->status = $parent->status;
             $parentModel->save();
+
+            // Notification
+            $this->notificationService->sendToRole(
+                'admin',
+                'Parent Updated',
+                'A parent profile has been updated in the system.',
+                'warning',
+                route('parents.show', $parent)
+            );
 
             return redirect()->route('parents.index')->with('success', 'Parent updated successfully.');
 
@@ -259,7 +283,18 @@ class ParentController extends Controller
             }
         }
 
-        $parent->delete();
-        return redirect()->route('parents.index')->with('success', 'Parent deleted successfully.');
+        try {
+            $parent->delete();
+            // Notification
+            $this->notificationService->sendToRole(
+                'admin',
+                'Parent Deleted',
+                'A parent profile has been deleted from the system.',
+                'error'
+            );
+            return redirect()->route('parents.index')->with('success', 'Parent deleted successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'An error occurred while deleting the parent. Please try again.');
+        }
     }
 }

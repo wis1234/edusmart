@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Auth;
 
 use Illuminate\Auth\Events\Lockout;
+use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -46,6 +47,14 @@ class LoginRequest extends FormRequest
 
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
+            ]);
+        }
+        
+        $user = Auth::user();
+        if (!$user->validated) {
+            Auth::logout();
+            throw ValidationException::withMessages([
+                'email' => 'Your account is pending validation by an administrator.',
             ]);
         }
 

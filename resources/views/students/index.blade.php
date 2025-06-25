@@ -12,9 +12,11 @@
                 </div>
             </div>
             <div class="flex gap-2">
+                @if(!auth()->user()->hasRole('student'))
                 <a href="{{ route('students.create') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700 transition whitespace-nowrap">
                     <i class="fas fa-plus"></i> Add Student
                 </a>
+                @endif
             </div>
         </div>
 
@@ -143,17 +145,19 @@
                                 </td>
                                 <td class="px-2 py-3 text-right">
                                     @php
-                                        $canEdit = auth()->user()->can('update', $student);
-                                        $canDelete = auth()->user()->can('delete', $student);
+                                        $isStudent = auth()->user()->hasRole('student');
+                                        $canEdit = !$isStudent && auth()->user()->can('update', $student);
+                                        $canDelete = !$isStudent && auth()->user()->can('delete', $student);
+                                        $viewRoute = route('students.show', $student);
                                     @endphp
-                                    @include('components.action-icons', [
-                                        'viewRoute' => route('students.show', $student),
-                                        'editRoute' => $canEdit ? route('students.edit', $student) : null,
-                                        'deleteRoute' => $canDelete ? route('students.destroy', $student) : null,
-                                        'canEdit' => $canEdit,
-                                        'canDelete' => $canDelete,
-                                        'deleteConfirmMessage' => 'Are you sure you want to delete this student?'
-                                    ])
+                                    <x-action-icons 
+                                        :viewRoute="$viewRoute"
+                                        :editRoute="$canEdit ? route('students.edit', $student) : null"
+                                        :deleteRoute="$canDelete ? route('students.destroy', $student) : null"
+                                        :canEdit="$canEdit"
+                                        :canDelete="$canDelete"
+                                        deleteConfirmMessage="Are you sure you want to delete this student?"
+                                    />
                                 </td>
                             </tr>
                             @empty
@@ -198,39 +202,26 @@
                                     <i class="fas fa-user text-gray-500"></i>
                                 </span>
                             @endif
-                            <span class="font-bold text-lg text-gray-900 dark:text-white">{{ $student->first_name }} {{ $student->last_name }}</span>
                         </div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ $student->classRoom->name ?? 'No class assigned' }}</div>
-                        <div class="flex flex-col gap-1 text-sm">
-                            <span class="truncate"><i class="fas fa-calendar mr-1"></i> {{ $student->date_of_birth?->format('Y-m-d') }}</span>
-                            <span class="truncate"><i class="fas fa-venus-mars mr-1"></i> {{ ucfirst($student->gender) }}</span>
-                            <span class="truncate"><i class="fas fa-user mr-1"></i>
-                                     @php $parent = $users->firstWhere('id', $student->selected_parent_id); @endphp
-                                    @if($parent)
-                                        {{ $parent->first_name }} {{ $parent->last_name }}
-                                    @else
-                                        <span class="text-gray-400">Not assigned</span>
-                                    @endif                           
-                             </span>
+                        <div class="flex-1">
+                            <div class="font-semibold text-lg truncate">{{ $student->first_name }} {{ $student->last_name }}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 break-all truncate">{{ $student->email ?? '' }}</div>
                         </div>
-                        <div class="flex items-center gap-2 mt-2">
-                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold {{ $student->status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' }}">
-                                {{ ucfirst($student->status) }}
-                            </span>
-                        </div>
-                        <div class="flex gap-2 mt-3 justify-end">
+                        <div class="flex gap-2 mt-2 justify-end">
                             @php
-                                $canEdit = auth()->user()->can('update', $student);
-                                $canDelete = auth()->user()->can('delete', $student);
+                                $isStudent = auth()->user()->hasRole('student');
+                                $canEdit = !$isStudent && auth()->user()->can('update', $student);
+                                $canDelete = !$isStudent && auth()->user()->can('delete', $student);
+                                $viewRoute = route('students.show', $student);
                             @endphp
-                            @include('components.action-icons', [
-                                'viewRoute' => route('students.show', $student),
-                                'editRoute' => $canEdit ? route('students.edit', $student) : null,
-                                'deleteRoute' => $canDelete ? route('students.destroy', $student) : null,
-                                'canEdit' => $canEdit,
-                                'canDelete' => $canDelete,
-                                'deleteConfirmMessage' => 'Are you sure you want to delete this student?'
-                            ])
+                            <x-action-icons 
+                                :viewRoute="$viewRoute"
+                                :editRoute="$canEdit ? route('students.edit', $student) : null"
+                                :deleteRoute="$canDelete ? route('students.destroy', $student) : null"
+                                :canEdit="$canEdit"
+                                :canDelete="$canDelete"
+                                deleteConfirmMessage="Are you sure you want to delete this student?"
+                            />
                         </div>
                     </div>
                 @empty

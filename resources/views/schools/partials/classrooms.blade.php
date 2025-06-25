@@ -4,6 +4,9 @@
         <h2 class="text-lg font-bold flex items-center gap-2"><i class="fas fa-door-open text-indigo-500"></i> Classrooms</h2>
         <div class="flex items-center gap-3">
             <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">{{ $school->classRooms->count() }} Classrooms</span>
+            <a href="{{ route('class_rooms.index', ['school_id' => $school->id]) }}" class="inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-semibold bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800 transition">
+                <i class="fas fa-list"></i> View All
+            </a>
             @can('create', App\Models\ClassRoom::class)
                 <a href="{{ route('class_rooms.create') }}" class="inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-semibold bg-green-600 text-white hover:bg-green-700 transition">
                     <i class="fas fa-plus"></i> Add Classroom
@@ -44,9 +47,7 @@
                 </tbody>
             </table>
             @if($school->classRooms->count() > 5)
-                <div class="text-right mt-3">
-                    <a href="{{ route('class_rooms.index', ['school_id' => $school->id]) }}" class="text-indigo-600 hover:underline">View All Classrooms</a>
-                </div>
+                <!-- Removed conditional View All link, now always in header -->
             @endif
         </div>
     @else

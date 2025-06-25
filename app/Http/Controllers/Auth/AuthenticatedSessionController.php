@@ -36,9 +36,8 @@ class AuthenticatedSessionController extends Controller
     {
         $user = User::where('email', $request->email)->first();
 
-        // 1. Vérifier si le compte est verrouillé
+        // Vérifier si le compte est verrouillé
         if ($user && $user->locked_at) {
-            // Renvoyer la vue du compte verrouillé
             return view('auth.locked');
         }
 

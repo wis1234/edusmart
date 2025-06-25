@@ -8,9 +8,16 @@ use App\Models\Product;
 use App\Models\Order;
 use App\Models\OrderItem;
 use Illuminate\Support\Facades\Session;
+use App\Services\NotificationService;
 
 class OrderController extends Controller
 {
+    protected $notificationService;
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     // Add product to cart (stored in session)
     public function addToCart(Request $request)
     {
@@ -76,6 +83,14 @@ class OrderController extends Controller
 
         Session::forget('cart');
 
+        // Notification
+        $this->notificationService->sendToRole(
+            'admin',
+            'New Order Placed',
+            'A new order has been placed in the system.',
+            'success',
+            route('ecommerce.index')
+        );
         return redirect()->route('ecommerce.index')->with('success', 'Order placed successfully.');
     }
 }

@@ -19,6 +19,11 @@ class TeacherPolicy
             return true;
         }
         
+        if ($user->hasRole('student')) {
+            // Peut voir la liste des enseignants de sa classe/école
+            return $user->studentProfile && $user->studentProfile->classRoom;
+        }
+        
         // Vérifier le statut de l'enseignant
         if (($user->hasRole('teacher') || $user->hasRole('enseignant')) && 
             (!$user->teacherProfile || $user->teacherProfile->status !== 'active')) {
@@ -43,6 +48,12 @@ class TeacherPolicy
     {
         if ($user->email === 'ronaldoagbohou@gmail.com') {
             return true;
+        }
+        
+        if ($user->hasRole('student')) {
+            // Peut voir la fiche d'un enseignant s'il lui enseigne
+            return $user->studentProfile && $user->studentProfile->classRoom &&
+                $user->studentProfile->classRoom->classRoomTeachers->pluck('teacher_id')->contains($teacher->id);
         }
         
         // Vérifier le statut de l'enseignant

@@ -11,11 +11,14 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use App\Services\NotificationService;
 
 class StudentController extends Controller
 {
-    public function __construct()
+    protected $notificationService;
+    public function __construct(NotificationService $notificationService)
     {
+        $this->notificationService = $notificationService;
         $this->authorizeResource(Student::class, 'student');
     }
 
@@ -125,10 +128,11 @@ class StudentController extends Controller
     public function store(Request $request)
     {
         $user = Auth::user();
-        
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
             'user_id' => ['nullable', 'exists:users,id'],
             'class_room_id' => ['nullable', 'exists:class_rooms,id'],
             'school_id' => ['required', 'exists:schools,id'],
@@ -151,10 +155,19 @@ class StudentController extends Controller
             $validated['school_id'] = $user->school_id;
         }
 
-        // Set user_id to the currently authenticated user if not provided
-        if (empty($validated['user_id'])) {
-            $validated['user_id'] = Auth::id();
-        }
+        // Création du compte utilisateur pour l'étudiant
+        $studentUser = \App\Models\User::create([
+            'first_name' => $validated['first_name'],
+            'last_name' => $validated['last_name'],
+            'email' => $validated['email'],
+            'password' => $validated['password'],
+            'role' => 'student',
+            'status' => $validated['status'],
+            'school_id' => $validated['school_id'],
+            'validated' => true, // Auto-validate when created by admin
+        ]);
+        $studentUser->assignRole('student');
+        $validated['user_id'] = $studentUser->id;
 
         // Auto-generate unique admission_number
         $year = date('Y');
@@ -195,7 +208,7 @@ class StudentController extends Controller
 
         $student = Student::create($validated);
         // Notification
-        app(\App\Services\NotificationService::class)->sendToRole(
+        $this->notificationService->sendToRole(
             'admin',
             'New Student Created',
             'A new student profile has been created in the system.',
@@ -208,7 +221,9 @@ class StudentController extends Controller
     public function show(Student $student)
     {
         $user = Auth::user();
-        
+        if ($user->hasRole('student') && $user->id !== $student->user_id) {
+            abort(403, "You are not allowed to view another student's profile.");
+        }
         // Vérifier si l'utilisateur peut voir le profil selon la logique de verrouillage
         if ($student->user && !$user->canViewProfile($student->user)) {
             abort(403, 'This user has locked his profile.');
@@ -243,6 +258,8 @@ class StudentController extends Controller
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $student->user_id],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'user_id' => ['nullable', 'exists:users,id'],
             'class_room_id' => ['nullable', 'exists:class_rooms,id'],
             'school_id' => ['required', 'exists:schools,id'],
@@ -260,10 +277,21 @@ class StudentController extends Controller
             'profile_photo' => ['nullable', 'image', 'max:2048'],
         ]);
 
-        // Set user_id to the currently authenticated user if not provided
-        if (empty($validated['user_id'])) {
-            $validated['user_id'] = Auth::id();
+        // Mise à jour du compte utilisateur lié
+        if ($student->user) {
+            $student->user->update([
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
+                'email' => $validated['email'],
+                'status' => $validated['status'],
+                'school_id' => $validated['school_id'],
+            ]);
+
+            if (!empty($validated['password'])) {
+                $student->user->update(['password' => $validated['password']]);
+            }
         }
+        $validated['user_id'] = $student->user_id;
 
         // Do not allow changing admission_number or roll_number
         $validated['admission_number'] = $student->admission_number;
@@ -295,7 +323,7 @@ class StudentController extends Controller
 
         $student->update($validated);
         // Notification
-        app(\App\Services\NotificationService::class)->sendToRole(
+        $this->notificationService->sendToRole(
             'admin',
             'Student Updated',
             'A student profile has been updated in the system.',
@@ -311,15 +339,18 @@ class StudentController extends Controller
         if ($student->profile_photo && Storage::disk('public')->exists($student->profile_photo)) {
             Storage::disk('public')->delete($student->profile_photo);
         }
-
-        $student->delete();
-        // Notification
-        app(\App\Services\NotificationService::class)->sendToRole(
-            'admin',
-            'Student Deleted',
-            'A student profile has been deleted from the system.',
-            'error'
-        );
-        return redirect()->route('students.index')->with('success', 'Student deleted successfully.');
+        try {
+            $student->delete();
+            // Notification
+            $this->notificationService->sendToRole(
+                'admin',
+                'Student Deleted',
+                'A student profile has been deleted from the system.',
+                'error'
+            );
+            return redirect()->route('students.index')->with('success', 'Student deleted successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'An error occurred while deleting the student. Please try again.');
+        }
     }
 }

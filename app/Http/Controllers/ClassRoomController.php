@@ -7,11 +7,14 @@ use App\Models\School;
 use App\Http\Requests\ClassRoomRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Services\NotificationService;
 
 class ClassRoomController extends Controller
 {
-    public function __construct()
+    protected $notificationService;
+    public function __construct(NotificationService $notificationService)
     {
+        $this->notificationService = $notificationService;
         $this->authorizeResource(ClassRoom::class, 'class_room');
     }
 
@@ -134,7 +137,7 @@ class ClassRoomController extends Controller
         $validated['updated_by'] = auth()->id();
         $classRoom = ClassRoom::create($validated);
         // Notification
-        app(\App\Services\NotificationService::class)->sendToRole(
+        $this->notificationService->sendToRole(
             'admin',
             'New Class Created',
             'A new class has been created in the system.',
@@ -192,7 +195,7 @@ class ClassRoomController extends Controller
 
         $classRoom->update($validated);
         // Notification
-        app(\App\Services\NotificationService::class)->sendToRole(
+        $this->notificationService->sendToRole(
             'admin',
             'Class Updated',
             'A class has been updated in the system.',
@@ -212,18 +215,21 @@ class ClassRoomController extends Controller
         if ($classRoom->students()->exists()) {
             return back()->with('error', 'Cannot delete classroom because it has associated students.');
         }
-
-        $classRoom->delete();
-        // Notification
-        app(\App\Services\NotificationService::class)->sendToRole(
-            'admin',
-            'Class Deleted',
-            'A class has been deleted from the system.',
-            'error'
-        );
-        return redirect()
-            ->route('class_rooms.index')
-            ->with('success', 'Classroom deleted successfully.');
+        try {
+            $classRoom->delete();
+            // Notification
+            $this->notificationService->sendToRole(
+                'admin',
+                'Class Deleted',
+                'A class has been deleted from the system.',
+                'error'
+            );
+            return redirect()
+                ->route('class_rooms.index')
+                ->with('success', 'Classroom deleted successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'An error occurred while deleting the classroom. Please try again.');
+        }
     }
 
     /**

@@ -6,9 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Services\NotificationService;
 
 class ProductController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     public function index()
     {
         $products = Product::paginate(10);
@@ -56,6 +64,13 @@ class ProductController extends Controller
             'image' => json_encode($imagePaths),
         ]);
 
+        // Notification
+        $this->notificationService->sendToRole(
+            'admin',
+            'New Product Created',
+            'A new product has been created in the system.',
+            'success'
+        );
         return redirect()->route('ecommerce.index')->with('success', 'Product created successfully.');
     }
 
@@ -94,6 +109,13 @@ class ProductController extends Controller
             'image' => json_encode($imagePaths),
         ]);
 
+        // Notification
+        $this->notificationService->sendToRole(
+            'admin',
+            'Product Updated',
+            'A product has been updated in the system.',
+            'warning'
+        );
         return redirect()->route('ecommerce.index')->with('success', 'Product updated successfully.');
     }
 
@@ -107,6 +129,13 @@ class ProductController extends Controller
 
         $product->delete();
 
+        // Notification
+        $this->notificationService->sendToRole(
+            'admin',
+            'Product Deleted',
+            'A product has been deleted from the system.',
+            'error'
+        );
         return redirect()->route('ecommerce.index')->with('success', 'Product deleted successfully.');
     }
 }

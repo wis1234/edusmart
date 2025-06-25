@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 
 class TeacherController extends Controller
 {
@@ -105,8 +107,10 @@ class TeacherController extends Controller
             'password' => bcrypt($validated['password']),
             'profile_photo' => $validated['profile_photo'] ?? null,
             'role' => 'enseignant',
+            'school_id' => $validated['schools'][0] ?? null,
+            'validated' => true,
         ];
-        $user = \App\Models\User::create($userData);
+        $user = User::create($userData);
 
         // Create teacher record linked to user
         $teacher = Teacher::create([
@@ -260,17 +264,27 @@ class TeacherController extends Controller
             ]);
 
             // Update associated user
-            $teacher->user->update([
-                'first_name' => $validated['first_name'],
-                'last_name' => $validated['last_name'] ?? null,
-                'email' => $validated['email'],
-                'phone' => $validated['phone'],
-                'date_of_birth' => $validated['date_of_birth'],
-                'gender' => $validated['gender'],
-                'address' => $validated['address'],
-                'status' => $validated['status'],
-                'profile_photo' => $validated['profile_photo'] ?? $teacher->profile_photo,
-            ]);
+            $user = $teacher->user;
+            if ($user) {
+                $user->first_name = $validated['first_name'];
+                $user->last_name = $validated['last_name'] ?? null;
+                $user->email = $validated['email'];
+                $user->phone = $validated['phone'];
+                $user->date_of_birth = $validated['date_of_birth'];
+                $user->gender = $validated['gender'];
+                $user->address = $validated['address'];
+                $user->status = $validated['status'];
+                $user->role = 'enseignant';
+                $user->school_id = $validated['schools'][0] ?? null;
+                if (!empty($validated['password'])) {
+                    $user->password = bcrypt($validated['password']);
+                }
+                if (!empty($validated['profile_photo'])) {
+                    $user->profile_photo = $validated['profile_photo'];
+                }
+                $user->save();
+                $user->assignRole('enseignant');
+            }
 
             // Clear existing assignments
             $teacher->subjects()->detach();

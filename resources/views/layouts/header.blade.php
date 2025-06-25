@@ -1,23 +1,25 @@
-<header class="fixed top-0 left-0 right-0 z-30 w-full bg-white dark:bg-gray-900" style="box-shadow: 0 8px 32px 0 rgba(31,38,135,0.07);">
+<header class="fixed top-0 left-0 right-0 z-30 w-full" style="background: whitesmoke; box-shadow: 0 8px 32px 0 rgba(31,38,135,0.07);">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
         <!-- Left: Logo & Menu -->
         <div class="flex items-center gap-4">
             <button id="sidebarToggle" class="p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition">
                 <i class="fas fa-bars text-indigo-600 dark:text-indigo-300 text-xl"></i>
             </button>
-            <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 shadow-lg">
+            <!-- <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 shadow-lg">
                 <i class="fas fa-graduation-cap text-white text-xl"></i>
+            </span> -->
+            <span class="ml-2 text-3xl font-extrabold tracking-tight select-none" style="font-family: 'Inter', 'Segoe UI', Arial, sans-serif;">
+                <span class="bg-gradient-to-tr from-indigo-600 to-purple-600 bg-clip-text text-transparent">Edu</span><span class="text-black dark:text-white">Smart</span>
             </span>
-            <span class="ml-2 text-xl font-extrabold text-gray-900 dark:text-white tracking-tight">{{ config('app.name', __('messages.welcome')) }}</span>
         </div>
         <!-- Center: Search -->
         <div class="hidden md:flex flex-1 justify-center">
-            <div class="relative w-full max-w-xs">
-                <input type="text" placeholder="Search..." class="w-full pl-10 pr-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" />
+            <form method="GET" action="{{ route('search.global') }}" class="relative w-full max-w-xs">
+                <input type="text" name="q" value="{{ request('q') }}" placeholder="Search the entire platform..." class="w-full pl-10 pr-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" />
                 <span class="absolute left-3 top-2.5 text-gray-400 dark:text-gray-500">
                     <i class="fas fa-search"></i>
                 </span>
-            </div>
+            </form>
         </div>
         <!-- Right: Actions -->
         <div class="flex items-center gap-4">
@@ -37,6 +39,7 @@
                 </div>
             </div>
             <!-- Notifications Dropdown -->
+            @auth
             <div class="relative">
                 <button class="p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition relative" id="notificationsDropdownBtn">
                     <i class="fas fa-bell text-indigo-600 dark:text-indigo-300 text-xl"></i>
@@ -101,7 +104,9 @@
                     </div>
                 </div>
             </div>
+            @endauth
             <!-- User Dropdown (Vanilla JS) -->
+            @auth
             <div class="relative" id="userDropdownWrapper">
                 <button id="userDropdownBtn" class="flex items-center gap-3 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
                     <div class="relative">
@@ -128,7 +133,9 @@
                                     case 'enseignant':
                                         $roleLabel = 'Teacher';
                                         break;
-                                  
+                                    case 'student':
+                                        $roleLabel = 'Student';
+                                        break;
                                     case 'parent':
                                         $roleLabel = 'Parent';
                                         break;
@@ -151,10 +158,6 @@
                         </div>
                     </div>
                     <div class="py-2">
-                        <a href="{{ route('profile.edit') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition group">
-                            <i class="fas fa-user-edit w-5 text-gray-400 dark:text-gray-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400"></i>
-                            <span class="ml-3">{{ __('messages.profile') }}</span>
-                        </a>
                         <a href="{{ route('dashboard') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition group">
                             <i class="fas fa-tachometer-alt w-5 text-gray-400 dark:text-gray-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400"></i>
                             <span class="ml-3">{{ __('messages.dashboard') }}</span>
@@ -175,6 +178,15 @@
                     </div>
                 </div>
             </div>
+            @else
+            <!-- Login Button for non-authenticated users -->
+            <div class="flex items-center gap-2">
+                <a href="{{ route('login') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition duration-200">
+                    <i class="fas fa-sign-in-alt mr-2"></i>
+                    Login
+                </a>
+            </div>
+            @endauth
         </div>
     </div>
     <script>
@@ -441,7 +453,7 @@
 @push('styles')
 <style>
     .main-header {
-        background: white;
+        background: whitesmoke !important;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 

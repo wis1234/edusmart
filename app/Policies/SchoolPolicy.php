@@ -64,6 +64,10 @@ class SchoolPolicy
             return $school->status === 'active';
         }
         
+        if ($user->hasRole('student')) {
+            return $user->studentProfile && $user->studentProfile->school_id === $school->id;
+        }
+        
         return $user->hasAnyRole(['enseignant', 'parent']);
     }
 

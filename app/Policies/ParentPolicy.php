@@ -14,6 +14,10 @@ class ParentPolicy
      */
     public function viewAny(User $user): bool
     {
+        if ($user->hasRole('student')) {
+            // Peut voir la liste des parents seulement si son parent existe
+            return $user->studentProfile && $user->studentProfile->parent_id;
+        }
         if ($user->email === 'ronaldoagbohou@gmail.com') {
             return true;
         }
@@ -34,6 +38,10 @@ class ParentPolicy
      */
     public function view(User $user, User $parent): bool
     {
+        if ($user->hasRole('student')) {
+            // Peut voir uniquement la fiche de son propre parent
+            return $user->studentProfile && $user->studentProfile->parent_id === $parent->id;
+        }
         if ($user->email === 'ronaldoagbohou@gmail.com') {
             return true;
         }

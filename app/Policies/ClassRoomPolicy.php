@@ -71,6 +71,9 @@ class ClassRoomPolicy
                 $query->where('id', $classRoom->id);
             })->exists();
         }
+        if ($user->hasRole('student')) {
+            return $user->studentProfile && $user->studentProfile->class_room_id === $classRoom->id;
+        }
         return false;
     }
 

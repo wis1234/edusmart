@@ -9,6 +9,8 @@ use App\Http\Controllers\EvaluationController;
 use App\Http\Controllers\StudentGradeController;
 use App\Http\Controllers\DashboardController;
 use App\Models\Activity;
+use App\Http\Controllers\ActivityController;
+use Spatie\Permission\Middlewares\RoleMiddleware;
 
 Route::get('/', function () {
     return view('welcome');
@@ -88,7 +90,7 @@ Route::prefix('ecommerce')->name('ecommerce.')->group(function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::delete('/dashboard/activities/{id}', [DashboardController::class, 'deleteActivity'])->name('dashboard.activities.delete');
+    Route::resource('activities', ActivityController::class)->only(['index', 'show', 'destroy']);
 });
 
 // Route pour afficher les détails d'une activité (pour le modal du dashboard)
@@ -119,3 +121,29 @@ Route::bind('host', function ($value) {
 
 // API endpoint for classrooms by subject (for evaluation creation)
 Route::get('/api/classrooms', [App\Http\Controllers\ClassRoomController::class, 'apiBySubject'])->middleware('auth');
+
+// Routes AJAX pour la création dynamique du calendrier
+Route::get('/api/teacher/{teacher}/classrooms', [App\Http\Controllers\CalendarController::class, 'getTeacherClassRooms']);
+Route::get('/api/teacher/{teacher}/classroom/{classroom}/subjects', [App\Http\Controllers\CalendarController::class, 'getTeacherSubjectsForClassRoom']);
+
+Route::get('/search', [\App\Http\Controllers\SearchController::class, 'index'])->name('search.global');
+
+use App\Http\Controllers\UserController;
+
+Route::middleware(['auth'])->group(function () {
+    Route::resource('users', UserController::class);
+    Route::post('users/{user}/validate', [UserController::class, 'validateUser'])->name('users.validate');
+});
+
+Route::get('/register/success', function () {
+    return view('auth.register-success');
+})->name('register.success');
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+});
+
+Route::get('/registration-success', function () {
+    return view('auth.registration-success');
+})->name('registration.success');

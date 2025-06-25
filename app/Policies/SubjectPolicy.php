@@ -69,6 +69,13 @@ class SubjectPolicy
                 $query->where('subject_id', $subject->id);
             })->exists();
         }
+        if ($user->hasRole('student')) {
+            // Peut voir les matières de sa classe ou de son école
+            return $user->studentProfile && (
+                $user->studentProfile->school_id === $subject->school_id ||
+                ($user->studentProfile->classRoom && $user->studentProfile->classRoom->subjects->contains($subject->id))
+            );
+        }
         return false;
     }
 
@@ -84,6 +91,10 @@ class SubjectPolicy
         // Vérifier le statut de l'enseignant
         if (($user->hasRole('teacher') || $user->hasRole('enseignant')) && 
             (!$user->teacherProfile || $user->teacherProfile->status !== 'active')) {
+            return false;
+        }
+        
+        if ($user->hasRole('student')) {
             return false;
         }
         
@@ -112,6 +123,9 @@ class SubjectPolicy
             // Les school-admin peuvent modifier uniquement les matières de leur école
             return $user->school_id === $subject->school_id;
         }
+        if ($user->hasRole('student')) {
+            return false;
+        }
         // Les enseignants n'ont pas accès à la modification (lecture seule)
         return false;
     }
@@ -137,6 +151,9 @@ class SubjectPolicy
         if ($user->hasRole('school_admin')) {
             // Les school-admin peuvent supprimer uniquement les matières de leur école
             return $user->school_id === $subject->school_id;
+        }
+        if ($user->hasRole('student')) {
+            return false;
         }
         // Les enseignants n'ont pas accès à la suppression (lecture seule)
         return false;
@@ -164,6 +181,9 @@ class SubjectPolicy
             // Les school-admin peuvent restaurer uniquement les matières de leur école
             return $user->school_id === $subject->school_id;
         }
+        if ($user->hasRole('student')) {
+            return false;
+        }
         // Les enseignants n'ont pas accès à la restauration (lecture seule)
         return false;
     }
@@ -189,6 +209,9 @@ class SubjectPolicy
         if ($user->hasRole('school_admin')) {
             // Les school-admin peuvent supprimer définitivement uniquement les matières de leur école
             return $user->school_id === $subject->school_id;
+        }
+        if ($user->hasRole('student')) {
+            return false;
         }
         // Les enseignants n'ont pas accès à la suppression définitive (lecture seule)
         return false;
