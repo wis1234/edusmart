@@ -44,6 +44,9 @@ class ProfileController extends Controller
 
         $user->save();
 
+        // Rafraîchir l'utilisateur connecté pour refléter la nouvelle photo
+        \Auth::setUser($user->fresh());
+
         return redirect()->route('profile.edit')->with('success', 'Profile updated successfully.');
     }
 

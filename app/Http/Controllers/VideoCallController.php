@@ -250,15 +250,28 @@ class VideoCallController extends Controller
         $videoCall = VideoCall::where('room_id', $roomId)->firstOrFail();
         $user = Auth::user();
 
+        \Log::info('Tentative de rejoindre un appel', [
+            'user_id' => $user->id,
+            'room_id' => $roomId,
+            'video_call_id' => $videoCall->id,
+        ]);
+
         // Check if user is invited
         $participant = $videoCall->participants()->where('user_id', $user->id)->first();
-        
         if (!$participant) {
+            \Log::warning('Accès refusé à l\'appel vidéo', [
+                'user_id' => $user->id,
+                'room_id' => $roomId,
+            ]);
             abort(403, 'Vous n\'êtes pas invité à cet appel.');
         }
 
         // Update participant status
         $participant->join();
+        \Log::info('Participant a rejoint l\'appel', [
+            'user_id' => $user->id,
+            'room_id' => $roomId,
+        ]);
 
         // Start the call if it's still pending
         if ($videoCall->isPending()) {
@@ -391,7 +404,8 @@ class VideoCallController extends Controller
                                          'id' => $participant->id,
                                          'user' => [
                                              'id' => $participant->user->id,
-                                             'name' => $participant->user->name,
+                                             'first_name' => $participant->user->first_name,
+                                             'last_name' => $participant->user->last_name,
                                              'profile_photo' => $participant->user->profile_photo,
                                          ],
                                          'role' => $participant->role,

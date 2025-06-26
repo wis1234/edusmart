@@ -126,12 +126,9 @@
                     <div id="chat-content" class="tab-content hidden">
                         <div class="bg-gray-800 rounded-lg p-4 h-96 flex flex-col">
                             <h3 class="text-lg font-semibold mb-3">Chat</h3>
-                            <div id="chat-messages" class="flex-1 overflow-y-auto mb-3 space-y-2 min-h-0">
-                                <!-- Messages will be added here dynamically -->
-                            </div>
-                            <div class="flex space-x-2 mt-auto">
-                                <input type="text" id="chat-input" placeholder="Tapez votre message..." 
-                                       class="flex-1 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 text-sm">
+                            <div id="chat-messages" class="flex-1 overflow-y-auto mb-3 space-y-2 min-h-0"></div>
+                            <div class="flex items-center space-x-2 mt-auto w-full">
+                                <input type="text" id="chat-input" placeholder="Tapez votre message..." class="flex-1 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 text-sm max-w-full" style="min-width:0;" />
                                 <button id="send-message-btn" class="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded transition-colors flex-shrink-0">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>

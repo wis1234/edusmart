@@ -11,24 +11,7 @@
                 <div class="flex flex-col md:flex-row gap-8 w-full">
                     <!-- Colonne gauche : photo + infos principales -->
                     <div class="flex flex-col items-center md:items-start md:w-1/3 w-full gap-4">
-                        @if(auth()->user()->profile_photo)
-                            <img src="{{ asset('storage/' . auth()->user()->profile_photo) }}" alt="Profile Photo" class="w-28 h-28 rounded-xl object-cover border-4 border-gray-200 dark:border-gray-700 shadow">
-                        @else
-                            <div class="w-28 h-28 rounded-xl bg-gradient-to-tr from-indigo-400 to-purple-500 flex items-center justify-center border-4 border-gray-200 dark:border-gray-700 shadow">
-                                <i class="fas fa-user text-white text-4xl"></i>
-                            </div>
-                        @endif
-                        <form method="post" action="{{ route('profile.update') }}" enctype="multipart/form-data" class="w-full flex flex-col items-center md:items-start">
-                            @csrf
-                            @method('patch')
-                            <label for="profile_photo" class="mt-2 inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200 text-xs rounded-lg font-medium hover:bg-indigo-200 dark:hover:bg-indigo-800 cursor-pointer transition-colors">
-                                <i class="fas fa-camera"></i> Change Photo
-                                <input type="file" name="profile_photo" id="profile_photo" accept="image/*" class="hidden" />
-                            </label>
-                            @error('profile_photo')
-                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                            @enderror
-                        </form>
+                        <img id="profile-photo-preview" src="{{ auth()->user()->profile_photo_url }}" alt="Profile Photo" class="w-28 h-28 rounded-xl object-cover border-4 border-gray-200 dark:border-gray-700 shadow">
                         <div class="mt-4 text-center md:text-left w-full">
                             <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-1">{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</h2>
                             <div class="flex flex-col items-center md:items-start gap-1 w-full">
@@ -83,6 +66,19 @@
                                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                     @enderror
                                 </div>
+                            </div>
+                            <!-- Aperçu de la photo juste au-dessus de l'upload -->
+                            <div class="flex flex-col items-center mb-2">
+                                <img id="profile-photo-preview" src="{{ auth()->user()->profile_photo_url }}" alt="Profile Photo" class="w-28 h-28 rounded-xl object-cover border-4 border-gray-200 dark:border-gray-700 shadow">
+                            </div>
+                            <div>
+                                <label for="profile_photo" class="mt-2 inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200 text-xs rounded-lg font-medium hover:bg-indigo-200 dark:hover:bg-indigo-800 cursor-pointer transition-colors">
+                                    <i class="fas fa-camera"></i> Change Photo
+                                    <input type="file" name="profile_photo" id="profile_photo" accept="image/*" class="hidden" />
+                                </label>
+                                @error('profile_photo')
+                                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                @enderror
                             </div>
                             <div class="flex justify-end">
                                 <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-8 rounded-lg shadow transition-all text-base flex items-center gap-2">
@@ -154,4 +150,23 @@
             </div>
         </div>
     </div>
+    @push('scripts')
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const input = document.getElementById('profile_photo');
+        const preview = document.getElementById('profile-photo-preview');
+        if (input && preview) {
+            input.addEventListener('change', function (e) {
+                if (e.target.files && e.target.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function (ev) {
+                        preview.src = ev.target.result;
+                    };
+                    reader.readAsDataURL(e.target.files[0]);
+                }
+            });
+        }
+    });
+    </script>
+    @endpush
 </x-app-layout>

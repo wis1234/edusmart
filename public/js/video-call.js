@@ -18,6 +18,7 @@ let isScreenSharing = false;
 let callStartTime;
 let callTimer;
 let currentTab = 'participants';
+let participants = {};
 
 // Initialize the application
 async function init() {
@@ -31,7 +32,7 @@ async function init() {
         startCallTimer();
     } catch (error) {
         console.error('Failed to initialize:', error);
-        alert('Erreur lors de l\'initialisation de l\'appel: ' + error.message);
+        alert('Erreur lors de l\'initialisation de l\'appel : ' + error.message + '\nVérifiez que votre caméra et micro sont bien branchés et autorisés.');
     }
 }
 
@@ -46,6 +47,7 @@ async function getUserMedia() {
         document.getElementById('local-video').srcObject = localStream;
     } catch (error) {
         console.error('Error accessing media devices:', error);
+        showMediaError(error);
         throw new Error('Impossible d\'accéder à la caméra et au microphone');
     }
 }
@@ -53,17 +55,21 @@ async function getUserMedia() {
 // Connect to signal server
 function connectToSignalServer() {
     const config = window.videoCallConfig;
-    
-    socket = io(config.signalServerUrl, {
-        auth: {
-            token: config.csrfToken
-        }
-    });
+    try {
+        socket = io(config.signalServerUrl, {
+            auth: {
+                token: config.csrfToken
+            }
+        });
+    } catch (e) {
+        alert('Impossible de se connecter au serveur de signalisation. Veuillez réessayer plus tard.');
+        throw e;
+    }
 
     socket.on('connect', () => {
         console.log('Connected to signal server');
         updateConnectionStatus(true);
-        socket.emit('join-room', config.roomId);
+        socket.emit('join-room', config.roomId, config.userName);
         recordActivity('joined');
     });
 
@@ -114,6 +120,16 @@ function connectToSignalServer() {
     socket.on('activity.recorded', (data) => {
         addActivity(data.activity);
     });
+
+    socket.on('participants-list', (data) => {
+        participants = {};
+        data.forEach(p => {
+            participants[p.socketId] = p.userName;
+        });
+        renderParticipantsList();
+    });
+
+    socket.on('join-room-error', handleJoinRoomError);
 }
 
 // Setup event listeners
@@ -503,42 +519,17 @@ async function sendMessage() {
 
 // Add message to chat
 function addMessage(message) {
-    const messagesContainer = document.getElementById('chat-messages');
+    const chatMessages = document.getElementById('chat-messages');
     const messageElement = document.createElement('div');
-    messageElement.className = 'flex items-start space-x-2 chat-message';
-    
-    const isOwnMessage = message.user_id == window.videoCallConfig.userId;
-    
-    messageElement.innerHTML = `
-        <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-sm font-medium">
-                ${message.user ? message.user.name.charAt(0).toUpperCase() : 'U'}
-            </div>
-        </div>
-        <div class="flex-1 min-w-0">
-            <div class="flex items-center space-x-2">
-                <span class="text-sm font-medium ${isOwnMessage ? 'text-blue-400' : 'text-gray-300'}">
-                    ${message.user ? message.user.name : 'Unknown'}
-                </span>
-                <span class="text-xs text-gray-500">
-                    ${new Date(message.created_at).toLocaleTimeString()}
-                </span>
-            </div>
-            <div class="text-sm text-gray-300 mt-1 break-words">
-                ${message.message}
-            </div>
-        </div>
-    `;
-    
-    messagesContainer.appendChild(messageElement);
-    
-    // Scroll to bottom with smooth animation
-    setTimeout(() => {
-        messagesContainer.scrollTo({
-            top: messagesContainer.scrollHeight,
-            behavior: 'smooth'
-        });
-    }, 100);
+    messageElement.className = 'bg-gray-700 rounded px-3 py-2 text-sm text-white break-words max-w-full mb-1';
+    // Si message est un objet, on affiche le texte, le nom et l'heure
+    let userName = message.user && message.user.name ? message.user.name : 'Utilisateur';
+    let text = typeof message === 'string' ? message : message.message;
+    let time = message.created_at ? new Date(message.created_at).toLocaleTimeString() : '';
+    messageElement.innerHTML = `<span class="font-semibold text-blue-300 mr-2">${userName}</span> <span>${text}</span> <span class="text-xs text-gray-400 float-right ml-2">${time}</span>`;
+    chatMessages.appendChild(messageElement);
+    // Scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 // Record activity
@@ -586,41 +577,45 @@ function addActivity(activity) {
 
 // Add participant to list
 function addParticipant(data) {
-    const participantsList = document.getElementById('participants-list');
-    const participantElement = document.createElement('div');
-    participantElement.id = `participant-${data.socketId}`;
-    participantElement.className = 'flex items-center space-x-2 p-2 bg-gray-700 rounded';
-    
-    participantElement.innerHTML = `
-        <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-sm font-medium">
-                ${data.userName ? data.userName.charAt(0).toUpperCase() : 'P'}
-            </div>
-        </div>
-        <div class="flex-1 min-w-0">
-            <div class="text-sm font-medium text-gray-300">
-                ${data.userName || 'Participant'}
-            </div>
-        </div>
-        <div class="flex items-center space-x-1">
-            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-        </div>
-    `;
-    
-    participantsList.appendChild(participantElement);
+    participants[data.socketId] = data.userName || 'Participant';
+    renderParticipantsList();
 }
 
 // Remove participant from list
 function removeParticipant(socketId) {
-    const participantElement = document.getElementById(`participant-${socketId}`);
-    if (participantElement) {
-        participantElement.remove();
-    }
+    delete participants[socketId];
+    renderParticipantsList();
 }
 
-// Update participants count
+function renderParticipantsList() {
+    const participantsList = document.getElementById('participants-list');
+    participantsList.innerHTML = '';
+    Object.entries(participants).forEach(([socketId, userName]) => {
+        const participantElement = document.createElement('div');
+        participantElement.id = `participant-${socketId}`;
+        participantElement.className = 'flex items-center space-x-2 p-2 bg-gray-700 rounded';
+        participantElement.innerHTML = `
+            <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-sm font-medium">
+                    ${userName.charAt(0).toUpperCase()}
+                </div>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium text-gray-300">
+                    ${userName}
+                </div>
+            </div>
+            <div class="flex items-center space-x-1">
+                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+            </div>
+        `;
+        participantsList.appendChild(participantElement);
+    });
+    updateParticipantsCount();
+}
+
 function updateParticipantsCount() {
-    const count = document.querySelectorAll('#participants-list > div').length + 1; // +1 for local user
+    const count = Object.keys(participants).length;
     document.getElementById('participants-count').textContent = count;
 }
 
@@ -745,6 +740,44 @@ function removeRemoteVideo(socketId) {
             container.remove();
         }
     }
+}
+
+// Handle join room error
+function handleJoinRoomError(error) {
+    console.error('Erreur lors de la tentative de rejoindre la salle :', error);
+    alert('Impossible de rejoindre l\'appel : ' + (error && error.message ? error.message : 'Accès refusé ou problème de connexion.'));
+}
+
+// Show media error
+function showMediaError(error) {
+    let message = 'Erreur lors de l\'accès à la caméra/micro.';
+    if (error && error.name) {
+        switch (error.name) {
+            case 'NotAllowedError':
+                message = 'Accès à la caméra ou au micro refusé. Veuillez autoriser l\'accès dans votre navigateur.';
+                break;
+            case 'NotFoundError':
+                message = 'Aucun périphérique caméra ou micro détecté.';
+                break;
+            case 'NotReadableError':
+                message = 'Le périphérique caméra/micro est déjà utilisé par une autre application.';
+                break;
+            case 'OverconstrainedError':
+                message = 'Aucun périphérique ne correspond aux contraintes demandées.';
+                break;
+            default:
+                message += ' (' + error.name + ')';
+        }
+    }
+    // Affiche une alerte visible sur la page
+    let alertDiv = document.getElementById('media-error-alert');
+    if (!alertDiv) {
+        alertDiv = document.createElement('div');
+        alertDiv.id = 'media-error-alert';
+        alertDiv.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        document.body.appendChild(alertDiv);
+    }
+    alertDiv.textContent = message;
 }
 
 // Initialize when page loads
