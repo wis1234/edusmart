@@ -59,6 +59,46 @@ class VideoCallController extends Controller
     }
 
     /**
+     * Display history of video calls
+     */
+    public function history(Request $request)
+    {
+        $user = Auth::user();
+        $query = VideoCall::with(['initiator', 'school', 'participants.user']);
+
+        // Filter based on user role
+        if ($user->isAdmin()) {
+            // Admin sees all calls
+        } elseif ($user->isSchoolAdmin()) {
+            // School admin sees calls from their school
+            $query->where('school_id', $user->school_id);
+        } else {
+            // Regular users see calls they initiated or participated in
+            $query->where(function ($q) use ($user) {
+                $q->where('initiator_id', $user->id)
+                  ->orWhereHas('participants', function ($subQ) use ($user) {
+                      $subQ->where('user_id', $user->id);
+                  });
+            });
+        }
+
+        // Show only ended or cancelled calls for history
+        $query->whereIn('status', ['ended', 'cancelled']);
+
+        // Filter by type
+        if ($request->has('type')) {
+            $query->where('type', $request->type);
+        }
+
+        $videoCalls = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        return view('video_calls.history', [
+            'videoCalls' => $videoCalls,
+            'filters' => $request->only(['type']),
+        ]);
+    }
+
+    /**
      * Show the form for creating a new video call
      */
     public function create()
@@ -168,8 +208,8 @@ class VideoCallController extends Controller
 
             DB::commit();
 
-            return redirect()->route('video-calls.show', $videoCall->room_id)
-                           ->with('success', 'Appel créé avec succès. Les participants ont été notifiés.');
+            return redirect()->route('video-calls.show', $videoCall)
+                           ->with('success', 'Call created successfully. Participants have been notified.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -180,17 +220,15 @@ class VideoCallController extends Controller
     /**
      * Display the specified video call
      */
-    public function show($roomId)
+    public function show(VideoCall $videoCall)
     {
-        $videoCall = VideoCall::with(['initiator', 'school', 'participants.user'])
-                             ->where('room_id', $roomId)
-                             ->firstOrFail();
+        $videoCall->load(['initiator', 'school', 'participants.user']);
 
         $user = Auth::user();
 
         // Check if user can access this call
         if (!$videoCall->hasParticipant($user) && $videoCall->initiator_id !== $user->id) {
-            abort(403, 'Vous n\'avez pas accès à cet appel.');
+            abort(403, 'You do not have access to this call.');
         }
 
         // Get participant info for current user
@@ -227,8 +265,8 @@ class VideoCallController extends Controller
             $videoCall->start();
         }
 
-        return redirect()->route('video-calls.show', $roomId)
-                       ->with('success', 'Vous avez rejoint l\'appel.');
+        return redirect()->route('video-calls.show', $videoCall)
+                       ->with('success', 'You have joined the call.');
     }
 
     /**

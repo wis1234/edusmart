@@ -14,7 +14,7 @@
                             <h1 class="text-lg font-semibold">{{ $videoCall->title ?: 'Appel sans titre' }}</h1>
                             <p class="text-sm text-gray-400">
                                 {{ $videoCall->type === 'video' ? 'Vidéo' : ($videoCall->type === 'audio' ? 'Audio' : 'Vidéo/Audio') }} • 
-                                {{ $videoCall->participants()->count() }} participant(s)
+                                <span id="participants-count">{{ $videoCall->participants()->count() }}</span> participant(s)
                             </p>
                         </div>
                     </div>
@@ -44,6 +44,21 @@
                                 <div class="absolute bottom-2 left-2 bg-black bg-opacity-50 px-2 py-1 rounded text-sm">
                                     Vous ({{ Auth::user()->name }})
                                 </div>
+                                <div id="local-mute-indicator" class="absolute top-2 right-2 bg-red-500 rounded-full p-1 hidden">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Screen Share Area -->
+                        <div id="screen-share-area" class="hidden mb-4">
+                            <div class="relative bg-gray-700 rounded-lg overflow-hidden aspect-video">
+                                <video id="screen-share-video" autoplay playsinline class="w-full h-full object-cover"></video>
+                                <div class="absolute top-2 left-2 bg-black bg-opacity-50 px-2 py-1 rounded text-sm">
+                                    Partage d'écran - <span id="screen-share-user"></span>
+                                </div>
                             </div>
                         </div>
 
@@ -63,6 +78,13 @@
                                 </svg>
                             </button>
 
+                            <!-- Screen Share -->
+                            <button id="screen-share-btn" class="bg-gray-700 hover:bg-gray-600 p-3 rounded-full transition-colors">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                </svg>
+                            </button>
+
                             <!-- End Call -->
                             <button id="end-call-btn" class="bg-red-600 hover:bg-red-700 p-3 rounded-full transition-colors">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,28 +97,57 @@
 
                 <!-- Sidebar -->
                 <div class="lg:col-span-1">
-                    <!-- Participants -->
+                    <!-- Tabs -->
                     <div class="bg-gray-800 rounded-lg p-4 mb-4">
-                        <h3 class="text-lg font-semibold mb-3">Participants</h3>
-                        <div id="participants-list" class="space-y-2">
-                            <!-- Participants will be added here dynamically -->
+                        <div class="flex space-x-4 border-b border-gray-700">
+                            <button id="participants-tab" class="tab-btn active px-3 py-2 text-sm font-medium text-white border-b-2 border-blue-500">
+                                Participants
+                            </button>
+                            <button id="chat-tab" class="tab-btn px-3 py-2 text-sm font-medium text-gray-400 hover:text-white">
+                                Chat
+                            </button>
+                            <button id="history-tab" class="tab-btn px-3 py-2 text-sm font-medium text-gray-400 hover:text-white">
+                                Historique
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Chat -->
-                    <div class="bg-gray-800 rounded-lg p-4">
-                        <h3 class="text-lg font-semibold mb-3">Chat</h3>
-                        <div id="chat-messages" class="h-64 overflow-y-auto mb-3 space-y-2">
-                            <!-- Messages will be added here dynamically -->
+                    <!-- Participants Tab -->
+                    <div id="participants-content" class="tab-content">
+                        <div class="bg-gray-800 rounded-lg p-4 mb-4">
+                            <h3 class="text-lg font-semibold mb-3">Participants</h3>
+                            <div id="participants-list" class="space-y-2">
+                                <!-- Participants will be added here dynamically -->
+                            </div>
                         </div>
-                        <div class="flex">
-                            <input type="text" id="chat-input" placeholder="Tapez votre message..." 
-                                   class="flex-1 bg-gray-700 border border-gray-600 rounded-l px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500">
-                            <button id="send-message-btn" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-r transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-                                </svg>
-                            </button>
+                    </div>
+
+                    <!-- Chat Tab -->
+                    <div id="chat-content" class="tab-content hidden">
+                        <div class="bg-gray-800 rounded-lg p-4 h-96 flex flex-col">
+                            <h3 class="text-lg font-semibold mb-3">Chat</h3>
+                            <div id="chat-messages" class="flex-1 overflow-y-auto mb-3 space-y-2 min-h-0">
+                                <!-- Messages will be added here dynamically -->
+                            </div>
+                            <div class="flex space-x-2 mt-auto">
+                                <input type="text" id="chat-input" placeholder="Tapez votre message..." 
+                                       class="flex-1 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 text-sm">
+                                <button id="send-message-btn" class="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded transition-colors flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- History Tab -->
+                    <div id="history-content" class="tab-content hidden">
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold mb-3">Historique</h3>
+                            <div id="activities-list" class="h-64 overflow-y-auto space-y-2">
+                                <!-- Activities will be added here dynamically -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -113,7 +164,10 @@
             userName: '{{ Auth::user()->name }}',
             isHost: {{ $isHost ? 'true' : 'false' }},
             csrfToken: '{{ csrf_token() }}',
-            indexUrl: '{{ route("video-calls.index") }}'
+            indexUrl: '{{ route("video-calls.index") }}',
+            messagesUrl: '{{ route("video-calls.messages.index", $videoCall) }}',
+            activitiesUrl: '{{ route("video-calls.activities.index", $videoCall) }}',
+            recordActivityUrl: '{{ route("video-calls.activities.store", $videoCall) }}'
         };
     </script>
 
@@ -121,4 +175,51 @@
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script src="{{ asset('js/video-call.js') }}"></script>
     @endpush
+
+    <style>
+        /* Styles pour le chat */
+        #chat-messages {
+            scrollbar-width: thin;
+            scrollbar-color: #4B5563 #1F2937;
+        }
+        
+        #chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #chat-messages::-webkit-scrollbar-track {
+            background: #1F2937;
+        }
+        
+        #chat-messages::-webkit-scrollbar-thumb {
+            background: #4B5563;
+            border-radius: 3px;
+        }
+        
+        #chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #6B7280;
+        }
+        
+        #activities-list {
+            scrollbar-width: thin;
+            scrollbar-color: #4B5563 #1F2937;
+        }
+        
+        #activities-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #activities-list::-webkit-scrollbar-track {
+            background: #1F2937;
+        }
+        
+        #activities-list::-webkit-scrollbar-thumb {
+            background: #4B5563;
+            border-radius: 3px;
+        }
+        
+        #activities-list::-webkit-scrollbar-thumb:hover {
+            background: #6B7280;
+        }
+    </style>
 </x-app-layout> 

@@ -84,6 +84,22 @@ class VideoCall extends Model
     }
 
     /**
+     * Get all messages in the call
+     */
+    public function messages()
+    {
+        return $this->hasMany(VideoCallMessage::class)->orderBy('created_at', 'asc');
+    }
+
+    /**
+     * Get all activities in the call
+     */
+    public function activities()
+    {
+        return $this->hasMany(VideoCallActivity::class)->orderBy('created_at', 'desc');
+    }
+
+    /**
      * Get active participants (currently in the call)
      */
     public function activeParticipants()

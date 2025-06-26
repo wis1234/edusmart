@@ -149,9 +149,11 @@ Route::get('/registration-success', function () {
 })->name('registration.success');
 
 use App\Http\Controllers\VideoCallController;
+use App\Http\Controllers\VideoCallMessageController;
 
 Route::middleware(['auth'])->group(function () {
-    // Video Calls Routes
+    // Video Calls Routes - History must come before resource
+    Route::get('video-calls/history', [VideoCallController::class, 'history'])->name('video-calls.history');
     Route::resource('video-calls', VideoCallController::class);
     Route::get('video-calls/{roomId}/join', [VideoCallController::class, 'join'])->name('video-calls.join');
     Route::post('video-calls/{roomId}/leave', [VideoCallController::class, 'leave'])->name('video-calls.leave');
@@ -160,4 +162,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('video-calls/{roomId}/cancel', [VideoCallController::class, 'cancel'])->name('video-calls.cancel');
     Route::get('video-calls/{roomId}/participants', [VideoCallController::class, 'getActiveParticipants'])->name('video-calls.participants');
     Route::post('video-calls/{roomId}/status', [VideoCallController::class, 'updateParticipantStatus'])->name('video-calls.status');
+    
+    // Video Call Messages and Activities Routes
+    Route::get('video-calls/{videoCall}/messages', [VideoCallMessageController::class, 'index'])->name('video-calls.messages.index');
+    Route::post('video-calls/{videoCall}/messages', [VideoCallMessageController::class, 'store'])->name('video-calls.messages.store');
+    Route::get('video-calls/{videoCall}/activities', [VideoCallMessageController::class, 'activities'])->name('video-calls.activities.index');
+    Route::post('video-calls/{videoCall}/activities', [VideoCallMessageController::class, 'recordActivity'])->name('video-calls.activities.store');
 });

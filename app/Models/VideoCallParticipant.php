@@ -18,6 +18,9 @@ class VideoCallParticipant extends Model
         'left_at',
         'is_muted',
         'is_video_off',
+        'is_screen_sharing',
+        'screen_stream_id',
+        'screen_share_started_at',
         'permissions',
     ];
 
@@ -27,6 +30,8 @@ class VideoCallParticipant extends Model
         'left_at' => 'datetime',
         'is_muted' => 'boolean',
         'is_video_off' => 'boolean',
+        'is_screen_sharing' => 'boolean',
+        'screen_share_started_at' => 'datetime',
     ];
 
     /**
@@ -98,6 +103,29 @@ class VideoCallParticipant extends Model
     }
 
     /**
+     * Start screen sharing
+     */
+    public function startScreenSharing(string $streamId): void
+    {
+        $this->update([
+            'is_screen_sharing' => true,
+            'screen_stream_id' => $streamId,
+            'screen_share_started_at' => now(),
+        ]);
+    }
+
+    /**
+     * Stop screen sharing
+     */
+    public function stopScreenSharing(): void
+    {
+        $this->update([
+            'is_screen_sharing' => false,
+            'screen_stream_id' => null,
+        ]);
+    }
+
+    /**
      * Check if participant is currently in the call
      */
     public function isInCall(): bool
@@ -119,6 +147,26 @@ class VideoCallParticipant extends Model
     public function hasVideoOff(): bool
     {
         return $this->is_video_off;
+    }
+
+    /**
+     * Check if participant is sharing screen
+     */
+    public function isSharingScreen(): bool
+    {
+        return $this->is_screen_sharing;
+    }
+
+    /**
+     * Get screen sharing duration
+     */
+    public function getScreenSharingDurationAttribute(): int
+    {
+        if (!$this->is_screen_sharing || !$this->screen_share_started_at) {
+            return 0;
+        }
+
+        return $this->screen_share_started_at->diffInSeconds(now());
     }
 
     /**
