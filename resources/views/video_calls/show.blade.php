@@ -155,7 +155,7 @@
     <!-- Configuration data for JavaScript -->
     <script>
         window.videoCallConfig = {
-            signalServerUrl: '{{ $signalServerUrl }}',
+            signalServerUrl: 'https://node-whatsapp-1.onrender.com',
             roomId: '{{ $videoCall->room_id }}',
             userId: {{ Auth::id() }},
             userName: '{{ Auth::user()->name }}',
@@ -164,7 +164,8 @@
             indexUrl: '{{ route("video-calls.index") }}',
             messagesUrl: '{{ route("video-calls.messages.index", $videoCall) }}',
             activitiesUrl: '{{ route("video-calls.activities.index", $videoCall) }}',
-            recordActivityUrl: '{{ route("video-calls.activities.store", $videoCall) }}'
+            recordActivityUrl: '{{ route("video-calls.activities.store", $videoCall) }}',
+            callId: '{{ $videoCall->id }}'
         };
     </script>
 

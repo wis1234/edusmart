@@ -22,7 +22,7 @@ class VideoCallMessageController extends Controller
         }
 
         $messages = $videoCall->messages()
-            ->with('user:id,name,profile_photo_path')
+            ->with('user:id,first_name,profile_photo')
             ->latest()
             ->take(50)
             ->get()
@@ -54,7 +54,7 @@ class VideoCallMessageController extends Controller
             'metadata' => $request->metadata,
         ]);
 
-        $message->load('user:id,name,profile_photo_path');
+        $message->load('user:id,first_name,profile_photo');
 
         // Broadcast to other participants
         broadcast(new \App\Events\VideoCallMessageSent($videoCall, $message))->toOthers();
@@ -73,7 +73,7 @@ class VideoCallMessageController extends Controller
         }
 
         $activities = $videoCall->activities()
-            ->with('user:id,name,profile_photo_path')
+            ->with('user:id,first_name,profile_photo')
             ->latest()
             ->take(100)
             ->get();
@@ -102,7 +102,7 @@ class VideoCallMessageController extends Controller
             'metadata' => $request->metadata,
         ]);
 
-        $activity->load('user:id,name,profile_photo_path');
+        $activity->load('user:id,first_name,profile_photo');
 
         // Broadcast to other participants
         broadcast(new \App\Events\VideoCallActivityRecorded($videoCall, $activity))->toOthers();

@@ -27,8 +27,8 @@ async function init() {
         connectToSignalServer();
         setupEventListeners();
         setupTabs();
-        loadMessages();
-        loadActivities();
+        await loadMessages();
+        await loadActivities();
         startCallTimer();
     } catch (error) {
         console.error('Failed to initialize:', error);
@@ -57,9 +57,17 @@ function connectToSignalServer() {
     const config = window.videoCallConfig;
     try {
         socket = io(config.signalServerUrl, {
+            path: '/socket.io',
             auth: {
                 token: config.csrfToken
-            }
+            },
+            query: {
+                roomId: config.roomId,
+                userId: config.userId
+            },
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
+            transports: ['websocket']
         });
     } catch (e) {
         alert('Impossible de se connecter au serveur de signalisation. Veuillez réessayer plus tard.');
@@ -69,7 +77,7 @@ function connectToSignalServer() {
     socket.on('connect', () => {
         console.log('Connected to signal server');
         updateConnectionStatus(true);
-        socket.emit('join-room', config.roomId, config.userName);
+        socket.emit('join-room', config.roomId);
         recordActivity('joined');
     });
 
@@ -386,63 +394,57 @@ function updateConnectionStatus(connected) {
 
 // Load messages
 async function loadMessages() {
+    if (!window.videoCallConfig.callId) {
+        console.error('videoCallConfig.callId is undefined!');
+        addMessage({
+            user: { name: window.videoCallConfig.userName },
+            message: 'Erreur: ID de l\'appel vidéo manquant.',
+            timestamp: new Date().toISOString()
+        });
+        return;
+    }
     try {
-        console.log('Loading messages from:', window.videoCallConfig.messagesUrl);
-        const response = await fetch(window.videoCallConfig.messagesUrl);
-        console.log('Response status:', response.status);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
+        const response = await fetch(`/video-calls/${window.videoCallConfig.callId}/messages`);
+        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
         const messages = await response.json();
-        console.log('Loaded messages:', messages);
-        
-        // Clear existing messages
-        document.getElementById('chat-messages').innerHTML = '';
-        
-        // Add welcome message if no messages
+        const chatMessages = document.getElementById('chat-messages');
+        if (chatMessages) chatMessages.innerHTML = '';
         if (messages.length === 0) {
             addMessage({
-                id: 0,
-                user_id: 0,
+                user: { name: 'Système' },
                 message: 'Bienvenue dans le chat ! Tapez votre message ci-dessous.',
-                created_at: new Date().toISOString(),
-                user: {
-                    id: 0,
-                    name: 'Système'
-                }
+                timestamp: new Date().toISOString()
             });
         } else {
-            messages.forEach(message => {
-                addMessage(message);
-            });
+            messages.forEach(msg => addMessage({
+                user: { name: msg.user?.name || 'Utilisateur' },
+                message: msg.message,
+                timestamp: msg.created_at
+            }));
         }
     } catch (error) {
         console.error('Error loading messages:', error);
-        // Add a test message to show the chat is working
         addMessage({
-            id: 1,
-            user_id: window.videoCallConfig.userId,
-            message: 'Test message - Chat is working!',
-            created_at: new Date().toISOString(),
-            user: {
-                id: window.videoCallConfig.userId,
-                name: window.videoCallConfig.userName
-            }
+            user: { name: window.videoCallConfig.userName },
+            message: 'Erreur lors du chargement des messages.',
+            timestamp: new Date().toISOString()
         });
     }
 }
 
 // Load activities
 async function loadActivities() {
+    if (!window.videoCallConfig.callId) {
+        console.error('videoCallConfig.callId is undefined!');
+        return;
+    }
     try {
-        const response = await fetch(window.videoCallConfig.activitiesUrl);
+        const response = await fetch(`/video-calls/${window.videoCallConfig.callId}/activities`);
+        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
         const activities = await response.json();
-        
-        activities.forEach(activity => {
-            addActivity(activity);
-        });
+        const activitiesContainer = document.getElementById('activities-list');
+        if (activitiesContainer) activitiesContainer.innerHTML = '';
+        activities.forEach(activity => addActivity(activity));
     } catch (error) {
         console.error('Error loading activities:', error);
     }
@@ -452,69 +454,22 @@ async function loadActivities() {
 async function sendMessage() {
     const input = document.getElementById('chat-input');
     const message = input.value.trim();
-    
     if (!message) return;
-    
-    console.log('Sending message:', message);
-    console.log('To URL:', window.videoCallConfig.messagesUrl);
-    
-    try {
-        const response = await fetch(window.videoCallConfig.messagesUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': window.videoCallConfig.csrfToken
-            },
-            body: JSON.stringify({ message })
-        });
-        
-        console.log('Send message response status:', response.status);
-        
-        if (response.ok) {
-            const sentMessage = await response.json();
-            console.log('Message sent successfully:', sentMessage);
-            input.value = '';
-            // Add the message to the chat immediately
-            addMessage(sentMessage);
-        } else {
-            const errorData = await response.json();
-            console.error('Error sending message:', errorData);
-            
-            // Even if server fails, add message locally for testing
-            const localMessage = {
-                id: Date.now(),
-                user_id: window.videoCallConfig.userId,
-                message: message,
-                created_at: new Date().toISOString(),
-                user: {
-                    id: window.videoCallConfig.userId,
-                    name: window.videoCallConfig.userName
-                }
-            };
-            addMessage(localMessage);
-            input.value = '';
-            
-            console.log('Added message locally due to server error');
-        }
-    } catch (error) {
-        console.error('Error sending message:', error);
-        
-        // Even if network fails, add message locally for testing
-        const localMessage = {
-            id: Date.now(),
-            user_id: window.videoCallConfig.userId,
-            message: message,
-            created_at: new Date().toISOString(),
-            user: {
-                id: window.videoCallConfig.userId,
-                name: window.videoCallConfig.userName
-            }
-        };
-        addMessage(localMessage);
-        input.value = '';
-        
-        console.log('Added message locally due to network error');
-    }
+
+    // Ajouter le message localement immédiatement
+    addMessage({
+        user: { name: window.videoCallConfig.userName },
+        message,
+        timestamp: new Date().toISOString()
+    });
+
+    // Envoyer au serveur de signalisation (WebRTC)
+    socket.emit('chat-message', {
+        roomId: window.videoCallConfig.roomId,
+        message
+    });
+
+    input.value = '';
 }
 
 // Add message to chat
@@ -525,7 +480,7 @@ function addMessage(message) {
     // Si message est un objet, on affiche le texte, le nom et l'heure
     let userName = message.user && message.user.name ? message.user.name : 'Utilisateur';
     let text = typeof message === 'string' ? message : message.message;
-    let time = message.created_at ? new Date(message.created_at).toLocaleTimeString() : '';
+    let time = message.timestamp ? new Date(message.timestamp).toLocaleTimeString() : '';
     messageElement.innerHTML = `<span class="font-semibold text-blue-300 mr-2">${userName}</span> <span>${text}</span> <span class="text-xs text-gray-400 float-right ml-2">${time}</span>`;
     chatMessages.appendChild(messageElement);
     // Scroll to bottom
@@ -534,8 +489,12 @@ function addMessage(message) {
 
 // Record activity
 async function recordActivity(action, metadata = {}) {
+    if (!window.videoCallConfig.callId) {
+        console.error('videoCallConfig.callId is undefined!');
+        return;
+    }
     try {
-        await fetch(window.videoCallConfig.recordActivityUrl, {
+        await fetch(`/video-calls/${window.videoCallConfig.callId}/activities`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
