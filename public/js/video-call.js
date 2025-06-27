@@ -19,6 +19,8 @@ let callStartTime;
 let callTimer;
 let currentTab = 'participants';
 let participants = {};
+let focusedSocketId = null;
+let manualFocusSocketId = null;
 
 // Initialize the application
 async function init() {
@@ -43,8 +45,69 @@ async function getUserMedia() {
             video: true,
             audio: true
         });
-        
-        document.getElementById('local-video').srcObject = localStream;
+        const localVideo = document.getElementById('local-video');
+        localVideo.srcObject = localStream;
+        // Add id to local video container for animation
+        const localContainer = localVideo.closest('.relative');
+        if (localContainer) localContainer.id = 'video-container-local';
+        // Setup voice detection for local stream (focus mode)
+        setupVoiceDetection('video-container-local', localStream, 'local');
+
+        // Voice wave animation
+        const waveDiv = document.createElement('div');
+        waveDiv.className = 'voice-wave';
+        for (let i = 0; i < 4; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'voice-bar';
+            waveDiv.appendChild(bar);
+        }
+        if (localContainer) localContainer.appendChild(waveDiv);
+
+        // Add badges for local video
+        setTimeout(() => {
+            const videoActive = localStream.getVideoTracks().length > 0 && localStream.getVideoTracks()[0].enabled;
+            const audioActive = localStream.getAudioTracks().length > 0 && localStream.getAudioTracks()[0].enabled;
+            const badgeContainer = document.createElement('div');
+            badgeContainer.className = 'absolute top-2 left-2 flex space-x-2 z-10';
+            // Mic badge
+            const micBadge = document.createElement('span');
+            micBadge.className = 'inline-flex items-center justify-center rounded-full bg-black bg-opacity-60 text-white px-2 py-1 text-xs';
+            if (audioActive) {
+                micBadge.innerHTML = `<i class="fas fa-microphone"></i>`;
+                micBadge.title = 'Microphone on';
+            } else {
+                micBadge.innerHTML = `<i class="fas fa-microphone-slash text-red-500"></i>`;
+                micBadge.title = 'Microphone off';
+            }
+            badgeContainer.appendChild(micBadge);
+            // Camera badge
+            if (!videoActive) {
+                const camBadge = document.createElement('span');
+                camBadge.className = 'inline-flex items-center justify-center rounded-full bg-black bg-opacity-60 text-white px-2 py-1 text-xs ml-1';
+                camBadge.innerHTML = `<i class="fas fa-video-slash text-yellow-400"></i>`;
+                camBadge.title = 'Camera off';
+                badgeContainer.appendChild(camBadge);
+            }
+            // Screen share badge (if sharing)
+            if (window.isScreenSharing) {
+                const screenBadge = document.createElement('span');
+                screenBadge.className = 'inline-flex items-center justify-center rounded-full bg-blue-600 text-white px-2 py-1 text-xs';
+                screenBadge.innerHTML = `<i class="fas fa-desktop"></i>`;
+                screenBadge.title = 'Screen sharing';
+                badgeContainer.appendChild(screenBadge);
+            }
+            // Pin/focus button for local video
+            const pinBtn = document.createElement('button');
+            pinBtn.className = 'ml-2 bg-gray-800 bg-opacity-80 hover:bg-blue-600 text-white rounded-full p-1 focus:outline-none focus:ring-2 focus:ring-blue-400';
+            pinBtn.title = manualFocusSocketId === 'local' ? 'Unpin' : 'Pin';
+            pinBtn.innerHTML = `<i class="fas fa-thumbtack"></i>`;
+            pinBtn.onclick = (e) => {
+                e.stopPropagation();
+                handlePin('local');
+            };
+            badgeContainer.appendChild(pinBtn);
+            if (localContainer) localContainer.appendChild(badgeContainer);
+        }, 500);
     } catch (error) {
         console.error('Error accessing media devices:', error);
         showMediaError(error);
@@ -114,11 +177,22 @@ function connectToSignalServer() {
     socket.on('screen-share-started', (data) => {
         console.log('Screen share started:', data);
         showScreenShare(data);
+        // Mark the user as sharing screen
+        if (participants[data.socketId]) {
+            participants[data.socketId].isScreenSharing = true;
+            // Optionally, re-render the video grid to show the badge
+            renderAllRemoteVideos();
+        }
     });
 
     socket.on('screen-share-stopped', (data) => {
         console.log('Screen share stopped:', data);
         hideScreenShare();
+        // Unmark the user as sharing screen
+        if (participants[data.socketId]) {
+            participants[data.socketId].isScreenSharing = false;
+            renderAllRemoteVideos();
+        }
     });
 
     socket.on('message.sent', (data) => {
@@ -549,24 +623,22 @@ function removeParticipant(socketId) {
 function renderParticipantsList() {
     const participantsList = document.getElementById('participants-list');
     participantsList.innerHTML = '';
-    Object.entries(participants).forEach(([socketId, userName]) => {
+    Object.entries(participants).forEach(([socketId, user]) => {
         const participantElement = document.createElement('div');
         participantElement.id = `participant-${socketId}`;
-        participantElement.className = 'flex items-center space-x-2 p-2 bg-gray-700 rounded';
+        participantElement.className = 'flex items-center space-x-3 p-2 bg-gray-700 rounded shadow';
+        let avatarHtml;
+        if (user && user.profile_photo) {
+            avatarHtml = `<img src="${user.profile_photo}" class="w-10 h-10 rounded-full object-cover border-2 border-blue-500" alt="Profile photo">`;
+        } else {
+            avatarHtml = `<span class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-600 border-2 border-blue-500 text-white text-2xl"><i class='fas fa-user-circle'></i></span>`;
+        }
         participantElement.innerHTML = `
-            <div class="flex-shrink-0">
-                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-sm font-medium">
-                    ${userName.charAt(0).toUpperCase()}
-                </div>
-            </div>
+            ${avatarHtml}
             <div class="flex-1 min-w-0">
-                <div class="text-sm font-medium text-gray-300">
-                    ${userName}
-                </div>
+                <div class="text-base font-semibold text-gray-100">${user && user.name ? user.name : 'Unknown'}</div>
             </div>
-            <div class="flex items-center space-x-1">
-                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-            </div>
+            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
         `;
         participantsList.appendChild(participantElement);
     });
@@ -601,7 +673,7 @@ function createPeerConnection(socketId) {
     peerConnection.ontrack = (event) => {
         const remoteStream = event.streams[0];
         remoteStreams[socketId] = remoteStream;
-        addRemoteVideo(socketId, remoteStream);
+        addRemoteVideo(socketId, remoteStream, participants[socketId]);
     };
     
     peerConnection.createOffer()
@@ -638,7 +710,7 @@ async function handleOffer(data) {
     peerConnection.ontrack = (event) => {
         const remoteStream = event.streams[0];
         remoteStreams[data.fromSocketId] = remoteStream;
-        addRemoteVideo(data.fromSocketId, remoteStream);
+        addRemoteVideo(data.fromSocketId, remoteStream, participants[data.fromSocketId]);
     };
     
     await peerConnection.setRemoteDescription(data.offer);
@@ -667,27 +739,112 @@ async function handleIceCandidate(data) {
     }
 }
 
-// Add remote video
-function addRemoteVideo(socketId, stream) {
+// Add remote video with badges, wave, and pin
+function addRemoteVideo(socketId, stream, user) {
     const videoGrid = document.getElementById('video-grid');
-    
-    const videoElement = document.createElement('video');
-    videoElement.id = `remote-video-${socketId}`;
-    videoElement.autoplay = true;
-    videoElement.playsinline = true;
-    videoElement.className = 'w-full h-full object-cover';
-    videoElement.srcObject = stream;
-    
     const videoContainer = document.createElement('div');
     videoContainer.className = 'relative bg-gray-700 rounded-lg overflow-hidden aspect-video';
-    videoContainer.appendChild(videoElement);
-    
+    videoContainer.id = `video-container-${socketId}`;
+
+    // Show video if active
+    let videoActive = false;
+    let audioActive = false;
+    if (stream) {
+        const videoTracks = stream.getVideoTracks();
+        const audioTracks = stream.getAudioTracks();
+        videoActive = videoTracks.length > 0 && videoTracks[0].enabled;
+        audioActive = audioTracks.length > 0 && audioTracks[0].enabled;
+    }
+
+    if (videoActive) {
+        const videoElement = document.createElement('video');
+        videoElement.id = `remote-video-${socketId}`;
+        videoElement.autoplay = true;
+        videoElement.playsinline = true;
+        videoElement.className = 'w-full h-full object-cover';
+        videoElement.srcObject = stream;
+        videoContainer.appendChild(videoElement);
+    } else {
+        // Show FontAwesome avatar if no profile photo
+        if (user && user.profile_photo) {
+            const img = document.createElement('img');
+            img.src = user.profile_photo;
+            img.className = 'w-full h-full object-cover';
+            videoContainer.appendChild(img);
+        } else {
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = 'w-full h-full flex items-center justify-center bg-gray-600';
+            avatarDiv.innerHTML = `<i class='fas fa-user-circle text-7xl text-gray-400'></i>`;
+            videoContainer.appendChild(avatarDiv);
+        }
+    }
+
+    // Voice wave animation
+    const waveDiv = document.createElement('div');
+    waveDiv.className = 'voice-wave';
+    for (let i = 0; i < 4; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'voice-bar';
+        waveDiv.appendChild(bar);
+    }
+    videoContainer.appendChild(waveDiv);
+
+    // Badges container
+    const badgeContainer = document.createElement('div');
+    badgeContainer.className = 'absolute top-2 left-2 flex space-x-2 z-10';
+
+    // Mic badge
+    const micBadge = document.createElement('span');
+    micBadge.className = 'inline-flex items-center justify-center rounded-full bg-black bg-opacity-60 text-white px-2 py-1 text-xs';
+    if (audioActive) {
+        micBadge.innerHTML = `<i class="fas fa-microphone"></i>`;
+        micBadge.title = 'Microphone on';
+    } else {
+        micBadge.innerHTML = `<i class="fas fa-microphone-slash text-red-500"></i>`;
+        micBadge.title = 'Microphone off';
+    }
+    badgeContainer.appendChild(micBadge);
+
+    // Camera badge
+    if (!videoActive) {
+        const camBadge = document.createElement('span');
+        camBadge.className = 'inline-flex items-center justify-center rounded-full bg-black bg-opacity-60 text-white px-2 py-1 text-xs ml-1';
+        camBadge.innerHTML = `<i class="fas fa-video-slash text-yellow-400"></i>`;
+        camBadge.title = 'Camera off';
+        badgeContainer.appendChild(camBadge);
+    }
+
+    // Screen share badge (if user is sharing screen)
+    if (user && user.isScreenSharing) {
+        const screenBadge = document.createElement('span');
+        screenBadge.className = 'inline-flex items-center justify-center rounded-full bg-blue-600 text-white px-2 py-1 text-xs';
+        screenBadge.innerHTML = `<i class="fas fa-desktop"></i>`;
+        screenBadge.title = 'Screen sharing';
+        badgeContainer.appendChild(screenBadge);
+    }
+
+    // Pin/focus button
+    const pinBtn = document.createElement('button');
+    pinBtn.className = 'ml-2 bg-gray-800 bg-opacity-80 hover:bg-blue-600 text-white rounded-full p-1 focus:outline-none focus:ring-2 focus:ring-blue-400';
+    pinBtn.title = manualFocusSocketId === socketId ? 'Unpin' : 'Pin';
+    pinBtn.innerHTML = `<i class="fas fa-thumbtack"></i>`;
+    pinBtn.onclick = (e) => {
+        e.stopPropagation();
+        handlePin(socketId);
+    };
+    badgeContainer.appendChild(pinBtn);
+
+    videoContainer.appendChild(badgeContainer);
+
+    // User name label
     const nameDiv = document.createElement('div');
-    nameDiv.className = 'absolute bottom-2 left-2 bg-black bg-opacity-50 px-2 py-1 rounded text-sm';
-    nameDiv.textContent = `Participant ${socketId}`;
+    nameDiv.className = 'absolute bottom-2 left-2 bg-black bg-opacity-60 px-3 py-1 rounded text-base font-semibold flex items-center space-x-2';
+    nameDiv.innerHTML = `<span>${user && user.name ? user.name : 'Unknown'}</span>`;
     videoContainer.appendChild(nameDiv);
-    
+
     videoGrid.appendChild(videoContainer);
+    // Setup voice detection for remote stream (focus mode)
+    setupVoiceDetection(`video-container-${socketId}`, stream, socketId);
 }
 
 // Remove remote video
@@ -737,6 +894,80 @@ function showMediaError(error) {
         document.body.appendChild(alertDiv);
     }
     alertDiv.textContent = message;
+}
+
+// Voice activity detection and animation
+function setupVoiceDetection(containerId, stream, socketId) {
+    if (!stream) return;
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        const source = audioContext.createMediaStreamSource(stream);
+        source.connect(analyser);
+        const dataArray = new Uint8Array(analyser.fftSize);
+        const videoContainer = document.getElementById(containerId);
+        function checkVolume() {
+            analyser.getByteTimeDomainData(dataArray);
+            let sum = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+                const val = (dataArray[i] - 128) / 128;
+                sum += val * val;
+            }
+            const volume = Math.sqrt(sum / dataArray.length);
+            if (videoContainer) {
+                if (volume > 0.05) {
+                    videoContainer.classList.add('speaking');
+                } else {
+                    videoContainer.classList.remove('speaking');
+                }
+            }
+            requestAnimationFrame(checkVolume);
+        }
+        checkVolume();
+    } catch (e) {
+        // Ignore errors (e.g. if no audio track)
+    }
+}
+
+// Only manual focus (pin) moves/enlarges a video
+function setFocusMode(socketId) {
+    const videoGrid = document.getElementById('video-grid');
+    Array.from(videoGrid.children).forEach(child => {
+        child.classList.remove('focused');
+    });
+    if (socketId) {
+        const focusContainer = document.getElementById(`video-container-${socketId}`) || document.getElementById('video-container-local');
+        if (focusContainer) {
+            focusContainer.classList.add('focused');
+            videoGrid.prepend(focusContainer);
+        }
+    }
+}
+
+function handlePin(socketId) {
+    if (manualFocusSocketId === socketId) {
+        manualFocusSocketId = null;
+        setFocusMode(null);
+    } else {
+        manualFocusSocketId = socketId;
+        setFocusMode(socketId);
+    }
+}
+
+// Helper to re-render all remote videos
+function renderAllRemoteVideos() {
+    const videoGrid = document.getElementById('video-grid');
+    // Remove all except the local video
+    Array.from(videoGrid.children).forEach(child => {
+        if (!child.querySelector('#local-video')) {
+            child.remove();
+        }
+    });
+    Object.entries(remoteStreams).forEach(([socketId, stream]) => {
+        if (participants[socketId]) {
+            addRemoteVideo(socketId, stream, participants[socketId]);
+        }
+    });
 }
 
 // Initialize when page loads

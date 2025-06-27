@@ -37,12 +37,13 @@
                 <div class="lg:col-span-3">
                     <div class="bg-gray-800 rounded-lg p-4">
                         <!-- Video Grid -->
-                        <div id="video-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                        <div id="video-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-4 auto-rows-fr">
                             <!-- Local Video -->
-                            <div class="relative bg-gray-700 rounded-lg overflow-hidden aspect-video">
-                                <video id="local-video" autoplay muted playsinline class="w-full h-full object-cover"></video>
-                                <div class="absolute bottom-2 left-2 bg-black bg-opacity-50 px-2 py-1 rounded text-sm">
-                                    Vous ({{ Auth::user()->name }})
+                            <div class="relative bg-gray-700 rounded-lg overflow-hidden aspect-video shadow-lg flex items-center justify-center">
+                                <video id="local-video" autoplay muted playsinline class="w-full h-full object-cover rounded-lg"></video>
+                                <div class="absolute bottom-2 left-2 bg-black bg-opacity-60 px-3 py-1 rounded text-base font-semibold flex items-center space-x-2">
+                                    <img src="{{ Auth::user()->profile_photo ? asset(Auth::user()->profile_photo) : asset('default-avatar.png') }}" class="w-7 h-7 rounded-full object-cover border-2 border-blue-500" alt="Votre photo">
+                                    <span>Vous ({{ Auth::user()->name }})</span>
                                 </div>
                                 <div id="local-mute-indicator" class="absolute top-2 right-2 bg-red-500 rounded-full p-1 hidden">
                                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -106,17 +107,17 @@
                             <button id="chat-tab" class="tab-btn px-3 py-2 text-sm font-medium text-gray-400 hover:text-white">
                                 Chat
                             </button>
-                            <button id="history-tab" class="tab-btn px-3 py-2 text-sm font-medium text-gray-400 hover:text-white">
-                                Historique
+                            <button id="history-tab" class="tab-btn px-3 py-2 text-sm font-medium text-gray-400 hover:text-white truncate max-w-[100px]">
+                                History
                             </button>
                         </div>
                     </div>
 
                     <!-- Participants Tab -->
                     <div id="participants-content" class="tab-content">
-                        <div class="bg-gray-800 rounded-lg p-4 mb-4">
+                        <div class="bg-gray-800 rounded-lg p-4 mb-4 shadow-lg">
                             <h3 class="text-lg font-semibold mb-3">Participants</h3>
-                            <div id="participants-list" class="space-y-2">
+                            <div id="participants-list" class="space-y-3">
                                 <!-- Participants will be added here dynamically -->
                             </div>
                         </div>
@@ -141,7 +142,7 @@
                     <!-- History Tab -->
                     <div id="history-content" class="tab-content hidden">
                         <div class="bg-gray-800 rounded-lg p-4">
-                            <h3 class="text-lg font-semibold mb-3">Historique</h3>
+                            <h3 class="text-lg font-semibold mb-3">History</h3>
                             <div id="activities-list" class="h-64 overflow-y-auto space-y-2">
                                 <!-- Activities will be added here dynamically -->
                             </div>
@@ -173,6 +174,9 @@
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script src="{{ asset('js/video-call.js') }}"></script>
     @endpush
+
+    <!-- FontAwesome for user icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-papm6Q+..." crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <style>
         /* Styles pour le chat */
@@ -219,5 +223,76 @@
         #activities-list::-webkit-scrollbar-thumb:hover {
             background: #6B7280;
         }
+
+        #video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.5rem;
+            align-items: stretch;
+        }
+        .aspect-video {
+            aspect-ratio: 16/9;
+        }
+        #participants-list img {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        /* Animation for active speaker */
+        .speaking {
+            box-shadow: 0 0 0 4px #3b82f6, 0 0 16px 4px #3b82f6;
+            border: 2px solid #3b82f6 !important;
+            transition: box-shadow 0.2s, border 0.2s;
+            z-index: 2;
+        }
+        /* Focus mode: enlarge the focused video */
+        .focused {
+            grid-column: 1 / -1 !important;
+            grid-row: 1 !important;
+            z-index: 10;
+            transform: scale(1.08);
+            box-shadow: 0 0 0 6px #2563eb, 0 0 32px 8px #2563eb;
+            border: 3px solid #2563eb !important;
+            transition: all 0.2s;
+        }
+        /* Voice wave animation for active speaker */
+        .voice-wave {
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 18px;
+            display: flex;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            z-index: 20;
+        }
+        .speaking .voice-wave {
+            opacity: 1;
+        }
+        .voice-bar {
+            width: 4px;
+            height: 100%;
+            margin: 0 1px;
+            background: #3b82f6;
+            border-radius: 2px;
+            animation: voice-bar-osc 1s infinite linear;
+        }
+        .voice-bar:nth-child(2) { animation-delay: 0.1s; }
+        .voice-bar:nth-child(3) { animation-delay: 0.2s; }
+        .voice-bar:nth-child(4) { animation-delay: 0.3s; }
+        @keyframes voice-bar-osc {
+            0%, 100% { height: 30%; }
+            20% { height: 80%; }
+            40% { height: 50%; }
+            60% { height: 90%; }
+            80% { height: 40%; }
+        }
+        /* Pin/focus button style */
+        .fa-thumbtack { transform: rotate(-30deg); }
+        button:focus { outline: none; }
+        button:hover .fa-thumbtack { color: #2563eb; }
+        /* Camera badge style */
+        .fa-video-slash { filter: drop-shadow(0 0 2px #000); }
     </style>
 </x-app-layout> 
