@@ -77,7 +77,7 @@ function connectToSignalServer() {
     socket.on('connect', () => {
         console.log('Connected to signal server');
         updateConnectionStatus(true);
-        socket.emit('join-room', config.roomId);
+        socket.emit('join-room', config.roomId, config.userName);
         recordActivity('joined');
     });
 

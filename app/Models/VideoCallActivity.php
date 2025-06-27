@@ -20,6 +20,8 @@ class VideoCallActivity extends Model
         'metadata' => 'array',
     ];
 
+    protected $appends = ['action_description'];
+
     /**
      * Get the video call this activity belongs to
      */
