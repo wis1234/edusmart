@@ -177,230 +177,180 @@ async function connectToSignalServer() {
     const config = window.videoCallConfig;
     
     try {
-        // Récupérer un token d'authentification depuis Laravel
-        const tokenResponse = await fetch('/api/auth-token', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': config.csrfToken
-            }
-        });
-        
-        let authToken = config.csrfToken; // Fallback au CSRF token
-        
-        if (tokenResponse.ok) {
-            const tokenData = await tokenResponse.json();
-            authToken = tokenData.token || config.csrfToken;
-        }
-        
         socket = io(config.signalServerUrl, {
             path: '/socket.io',
-            auth: {
-                token: authToken
-            },
             transports: ['websocket', 'polling'],
-            reconnectionAttempts: 10,
-            reconnectionDelay: 1000,
-            reconnectionDelayMax: 5000,
-            timeout: 20000,
-            forceNew: true
+            auth: {
+                token: config.csrfToken // Token simple pour l'authentification
+            }
         });
-    } catch (e) {
-        console.error('Failed to create socket connection:', e);
-        alert('Impossible de se connecter au serveur de signalisation. Veuillez réessayer plus tard.');
-        throw e;
-    }
 
-    socket.on('connect', () => {
-        console.log('Connected to signal server');
-        updateConnectionStatus(true);
-        // Rejoindre la salle avec le nom d'utilisateur et la photo de profil
-        socket.emit('join-room', config.roomId);
-        recordActivity('joined');
-    });
+        socket.on('connect', () => {
+            console.log('Connected to signal server');
+            updateConnectionStatus(true);
+            
+            // Rejoindre la salle avec les paramètres attendus par le serveur
+            const user = window.currentUser || { name: 'User', profile_photo: null };
+            socket.emit('join-room', config.roomId, user.name, user.profile_photo);
+        });
 
-    socket.on('room-joined', (data) => {
-        console.log('Room joined:', data);
-        participants = {};
-        data.participants.forEach(p => {
-            participants[p.socketId] = {
-                userName: p.name,
-                profilePhoto: p.profile_photo,
-                isMuted: p.isMuted,
-                isVideoOff: p.isVideoOff,
-                isScreenSharing: p.isScreenSharing,
-                isHost: p.isHost,
-                isSpeaking: p.isSpeaking
+        socket.on('participants-list', (data) => {
+            console.log('Participants list received:', data);
+            participants = {};
+            data.forEach(p => {
+                participants[p.socketId] = {
+                    userName: p.userName,
+                    profilePhoto: p.profilePhoto,
+                    isMuted: p.isMuted || false,
+                    isVideoOff: p.isVideoOff || false,
+                    isScreenSharing: p.isScreenSharing || false,
+                    isHost: false, // Le serveur ne gère pas les rôles
+                    isSpeaking: false
+                };
+            });
+            renderParticipantsList();
+            updateParticipantsCount();
+        });
+
+        socket.on('user-joined', (data) => {
+            console.log('User joined:', data);
+            // Ajouter le nouveau participant
+            participants[data.socketId] = {
+                userName: data.userName,
+                profilePhoto: data.profilePhoto,
+                isMuted: false,
+                isVideoOff: false,
+                isScreenSharing: false,
+                isHost: false,
+                isSpeaking: false
             };
-        });
-        renderParticipantsList();
-        updateParticipantsCount();
-    });
-
-    socket.on('user-joined', (data) => {
-        console.log('User joined:', data);
-        // Ajouter le nouveau participant
-        participants[data.socketId] = {
-            userName: data.name,
-            profilePhoto: data.profile_photo,
-            isMuted: data.isMuted || false,
-            isVideoOff: data.isVideoOff || false,
-            isScreenSharing: data.isScreenSharing || false,
-            isHost: data.isHost || false,
-            isSpeaking: data.isSpeaking || false
-        };
-        createPeerConnection(data.socketId);
-        renderParticipantsList();
-        updateParticipantsCount();
-        
-        // Add system message
-        addMessage({
-            user: { name: 'System' },
-            message: `${data.name} has joined the call`,
-            timestamp: new Date().toISOString()
-        });
-    });
-
-    socket.on('user-left', (data) => {
-        console.log('User left:', data);
-        if (participants[data.socketId]) {
-            const userName = participants[data.socketId].userName;
-            delete participants[data.socketId];
-            removeRemoteVideo(data.socketId);
+            createPeerConnection(data.socketId);
             renderParticipantsList();
             updateParticipantsCount();
             
             // Add system message
             addMessage({
                 user: { name: 'System' },
-                message: `${userName} has left the call`,
+                message: `${data.userName} has joined the call`,
                 timestamp: new Date().toISOString()
             });
-        }
-    });
-
-    // Gestion des messages reçus
-    socket.on('chat-message', (data) => {
-        console.log('Chat message received:', data);
-        addMessage({
-            user: { name: data.fromName || 'User' },
-            message: data.message,
-            timestamp: new Date().toISOString()
         });
-    });
 
-    socket.on('participants-list', (data) => {
-        console.log('Participants list received:', data);
-        participants = {};
-        data.forEach(p => {
-            participants[p.socketId] = {
-                userName: p.name,
-                profilePhoto: p.profile_photo,
-                isMuted: p.isMuted,
-                isVideoOff: p.isVideoOff,
-                isScreenSharing: p.isScreenSharing,
-                isHost: p.isHost,
-                isSpeaking: p.isSpeaking
-            };
+        socket.on('user-left', (data) => {
+            console.log('User left:', data);
+            if (participants[data.socketId]) {
+                const userName = participants[data.socketId].userName;
+                delete participants[data.socketId];
+                removeRemoteVideo(data.socketId);
+                renderParticipantsList();
+                updateParticipantsCount();
+                
+                // Add system message
+                addMessage({
+                    user: { name: 'System' },
+                    message: `${userName} has left the call`,
+                    timestamp: new Date().toISOString()
+                });
+            }
         });
-        renderParticipantsList();
-        updateParticipantsCount();
-    });
 
-    socket.on('offer', async (data) => {
-        console.log('Offer received:', data);
-        await handleOffer(data);
-    });
+        // Gestion des messages reçus
+        socket.on('chat-message', (data) => {
+            console.log('Chat message received:', data);
+            addMessage({
+                user: { name: data.fromName || 'User' },
+                message: data.message,
+                timestamp: new Date().toISOString()
+            });
+        });
 
-    socket.on('answer', async (data) => {
-        console.log('Answer received:', data);
-        await handleAnswer(data);
-    });
+        socket.on('signal', async (data) => {
+            console.log('Signal received:', data);
+            
+            switch (data.type) {
+                case 'offer':
+                    await handleOffer(data);
+                    break;
+                case 'answer':
+                    await handleAnswer(data);
+                    break;
+                case 'ice-candidate':
+                    await handleIceCandidate(data);
+                    break;
+                default:
+                    console.warn('Unknown signal type:', data.type);
+            }
+        });
 
-    socket.on('ice-candidate', async (data) => {
-        console.log('ICE candidate received:', data);
-        await handleIceCandidate(data);
-    });
+        // Gestion du partage d'écran
+        socket.on('screen-share-started', (data) => {
+            console.log('Screen share started:', data);
+            if (participants[data.socketId]) {
+                participants[data.socketId].isScreenSharing = true;
+                renderParticipantsList();
+                updateRemoteVideoBadges(data.socketId, participants[data.socketId]);
+            }
+        });
 
-    // Gestion du partage d'écran
-    socket.on('screen-share-started', (data) => {
-        console.log('Screen share started:', data);
-        if (participants[data.fromSocketId]) {
-            participants[data.fromSocketId].isScreenSharing = true;
-            renderParticipantsList();
-            updateRemoteVideoBadges(data.fromSocketId, participants[data.fromSocketId]);
-        }
-    });
+        socket.on('screen-share-stopped', (data) => {
+            console.log('Screen share stopped:', data);
+            if (participants[data.socketId]) {
+                participants[data.socketId].isScreenSharing = false;
+                renderParticipantsList();
+                updateRemoteVideoBadges(data.socketId, participants[data.socketId]);
+            }
+        });
 
-    socket.on('screen-share-stopped', (data) => {
-        console.log('Screen share stopped:', data);
-        if (participants[data.fromSocketId]) {
-            participants[data.fromSocketId].isScreenSharing = false;
-            renderParticipantsList();
-            updateRemoteVideoBadges(data.fromSocketId, participants[data.fromSocketId]);
-        }
-    });
+        socket.on('disconnect', (reason) => {
+            console.log('Disconnected from signal server:', reason);
+            updateConnectionStatus(false);
+            
+            if (reason === 'io server disconnect') {
+                console.log('Server disconnected client, attempting to reconnect...');
+                socket.connect();
+            }
+        });
 
-    // Gestion des mises à jour de statut
-    socket.on('update-status', (data) => {
-        console.log('Status update received:', data);
-        if (participants[data.fromSocketId]) {
-            participants[data.fromSocketId].isMuted = data.isMuted;
-            participants[data.fromSocketId].isVideoOff = data.isVideoOff;
-            participants[data.fromSocketId].isScreenSharing = data.isScreenSharing;
-            participants[data.fromSocketId].isSpeaking = data.isSpeaking;
-            renderParticipantsList();
-            updateRemoteVideoBadges(data.fromSocketId, participants[data.fromSocketId]);
-        }
-    });
+        socket.on('connect_error', (error) => {
+            console.error('Connection error:', error);
+            updateConnectionStatus(false);
+            
+            const errorMessage = document.getElementById('connection-error');
+            if (errorMessage) {
+                errorMessage.textContent = `Connection error: ${error.message}`;
+                errorMessage.classList.remove('hidden');
+            }
+        });
 
-    socket.on('disconnect', (reason) => {
-        console.log('Disconnected from signal server:', reason);
-        updateConnectionStatus(false);
-        
-        if (reason === 'io server disconnect') {
-            // Le serveur a déconnecté le client
-            console.log('Server disconnected client, attempting to reconnect...');
-            socket.connect();
-        }
-    });
+        socket.on('reconnect', (attemptNumber) => {
+            console.log('Reconnected to signal server after', attemptNumber, 'attempts');
+            updateConnectionStatus(true);
+            
+            const errorMessage = document.getElementById('connection-error');
+            if (errorMessage) {
+                errorMessage.classList.add('hidden');
+            }
+            
+            // Rejoindre la salle après reconnexion
+            const user = window.currentUser || { name: 'User', profile_photo: null };
+            socket.emit('join-room', config.roomId, user.name, user.profile_photo);
+        });
 
-    socket.on('connect_error', (error) => {
-        console.error('Connection error:', error);
-        updateConnectionStatus(false);
-        
-        // Afficher un message d'erreur plus informatif
-        const errorMessage = document.getElementById('connection-error');
-        if (errorMessage) {
-            errorMessage.textContent = `Connection error: ${error.message}`;
-            errorMessage.classList.remove('hidden');
-        }
-    });
+        socket.on('reconnect_error', (error) => {
+            console.error('Reconnection error:', error);
+            updateConnectionStatus(false);
+        });
 
-    socket.on('reconnect', (attemptNumber) => {
-        console.log('Reconnected to signal server after', attemptNumber, 'attempts');
-        updateConnectionStatus(true);
-        
-        // Masquer le message d'erreur
-        const errorMessage = document.getElementById('connection-error');
-        if (errorMessage) {
-            errorMessage.classList.add('hidden');
-        }
-        
-        // Rejoindre la salle après reconnexion
-        socket.emit('join-room', config.roomId);
-    });
+        socket.on('reconnect_failed', () => {
+            console.error('Failed to reconnect to signal server');
+            updateConnectionStatus(false);
+            alert('Impossible de se reconnecter au serveur. Veuillez rafraîchir la page.');
+        });
 
-    socket.on('reconnect_error', (error) => {
-        console.error('Reconnection error:', error);
-        updateConnectionStatus(false);
-    });
-
-    socket.on('reconnect_failed', () => {
-        console.error('Failed to reconnect to signal server');
-        updateConnectionStatus(false);
-        alert('Impossible de se reconnecter au serveur. Veuillez rafraîchir la page.');
-    });
+    } catch (error) {
+        console.error('Failed to connect to signal server:', error);
+        throw new Error('Impossible de se connecter au serveur de signalisation');
+    }
 }
 
 // Setup event listeners
@@ -483,38 +433,33 @@ function switchTab(tabName) {
 
 // Toggle mute/unmute
 function toggleMute() {
+    isMuted = !isMuted;
+    
     if (localStream) {
-        const audioTrack = localStream.getAudioTracks()[0];
-        if (audioTrack) {
-            audioTrack.enabled = !audioTrack.enabled;
-            isMuted = !audioTrack.enabled;
-            
-            // Update button appearance
-            const muteBtn = document.getElementById('mute-btn');
-            if (isMuted) {
-                muteBtn.classList.add('bg-red-600');
-                muteBtn.classList.remove('bg-gray-700');
-                muteBtn.innerHTML = `<i class="fas fa-microphone-slash"></i>`;
-            } else {
-                muteBtn.classList.remove('bg-red-600');
-                muteBtn.classList.add('bg-gray-700');
-                muteBtn.innerHTML = `<i class="fas fa-microphone"></i>`;
-            }
-            
-            // Envoyer la mise à jour de statut au serveur
-            socket.emit('update-status', {
-                roomId: window.videoCallConfig.roomId,
-                isMuted: isMuted,
-                isVideoOff: isVideoOff,
-                isScreenSharing: isScreenSharing
-            });
-            
-            // Mettre à jour les badges locaux
-            updateLocalVideoBadges();
-            
-            // Enregistrer l'activité
-            recordActivity(isMuted ? 'muted' : 'unmuted');
-        }
+        localStream.getAudioTracks().forEach(track => {
+            track.enabled = !isMuted;
+        });
+    }
+    
+    // Update UI
+    const muteBtn = document.getElementById('mute-btn');
+    const muteIndicator = document.getElementById('local-mute-indicator');
+    
+    if (isMuted) {
+        muteBtn.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clip-rule="evenodd"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>';
+        muteIndicator.classList.remove('hidden');
+    } else {
+        muteBtn.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>';
+        muteIndicator.classList.add('hidden');
+    }
+    
+    // Notify server
+    socket.emit('update-status', window.videoCallConfig.roomId, { isMuted });
+    
+    // Update local participant
+    if (participants[socket.id]) {
+        participants[socket.id].isMuted = isMuted;
+        renderParticipantsList();
     }
 }
 
@@ -579,38 +524,30 @@ function updateLocalVideoBadges() {
 
 // Toggle video on/off
 function toggleVideo() {
+    isVideoOff = !isVideoOff;
+    
     if (localStream) {
-        const videoTrack = localStream.getVideoTracks()[0];
-        if (videoTrack) {
-            videoTrack.enabled = !videoTrack.enabled;
-            isVideoOff = !videoTrack.enabled;
-            
-            // Update button appearance
-            const videoBtn = document.getElementById('video-btn');
-            if (isVideoOff) {
-                videoBtn.classList.add('bg-red-600');
-                videoBtn.classList.remove('bg-gray-700');
-                videoBtn.innerHTML = `<i class="fas fa-video-slash"></i>`;
-            } else {
-                videoBtn.classList.remove('bg-red-600');
-                videoBtn.classList.add('bg-gray-700');
-                videoBtn.innerHTML = `<i class="fas fa-video"></i>`;
-            }
-            
-            // Envoyer la mise à jour de statut au serveur
-            socket.emit('update-status', {
-                roomId: window.videoCallConfig.roomId,
-                isMuted: isMuted,
-                isVideoOff: isVideoOff,
-                isScreenSharing: isScreenSharing
-            });
-            
-            // Mettre à jour les badges locaux
-            updateLocalVideoBadges();
-            
-            // Enregistrer l'activité
-            recordActivity(isVideoOff ? 'video_off' : 'video_on');
-        }
+        localStream.getVideoTracks().forEach(track => {
+            track.enabled = !isVideoOff;
+        });
+    }
+    
+    // Update UI
+    const videoBtn = document.getElementById('video-btn');
+    
+    if (isVideoOff) {
+        videoBtn.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"></path></svg>';
+    } else {
+        videoBtn.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>';
+    }
+    
+    // Notify server
+    socket.emit('update-status', window.videoCallConfig.roomId, { isVideoOff });
+    
+    // Update local participant
+    if (participants[socket.id]) {
+        participants[socket.id].isVideoOff = isVideoOff;
+        renderParticipantsList();
     }
 }
 
@@ -623,20 +560,14 @@ async function toggleScreenShare() {
     }
 }
 
-// Start screen sharing
 async function startScreenSharing() {
     try {
-        const screenStream = await navigator.mediaDevices.getDisplayMedia({
+        screenStream = await navigator.mediaDevices.getDisplayMedia({
             video: {
                 cursor: 'always',
                 displaySurface: 'monitor'
             },
             audio: false
-        });
-        
-        // Notify server about screen sharing start
-        socket.emit('screen-share-start', {
-            roomId: window.videoCallConfig.roomId
         });
 
         // Replace video track in all peer connections
@@ -648,50 +579,38 @@ async function startScreenSharing() {
             }
         });
 
-        // Store screen stream
-        screenShareStream = screenStream;
         isScreenSharing = true;
-
+        
+        // Notify server
+        socket.emit('screen-share-start', window.videoCallConfig.roomId);
+        
         // Update UI
         const screenShareBtn = document.getElementById('screen-share-btn');
-        screenShareBtn.classList.add('bg-red-600');
-        screenShareBtn.classList.remove('bg-gray-600');
-        screenShareBtn.innerHTML = '<i class="fas fa-stop"></i>';
-
-        // Mettre à jour les badges locaux
-        updateLocalVideoBadges();
-
-        // Envoyer la mise à jour de statut au serveur
-        socket.emit('update-status', {
-            roomId: window.videoCallConfig.roomId,
-            isMuted: isMuted,
-            isVideoOff: isVideoOff,
-            isScreenSharing: isScreenSharing
-        });
-
+        screenShareBtn.classList.add('bg-blue-600');
+        screenShareBtn.classList.remove('bg-gray-700');
+        
+        // Show screen share area
+        const screenShareArea = document.getElementById('screen-share-area');
+        const screenShareVideo = document.getElementById('screen-share-video');
+        screenShareArea.classList.remove('hidden');
+        screenShareVideo.srcObject = screenStream;
+        
         // Handle screen share stop
         videoTrack.onended = () => {
             stopScreenSharing();
         };
-
-        recordActivity('screen_share_started');
+        
     } catch (error) {
         console.error('Error starting screen share:', error);
-        alert('Impossible de démarrer le partage d\'écran. Veuillez réessayer.');
+        alert('Impossible de démarrer le partage d\'écran');
     }
 }
 
-// Stop screen sharing
 function stopScreenSharing() {
-    if (screenShareStream) {
-        screenShareStream.getTracks().forEach(track => track.stop());
-        screenShareStream = null;
+    if (screenStream) {
+        screenStream.getTracks().forEach(track => track.stop());
+        screenStream = null;
     }
-
-    // Notify server about screen sharing stop
-    socket.emit('screen-share-stop', {
-        roomId: window.videoCallConfig.roomId
-    });
 
     // Restore original video track
     if (localStream) {
@@ -705,25 +624,18 @@ function stopScreenSharing() {
     }
 
     isScreenSharing = false;
-
+    
+    // Notify server
+    socket.emit('screen-share-stop', window.videoCallConfig.roomId);
+    
     // Update UI
     const screenShareBtn = document.getElementById('screen-share-btn');
-    screenShareBtn.classList.remove('bg-red-600');
-    screenShareBtn.classList.add('bg-gray-600');
-    screenShareBtn.innerHTML = '<i class="fas fa-desktop"></i>';
-
-    // Mettre à jour les badges locaux
-    updateLocalVideoBadges();
-
-    // Envoyer la mise à jour de statut au serveur
-    socket.emit('update-status', {
-        roomId: window.videoCallConfig.roomId,
-        isMuted: isMuted,
-        isVideoOff: isVideoOff,
-        isScreenSharing: isScreenSharing
-    });
-
-    recordActivity('screen_share_stopped');
+    screenShareBtn.classList.remove('bg-blue-600');
+    screenShareBtn.classList.add('bg-gray-700');
+    
+    // Hide screen share area
+    const screenShareArea = document.getElementById('screen-share-area');
+    screenShareArea.classList.add('hidden');
 }
 
 // End call
@@ -732,8 +644,8 @@ function endCall() {
     if (localStream) {
         localStream.getTracks().forEach(track => track.stop());
     }
-    if (screenShareStream) {
-        screenShareStream.getTracks().forEach(track => track.stop());
+    if (screenStream) {
+        screenStream.getTracks().forEach(track => track.stop());
     }
     
     // Close all peer connections
@@ -803,7 +715,20 @@ async function loadMessages() {
         if (!response.ok) {
             throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
         }
-        const messages = await response.json();
+        const data = await response.json();
+        console.log('Messages API response:', data); // Debug
+        
+        // Handle different response formats
+        let messages = data;
+        if (data && typeof data === 'object' && data.data) {
+            messages = data.data; // Laravel pagination format
+        } else if (Array.isArray(data)) {
+            messages = data; // Direct array
+        } else {
+            console.error('Unexpected messages response format:', data);
+            messages = [];
+        }
+        
         const chatMessages = document.getElementById('chat-messages');
         if (chatMessages) {
             chatMessages.innerHTML = '';
@@ -1097,8 +1022,9 @@ function createPeerConnection(socketId) {
     
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-            socket.emit('ice-candidate', {
+            socket.emit('signal', {
                 roomId: window.videoCallConfig.roomId,
+                type: 'ice-candidate',
                 candidate: event.candidate
             });
         }
@@ -1114,8 +1040,9 @@ function createPeerConnection(socketId) {
     peerConnection.createOffer()
         .then(offer => peerConnection.setLocalDescription(offer))
         .then(() => {
-            socket.emit('offer', {
+            socket.emit('signal', {
                 roomId: window.videoCallConfig.roomId,
+                type: 'offer',
                 offer: peerConnection.localDescription
             });
         })
@@ -1125,7 +1052,7 @@ function createPeerConnection(socketId) {
 // Handle incoming offer
 async function handleOffer(data) {
     const peerConnection = new RTCPeerConnection(rtcConfig);
-    peerConnections[data.fromSocketId] = peerConnection;
+    peerConnections[data.from] = peerConnection;
     
     if (localStream) {
         localStream.getTracks().forEach(track => {
@@ -1135,8 +1062,9 @@ async function handleOffer(data) {
     
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-            socket.emit('ice-candidate', {
+            socket.emit('signal', {
                 roomId: window.videoCallConfig.roomId,
+                type: 'ice-candidate',
                 candidate: event.candidate
             });
         }
@@ -1144,24 +1072,25 @@ async function handleOffer(data) {
     
     peerConnection.ontrack = (event) => {
         const remoteStream = event.streams[0];
-        remoteStreams[data.fromSocketId] = remoteStream;
-        const participant = participants[data.fromSocketId];
-        addRemoteVideo(data.fromSocketId, remoteStream, participant);
+        remoteStreams[data.from] = remoteStream;
+        const participant = participants[data.from];
+        addRemoteVideo(data.from, remoteStream, participant);
     };
     
     await peerConnection.setRemoteDescription(data.offer);
     const answer = await peerConnection.createAnswer();
     await peerConnection.setLocalDescription(answer);
     
-    socket.emit('answer', {
+    socket.emit('signal', {
         roomId: window.videoCallConfig.roomId,
+        type: 'answer',
         answer: answer
     });
 }
 
 // Handle incoming answer
 async function handleAnswer(data) {
-    const peerConnection = peerConnections[data.fromSocketId];
+    const peerConnection = peerConnections[data.from];
     if (peerConnection) {
         await peerConnection.setRemoteDescription(data.answer);
     }
@@ -1169,7 +1098,7 @@ async function handleAnswer(data) {
 
 // Handle ICE candidate
 async function handleIceCandidate(data) {
-    const peerConnection = peerConnections[data.fromSocketId];
+    const peerConnection = peerConnections[data.from];
     if (peerConnection) {
         await peerConnection.addIceCandidate(data.candidate);
     }

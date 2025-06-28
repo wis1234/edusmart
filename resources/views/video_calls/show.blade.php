@@ -173,6 +173,12 @@
             recordActivityUrl: '{{ route("video-calls.activities.store", $videoCall) }}',
             callId: '{{ $videoCall->id }}'
         };
+        
+        // Données utilisateur pour le serveur de signalisation
+        window.currentUser = {
+            name: '{{ Auth::user()->name }}',
+            profile_photo: '{{ Auth::user()->profile_photo_url }}'
+        };
     </script>
 
     @push('scripts')
