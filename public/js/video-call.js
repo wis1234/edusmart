@@ -53,6 +53,7 @@ let currentTab = 'participants';
 let participants = {};
 let focusedSocketId = null;
 let manualFocusSocketId = null;
+let screenShareStream;
 
 // Initialize the application
 async function init() {
@@ -171,46 +172,14 @@ async function connectToSignalServer() {
     const config = window.videoCallConfig;
     
     try {
-        // Get authentication token
-        let authToken = localStorage.getItem('auth_token');
-        if (!authToken) {
-            try {
-                const response = await fetch('/api/auth-token', {
-                    method: 'GET',
-                    headers: {
-                        'X-CSRF-TOKEN': config.csrfToken,
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'same-origin'
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    authToken = data.token;
-                    localStorage.setItem('auth_token', authToken);
-                } else {
-                    // Fallback to CSRF token
-                    authToken = config.csrfToken;
-                }
-            } catch (error) {
-                console.warn('Failed to get auth token, using CSRF token:', error);
-                authToken = config.csrfToken;
-            }
-        }
-        
         socket = io(config.signalServerUrl, {
             path: '/socket.io',
             auth: {
-                token: authToken
+                token: config.csrfToken
             },
-            query: {
-                roomId: config.roomId,
-                userId: config.userId
-            },
+            transports: ['websocket', 'polling'],
             reconnectionAttempts: 5,
-            reconnectionDelay: 1000,
-            transports: ['websocket']
+            reconnectionDelay: 1000
         });
     } catch (e) {
         alert('Impossible de se connecter au serveur de signalisation. Veuillez réessayer plus tard.');
@@ -220,74 +189,64 @@ async function connectToSignalServer() {
     socket.on('connect', () => {
         console.log('Connected to signal server');
         updateConnectionStatus(true);
-        socket.emit('join-room', config.roomId);
+        // Rejoindre la salle avec le nom d'utilisateur et la photo de profil
+        socket.emit('join-room', config.roomId, config.userName, config.userProfilePhoto || null);
         recordActivity('joined');
     });
 
-    socket.on('room-joined', (data) => {
-        console.log('Joined room:', data);
-        // Update participants with full user data
-        if (data.participants) {
-            participants = {};
-            data.participants.forEach(p => {
-                participants[p.socketId] = {
-                    userId: p.userId,
-                    name: p.name,
-                    profile_photo: p.profile_photo,
-                    isMuted: p.isMuted,
-                    isVideoOff: p.isVideoOff,
-                    isScreenSharing: p.isScreenSharing,
-                    isHost: p.isHost,
-                    isSpeaking: p.isSpeaking
-                };
-            });
-            renderParticipantsList();
-        }
+    socket.on('participants-list', (data) => {
+        console.log('Participants list received:', data);
+        participants = {};
+        data.forEach(p => {
+            participants[p.socketId] = {
+                userName: p.userName,
+                profilePhoto: p.profilePhoto,
+                isMuted: p.isMuted,
+                isVideoOff: p.isVideoOff,
+                isScreenSharing: p.isScreenSharing
+            };
+        });
+        renderParticipantsList();
+        updateParticipantsCount();
     });
 
     socket.on('user-joined', (data) => {
         console.log('User joined:', data);
-        // Store full participant data
+        // Ajouter le nouveau participant
         participants[data.socketId] = {
-            userId: data.userId,
-            name: data.name,
-            profile_photo: data.profile_photo,
-            isMuted: data.isMuted,
-            isVideoOff: data.isVideoOff,
-            isScreenSharing: data.isScreenSharing,
-            isHost: data.isHost,
-            isSpeaking: data.isSpeaking
+            userName: data.userName,
+            profilePhoto: data.profilePhoto,
+            isMuted: false,
+            isVideoOff: false,
+            isScreenSharing: false
         };
         createPeerConnection(data.socketId);
         renderParticipantsList();
         updateParticipantsCount();
     });
 
-    socket.on('user-left', (data) => {
-        console.log('User left:', data);
-        removeParticipant(data.userId);
-        removeRemoteVideo(data.userId);
-        updateParticipantsCount();
-    });
-
-    socket.on('offer', async (data) => {
-        await handleOffer(data);
-    });
-
-    socket.on('answer', async (data) => {
-        await handleAnswer(data);
-    });
-
-    socket.on('ice-candidate', async (data) => {
-        await handleIceCandidate(data);
+    socket.on('signal', async (data) => {
+        console.log('Signal received:', data);
+        const { type, from, ...signalData } = data;
+        
+        switch (type) {
+            case 'offer':
+                await handleOffer({ fromSocketId: from, offer: signalData.offer });
+                break;
+            case 'answer':
+                await handleAnswer({ fromSocketId: from, answer: signalData.answer });
+                break;
+            case 'ice-candidate':
+                await handleIceCandidate({ fromSocketId: from, candidate: signalData.candidate });
+                break;
+        }
     });
 
     socket.on('screen-share-started', (data) => {
         console.log('Screen share started:', data);
         showScreenShare(data);
-        // Mark the user as sharing screen
-        if (participants[data.userId]) {
-            participants[data.userId].isScreenSharing = true;
+        if (participants[data.socketId]) {
+            participants[data.socketId].isScreenSharing = true;
             renderParticipantsList();
         }
     });
@@ -295,31 +254,21 @@ async function connectToSignalServer() {
     socket.on('screen-share-stopped', (data) => {
         console.log('Screen share stopped:', data);
         hideScreenShare();
-        // Unmark the user as sharing screen
-        if (participants[data.userId]) {
-            participants[data.userId].isScreenSharing = false;
+        if (participants[data.socketId]) {
+            participants[data.socketId].isScreenSharing = false;
             renderParticipantsList();
         }
     });
 
-    socket.on('participants-list', (data) => {
-        participants = {};
-        data.forEach(p => {
-            participants[p.socketId] = {
-                userId: p.userId,
-                name: p.name,
-                profile_photo: p.profile_photo,
-                isMuted: p.isMuted,
-                isVideoOff: p.isVideoOff,
-                isScreenSharing: p.isScreenSharing,
-                isHost: p.isHost,
-                isSpeaking: p.isSpeaking
-            };
-        });
-        renderParticipantsList();
+    socket.on('disconnect', () => {
+        console.log('Disconnected from signal server');
+        updateConnectionStatus(false);
     });
 
-    socket.on('join-room-error', handleJoinRoomError);
+    socket.on('connect_error', (error) => {
+        console.error('Connection error:', error);
+        updateConnectionStatus(false);
+    });
 }
 
 // Setup event listeners
@@ -400,7 +349,7 @@ function switchTab(tabName) {
     currentTab = tabName;
 }
 
-// Toggle mute on/off
+// Toggle mute/unmute
 function toggleMute() {
     if (localStream) {
         const audioTrack = localStream.getAudioTracks()[0];
@@ -424,10 +373,7 @@ function toggleMute() {
             updateLocalVideoBadges();
             
             // Send status update to server
-            socket.emit('update-status', {
-                roomId: window.videoCallConfig.roomId,
-                isMuted: isMuted
-            });
+            socket.emit('update-status', window.videoCallConfig.roomId, { isMuted: isMuted });
             
             // Record activity
             recordActivity(isMuted ? 'muted' : 'unmuted');
@@ -522,10 +468,7 @@ function toggleVideo() {
             updateLocalVideoBadges();
             
             // Send status update to server
-            socket.emit('update-status', {
-                roomId: window.videoCallConfig.roomId,
-                isVideoOff: isVideoOff
-            });
+            socket.emit('update-status', window.videoCallConfig.roomId, { isVideoOff: isVideoOff });
             
             // Record activity
             recordActivity(isVideoOff ? 'video_off' : 'video_on');
@@ -545,7 +488,7 @@ async function toggleScreenShare() {
 // Start screen sharing
 async function startScreenSharing() {
     try {
-        screenStream = await navigator.mediaDevices.getDisplayMedia({
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({
             video: {
                 cursor: 'always',
                 displaySurface: 'monitor'
@@ -553,6 +496,9 @@ async function startScreenSharing() {
             audio: false
         });
         
+        // Notify server about screen sharing start
+        socket.emit('screen-share-start', window.videoCallConfig.roomId);
+
         // Replace video track in all peer connections
         const videoTrack = screenStream.getVideoTracks()[0];
         Object.values(peerConnections).forEach(pc => {
@@ -562,102 +508,85 @@ async function startScreenSharing() {
             }
         });
 
-        // Show screen share video
-        const screenVideo = document.getElementById('screen-share-video');
-        screenVideo.srcObject = screenStream;
-        document.getElementById('screen-share-area').classList.remove('hidden');
-        document.getElementById('screen-share-user').textContent = 'Vous';
-
-        // Update button
-        const screenShareBtn = document.getElementById('screen-share-btn');
-        screenShareBtn.classList.add('bg-blue-600');
-        screenShareBtn.classList.remove('bg-gray-700');
-
+        // Store screen stream
+        screenShareStream = screenStream;
         isScreenSharing = true;
 
-        // Notify server
-        socket.emit('screen-share-start', {
-            roomId: window.videoCallConfig.roomId
-        });
-        
+        // Update UI
+        const screenShareBtn = document.getElementById('screen-share-btn');
+        screenShareBtn.classList.add('bg-red-600');
+        screenShareBtn.classList.remove('bg-gray-600');
+        screenShareBtn.innerHTML = '<i class="fas fa-stop"></i>';
+
         // Handle screen share stop
         videoTrack.onended = () => {
             stopScreenSharing();
         };
-        
+
         recordActivity('screen_share_started');
     } catch (error) {
         console.error('Error starting screen share:', error);
-        alert('Impossible de démarrer le partage d\'écran');
+        alert('Impossible de démarrer le partage d\'écran. Veuillez réessayer.');
     }
 }
 
 // Stop screen sharing
 function stopScreenSharing() {
-    if (screenStream) {
-        screenStream.getTracks().forEach(track => track.stop());
-        screenStream = null;
+    if (screenShareStream) {
+        screenShareStream.getTracks().forEach(track => track.stop());
+        screenShareStream = null;
     }
-    
+
+    // Notify server about screen sharing stop
+    socket.emit('screen-share-stop', window.videoCallConfig.roomId);
+
     // Restore original video track
     if (localStream) {
-    const videoTrack = localStream.getVideoTracks()[0];
-    Object.values(peerConnections).forEach(pc => {
-        const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+        const videoTrack = localStream.getVideoTracks()[0];
+        Object.values(peerConnections).forEach(pc => {
+            const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
             if (sender && videoTrack) {
-            sender.replaceTrack(videoTrack);
-        }
-    });
+                sender.replaceTrack(videoTrack);
+            }
+        });
     }
-
-    // Hide screen share area
-    document.getElementById('screen-share-area').classList.add('hidden');
-
-    // Update button
-    const screenShareBtn = document.getElementById('screen-share-btn');
-    screenShareBtn.classList.remove('bg-blue-600');
-    screenShareBtn.classList.add('bg-gray-700');
 
     isScreenSharing = false;
 
-    // Notify server
-    socket.emit('screen-share-stop', {
-        roomId: window.videoCallConfig.roomId
-    });
-    
+    // Update UI
+    const screenShareBtn = document.getElementById('screen-share-btn');
+    screenShareBtn.classList.remove('bg-red-600');
+    screenShareBtn.classList.add('bg-gray-600');
+    screenShareBtn.innerHTML = '<i class="fas fa-desktop"></i>';
+
     recordActivity('screen_share_stopped');
-}
-
-// Show screen share from other user
-function showScreenShare(data) {
-    document.getElementById('screen-share-area').classList.remove('hidden');
-    document.getElementById('screen-share-user').textContent = data.userName || 'Participant';
-}
-
-// Hide screen share
-function hideScreenShare() {
-    document.getElementById('screen-share-area').classList.add('hidden');
 }
 
 // End call
 function endCall() {
-    if (confirm('Êtes-vous sûr de vouloir terminer l\'appel ?')) {
-        Object.values(peerConnections).forEach(pc => pc.close());
-        if (localStream) {
-            localStream.getTracks().forEach(track => track.stop());
-        }
-        if (screenStream) {
-            screenStream.getTracks().forEach(track => track.stop());
-        }
-        if (socket) {
-            socket.emit('leave-room', window.videoCallConfig.roomId);
-            socket.disconnect();
-        }
-        if (callTimer) {
-            clearInterval(callTimer);
-        }
-        window.location.href = window.videoCallConfig.indexUrl;
+    // Stop all media streams
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
     }
+    if (screenShareStream) {
+        screenShareStream.getTracks().forEach(track => track.stop());
+    }
+    
+    // Close all peer connections
+    Object.values(peerConnections).forEach(pc => pc.close());
+    peerConnections = {};
+    remoteStreams = {};
+    
+    // Disconnect from signal server
+    if (socket) {
+        socket.disconnect();
+    }
+    
+    // Record activity
+    recordActivity('call_ended');
+    
+    // Redirect to video calls index
+    window.location.href = window.videoCallConfig.indexUrl;
 }
 
 // Start call timer
@@ -809,92 +738,63 @@ async function recordActivity(action, metadata = {}) {
     }
 }
 
-// Add activity to history
+// Add activity to list
 function addActivity(activity) {
     const activitiesContainer = document.getElementById('activities-list');
     const activityElement = document.createElement('div');
-    activityElement.className = 'flex items-center space-x-2 p-2 bg-gray-700 rounded';
+    activityElement.className = 'flex items-center space-x-2 p-2 bg-gray-700 rounded text-sm';
     
-    activityElement.innerHTML = `
-        <div class="flex-shrink-0">
-            <div class="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center text-xs">
-                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                </svg>
-            </div>
-        </div>
-        <div class="flex-1 min-w-0">
-            <div class="text-sm text-gray-300">
-                ${activity.action_description || activity.action}
-            </div>
-            <div class="text-xs text-gray-500">
-                ${new Date(activity.created_at).toLocaleString()}
-            </div>
-        </div>
-    `;
+    const icon = document.createElement('i');
+    icon.className = 'fas fa-circle text-blue-400 text-xs';
+    
+    const text = document.createElement('span');
+    text.className = 'text-gray-300';
+    text.textContent = activity.description || activity.action;
+    
+    activityElement.appendChild(icon);
+    activityElement.appendChild(text);
     
     activitiesContainer.insertBefore(activityElement, activitiesContainer.firstChild);
-}
-
-// Add participant to list
-function addParticipant(data) {
-    participants[data.socketId] = data.userName || 'Participant';
-    renderParticipantsList();
-}
-
-// Remove participant from list
-function removeParticipant(socketId) {
-    delete participants[socketId];
-    renderParticipantsList();
 }
 
 function renderParticipantsList() {
     const participantsList = document.getElementById('participants-list');
     participantsList.innerHTML = '';
-    
     Object.entries(participants).forEach(([socketId, participant]) => {
         const participantElement = document.createElement('div');
         participantElement.id = `participant-${socketId}`;
         participantElement.className = 'flex items-center space-x-3 p-2 bg-gray-700 rounded shadow';
         
         let avatarHtml;
-        if (participant && participant.profile_photo) {
-            avatarHtml = `<img src="${participant.profile_photo}" class="w-10 h-10 rounded-full object-cover border-2 border-blue-500" alt="Profile photo">`;
+        if (participant && participant.profilePhoto) {
+            avatarHtml = `<img src="${participant.profilePhoto}" class="w-10 h-10 rounded-full object-cover border-2 border-blue-500" alt="Profile photo">`;
         } else {
             avatarHtml = `<span class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-600 border-2 border-blue-500 text-white text-2xl"><i class='fas fa-user-circle'></i></span>`;
         }
         
-        const statusIcons = [];
+        // Status badges
+        let statusBadges = '';
         if (participant.isMuted) {
-            statusIcons.push('<i class="fas fa-microphone-slash text-red-500" title="Micro coupé"></i>');
+            statusBadges += '<i class="fas fa-microphone-slash text-red-500 ml-1" title="Microphone off"></i>';
         }
         if (participant.isVideoOff) {
-            statusIcons.push('<i class="fas fa-video-slash text-yellow-400" title="Caméra coupée"></i>');
+            statusBadges += '<i class="fas fa-video-slash text-yellow-400 ml-1" title="Camera off"></i>';
         }
         if (participant.isScreenSharing) {
-            statusIcons.push('<i class="fas fa-desktop text-blue-400" title="Partage d\'écran"></i>');
-        }
-        if (participant.isHost) {
-            statusIcons.push('<i class="fas fa-crown text-yellow-500" title="Hôte"></i>');
+            statusBadges += '<i class="fas fa-desktop text-blue-400 ml-1" title="Screen sharing"></i>';
         }
         
         participantElement.innerHTML = `
             ${avatarHtml}
             <div class="flex-1 min-w-0">
-                <div class="text-base font-semibold text-gray-100">${participant && participant.name ? participant.name : 'Unknown'}</div>
-                <div class="text-sm text-gray-400">${participant.isHost ? 'Hôte' : 'Participant'}</div>
+                <div class="text-base font-semibold text-gray-100">${participant && participant.userName ? participant.userName : 'Unknown'}</div>
             </div>
-            <div class="flex space-x-1">
-                ${statusIcons.join('')}
-            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+            <div class="flex items-center">
+                <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                ${statusBadges}
             </div>
         `;
         participantsList.appendChild(participantElement);
-        
-        // Update remote video badges if video exists
-        if (document.getElementById(`video-container-${socketId}`)) {
-            updateRemoteVideoBadges(socketId, participant);
-        }
     });
     updateParticipantsCount();
 }
@@ -921,7 +821,8 @@ function createPeerConnection(socketId) {
     
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-            socket.emit('ice-candidate', {
+            socket.emit('signal', {
+                type: 'ice-candidate',
                 roomId: window.videoCallConfig.roomId,
                 candidate: event.candidate
             });
@@ -938,7 +839,8 @@ function createPeerConnection(socketId) {
     peerConnection.createOffer()
         .then(offer => peerConnection.setLocalDescription(offer))
         .then(() => {
-            socket.emit('offer', {
+            socket.emit('signal', {
+                type: 'offer',
                 roomId: window.videoCallConfig.roomId,
                 offer: peerConnection.localDescription
             });
@@ -959,7 +861,8 @@ async function handleOffer(data) {
     
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-            socket.emit('ice-candidate', {
+            socket.emit('signal', {
+                type: 'ice-candidate',
                 roomId: window.videoCallConfig.roomId,
                 candidate: event.candidate
             });
@@ -977,7 +880,8 @@ async function handleOffer(data) {
     const answer = await peerConnection.createAnswer();
     await peerConnection.setLocalDescription(answer);
     
-    socket.emit('answer', {
+    socket.emit('signal', {
+        type: 'answer',
         roomId: window.videoCallConfig.roomId,
         answer: answer
     });
@@ -1034,9 +938,9 @@ function addRemoteVideo(socketId, stream, participant) {
         videoContainer.appendChild(videoElement);
     } else {
         // Show FontAwesome avatar if no profile photo
-        if (participant && participant.profile_photo) {
+        if (participant && participant.profilePhoto) {
             const img = document.createElement('img');
-            img.src = participant.profile_photo;
+            img.src = participant.profilePhoto;
             img.className = 'w-full h-full object-cover';
             videoContainer.appendChild(img);
         } else {
@@ -1128,7 +1032,7 @@ function addRemoteVideo(socketId, stream, participant) {
     // User name label
     const nameDiv = document.createElement('div');
     nameDiv.className = 'absolute bottom-2 left-2 bg-black bg-opacity-60 px-3 py-1 rounded text-base font-semibold flex items-center space-x-2';
-    nameDiv.innerHTML = `<span>${participant && participant.name ? participant.name : 'Unknown'}</span>`;
+    nameDiv.innerHTML = `<span>${participant && participant.userName ? participant.userName : 'Unknown'}</span>`;
     videoContainer.appendChild(nameDiv);
 
     videoGrid.appendChild(videoContainer);
@@ -1145,12 +1049,6 @@ function removeRemoteVideo(socketId) {
             container.remove();
         }
     }
-}
-
-// Handle join room error
-function handleJoinRoomError(error) {
-    console.error('Failed to join room:', error);
-    alert('Impossible de rejoindre l\'appel. Veuillez réessayer.');
 }
 
 // Show media error
