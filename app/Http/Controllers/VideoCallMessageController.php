@@ -16,13 +16,14 @@ class VideoCallMessageController extends Controller
      */
     public function index(VideoCall $videoCall): JsonResponse
     {
-        // Check if user is participant
-        if (!$videoCall->hasParticipant(Auth::user())) {
+        // Check if user can access this call (participant or initiator)
+        $user = Auth::user();
+        if (!$videoCall->hasParticipant($user) && $videoCall->initiator_id !== $user->id) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         $messages = $videoCall->messages()
-            ->with('user:id,first_name,profile_photo')
+            ->with('user:id,first_name,last_name,profile_photo')
             ->latest()
             ->take(50)
             ->get()
@@ -36,8 +37,9 @@ class VideoCallMessageController extends Controller
      */
     public function store(Request $request, VideoCall $videoCall): JsonResponse
     {
-        // Check if user is participant
-        if (!$videoCall->hasParticipant(Auth::user())) {
+        // Check if user can access this call (participant or initiator)
+        $user = Auth::user();
+        if (!$videoCall->hasParticipant($user) && $videoCall->initiator_id !== $user->id) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -47,19 +49,34 @@ class VideoCallMessageController extends Controller
             'metadata' => 'sometimes|array',
         ]);
 
-        $message = $videoCall->messages()->create([
-            'user_id' => Auth::id(),
-            'message' => $request->message,
-            'type' => $request->type ?? 'text',
-            'metadata' => $request->metadata,
-        ]);
+        try {
+            $message = $videoCall->messages()->create([
+                'user_id' => Auth::id(),
+                'message' => $request->message,
+                'type' => $request->type ?? 'text',
+                'metadata' => $request->metadata ?? [],
+            ]);
 
-        $message->load('user:id,first_name,profile_photo');
+            $message->load('user:id,first_name,last_name,profile_photo');
 
-        // Broadcast to other participants
-        broadcast(new \App\Events\VideoCallMessageSent($videoCall, $message))->toOthers();
+            // Broadcast to other participants if the event exists
+            if (class_exists('\App\Events\VideoCallMessageSent')) {
+                broadcast(new \App\Events\VideoCallMessageSent($videoCall, $message))->toOthers();
+            }
 
-        return response()->json($message, 201);
+            return response()->json($message, 201);
+        } catch (\Exception $e) {
+            \Log::error('Error saving video call message: ' . $e->getMessage(), [
+                'video_call_id' => $videoCall->id,
+                'user_id' => Auth::id(),
+                'message' => $request->message
+            ]);
+            
+            return response()->json([
+                'error' => 'Failed to save message',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -67,13 +84,14 @@ class VideoCallMessageController extends Controller
      */
     public function activities(VideoCall $videoCall): JsonResponse
     {
-        // Check if user is participant
-        if (!$videoCall->hasParticipant(Auth::user())) {
+        // Check if user can access this call (participant or initiator)
+        $user = Auth::user();
+        if (!$videoCall->hasParticipant($user) && $videoCall->initiator_id !== $user->id) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         $activities = $videoCall->activities()
-            ->with('user:id,first_name,profile_photo')
+            ->with('user:id,first_name,last_name,profile_photo')
             ->latest()
             ->take(100)
             ->get();
@@ -86,8 +104,9 @@ class VideoCallMessageController extends Controller
      */
     public function recordActivity(Request $request, VideoCall $videoCall): JsonResponse
     {
-        // Check if user is participant
-        if (!$videoCall->hasParticipant(Auth::user())) {
+        // Check if user can access this call (participant or initiator)
+        $user = Auth::user();
+        if (!$videoCall->hasParticipant($user) && $videoCall->initiator_id !== $user->id) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -102,7 +121,7 @@ class VideoCallMessageController extends Controller
             'metadata' => $request->metadata,
         ]);
 
-        $activity->load('user:id,first_name,profile_photo');
+        $activity->load('user:id,first_name,last_name,profile_photo');
 
         // Broadcast to other participants
         broadcast(new \App\Events\VideoCallActivityRecorded($videoCall, $activity))->toOthers();

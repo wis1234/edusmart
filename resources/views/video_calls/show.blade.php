@@ -19,11 +19,16 @@
                         </div>
                     </div>
                     
-                    <div class="flex items-center space-x-4">
-                        <div id="call-timer" class="text-sm text-gray-300">00:00</div>
-                        <div id="connection-status" class="flex items-center">
-                            <div class="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
-                            <span class="text-sm">Déconnecté</span>
+                    <!-- Connection Status -->
+                    <div class="flex items-center space-x-4 mb-4">
+                        <div id="connection-status" class="flex items-center space-x-2">
+                            <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                            <span class="text-sm text-gray-300">Déconnecté</span>
+                        </div>
+                        <div id="connection-error" class="text-sm text-red-400 hidden"></div>
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-clock text-gray-400"></i>
+                            <span id="call-timer" class="text-sm text-gray-300">00:00</span>
                         </div>
                     </div>
                 </div>
@@ -141,9 +146,9 @@
 
                     <!-- History Tab -->
                     <div id="history-content" class="tab-content hidden">
-                        <div class="bg-gray-800 rounded-lg p-4">
+                        <div class="bg-gray-800 rounded-lg p-4 h-96 flex flex-col">
                             <h3 class="text-lg font-semibold mb-3">History</h3>
-                            <div id="activities-list" class="h-64 overflow-y-auto space-y-2">
+                            <div id="activities-list" class="flex-1 overflow-y-auto space-y-2 min-h-0">
                                 <!-- Activities will be added here dynamically -->
                             </div>
                         </div>
@@ -313,6 +318,42 @@
         @media (min-width: 1025px) {
             #video-grid {
                 grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* Styles pour l'historique */
+        #activities-list {
+            scrollbar-width: thin;
+            scrollbar-color: #4B5563 #1F2937;
+        }
+        
+        #activities-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #activities-list::-webkit-scrollbar-track {
+            background: #1F2937;
+        }
+        
+        #activities-list::-webkit-scrollbar-thumb {
+            background: #4B5563;
+            border-radius: 3px;
+        }
+        
+        /* Amélioration de l'affichage des activités */
+        #activities-list .flex {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        #activities-list .text-gray-300 {
+            line-height: 1.4;
+        }
+        
+        /* Responsive pour l'historique */
+        @media (max-width: 640px) {
+            #history-content .bg-gray-800 {
+                height: 80vh;
             }
         }
     </style>

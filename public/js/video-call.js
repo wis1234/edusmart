@@ -66,6 +66,11 @@ async function init() {
         await loadActivities();
         startCallTimer();
         updateLocalVideoBadges(); // Initialize badges
+        
+        // Initialize badges for all participants
+        Object.entries(participants).forEach(([socketId, participant]) => {
+            updateRemoteVideoBadges(socketId, participant);
+        });
     } catch (error) {
         console.error('Failed to initialize:', error);
         alert('Erreur lors de l\'initialisation de l\'appel : ' + error.message + '\nVérifiez que votre caméra et micro sont bien branchés et autorisés.');
@@ -172,16 +177,36 @@ async function connectToSignalServer() {
     const config = window.videoCallConfig;
     
     try {
+        // Récupérer un token d'authentification depuis Laravel
+        const tokenResponse = await fetch('/api/auth-token', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': config.csrfToken
+            }
+        });
+        
+        let authToken = config.csrfToken; // Fallback au CSRF token
+        
+        if (tokenResponse.ok) {
+            const tokenData = await tokenResponse.json();
+            authToken = tokenData.token || config.csrfToken;
+        }
+        
         socket = io(config.signalServerUrl, {
             path: '/socket.io',
             auth: {
-                token: config.csrfToken
+                token: authToken
             },
             transports: ['websocket', 'polling'],
-            reconnectionAttempts: 5,
-            reconnectionDelay: 1000
+            reconnectionAttempts: 10,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            timeout: 20000,
+            forceNew: true
         });
     } catch (e) {
+        console.error('Failed to create socket connection:', e);
         alert('Impossible de se connecter au serveur de signalisation. Veuillez réessayer plus tard.');
         throw e;
     }
@@ -190,20 +215,22 @@ async function connectToSignalServer() {
         console.log('Connected to signal server');
         updateConnectionStatus(true);
         // Rejoindre la salle avec le nom d'utilisateur et la photo de profil
-        socket.emit('join-room', config.roomId, config.userName, config.userProfilePhoto || null);
+        socket.emit('join-room', config.roomId);
         recordActivity('joined');
     });
 
-    socket.on('participants-list', (data) => {
-        console.log('Participants list received:', data);
+    socket.on('room-joined', (data) => {
+        console.log('Room joined:', data);
         participants = {};
-        data.forEach(p => {
+        data.participants.forEach(p => {
             participants[p.socketId] = {
-                userName: p.userName,
-                profilePhoto: p.profilePhoto,
+                userName: p.name,
+                profilePhoto: p.profile_photo,
                 isMuted: p.isMuted,
                 isVideoOff: p.isVideoOff,
-                isScreenSharing: p.isScreenSharing
+                isScreenSharing: p.isScreenSharing,
+                isHost: p.isHost,
+                isSpeaking: p.isSpeaking
             };
         });
         renderParticipantsList();
@@ -214,60 +241,165 @@ async function connectToSignalServer() {
         console.log('User joined:', data);
         // Ajouter le nouveau participant
         participants[data.socketId] = {
-            userName: data.userName,
-            profilePhoto: data.profilePhoto,
-            isMuted: false,
-            isVideoOff: false,
-            isScreenSharing: false
+            userName: data.name,
+            profilePhoto: data.profile_photo,
+            isMuted: data.isMuted || false,
+            isVideoOff: data.isVideoOff || false,
+            isScreenSharing: data.isScreenSharing || false,
+            isHost: data.isHost || false,
+            isSpeaking: data.isSpeaking || false
         };
         createPeerConnection(data.socketId);
         renderParticipantsList();
         updateParticipantsCount();
+        
+        // Add system message
+        addMessage({
+            user: { name: 'System' },
+            message: `${data.name} has joined the call`,
+            timestamp: new Date().toISOString()
+        });
     });
 
-    socket.on('signal', async (data) => {
-        console.log('Signal received:', data);
-        const { type, from, ...signalData } = data;
-        
-        switch (type) {
-            case 'offer':
-                await handleOffer({ fromSocketId: from, offer: signalData.offer });
-                break;
-            case 'answer':
-                await handleAnswer({ fromSocketId: from, answer: signalData.answer });
-                break;
-            case 'ice-candidate':
-                await handleIceCandidate({ fromSocketId: from, candidate: signalData.candidate });
-                break;
+    socket.on('user-left', (data) => {
+        console.log('User left:', data);
+        if (participants[data.socketId]) {
+            const userName = participants[data.socketId].userName;
+            delete participants[data.socketId];
+            removeRemoteVideo(data.socketId);
+            renderParticipantsList();
+            updateParticipantsCount();
+            
+            // Add system message
+            addMessage({
+                user: { name: 'System' },
+                message: `${userName} has left the call`,
+                timestamp: new Date().toISOString()
+            });
         }
     });
 
+    // Gestion des messages reçus
+    socket.on('chat-message', (data) => {
+        console.log('Chat message received:', data);
+        addMessage({
+            user: { name: data.fromName || 'User' },
+            message: data.message,
+            timestamp: new Date().toISOString()
+        });
+    });
+
+    socket.on('participants-list', (data) => {
+        console.log('Participants list received:', data);
+        participants = {};
+        data.forEach(p => {
+            participants[p.socketId] = {
+                userName: p.name,
+                profilePhoto: p.profile_photo,
+                isMuted: p.isMuted,
+                isVideoOff: p.isVideoOff,
+                isScreenSharing: p.isScreenSharing,
+                isHost: p.isHost,
+                isSpeaking: p.isSpeaking
+            };
+        });
+        renderParticipantsList();
+        updateParticipantsCount();
+    });
+
+    socket.on('offer', async (data) => {
+        console.log('Offer received:', data);
+        await handleOffer(data);
+    });
+
+    socket.on('answer', async (data) => {
+        console.log('Answer received:', data);
+        await handleAnswer(data);
+    });
+
+    socket.on('ice-candidate', async (data) => {
+        console.log('ICE candidate received:', data);
+        await handleIceCandidate(data);
+    });
+
+    // Gestion du partage d'écran
     socket.on('screen-share-started', (data) => {
         console.log('Screen share started:', data);
-        showScreenShare(data);
-        if (participants[data.socketId]) {
-            participants[data.socketId].isScreenSharing = true;
+        if (participants[data.fromSocketId]) {
+            participants[data.fromSocketId].isScreenSharing = true;
             renderParticipantsList();
+            updateRemoteVideoBadges(data.fromSocketId, participants[data.fromSocketId]);
         }
     });
 
     socket.on('screen-share-stopped', (data) => {
         console.log('Screen share stopped:', data);
-        hideScreenShare();
-        if (participants[data.socketId]) {
-            participants[data.socketId].isScreenSharing = false;
+        if (participants[data.fromSocketId]) {
+            participants[data.fromSocketId].isScreenSharing = false;
             renderParticipantsList();
+            updateRemoteVideoBadges(data.fromSocketId, participants[data.fromSocketId]);
         }
     });
 
-    socket.on('disconnect', () => {
-        console.log('Disconnected from signal server');
+    // Gestion des mises à jour de statut
+    socket.on('update-status', (data) => {
+        console.log('Status update received:', data);
+        if (participants[data.fromSocketId]) {
+            participants[data.fromSocketId].isMuted = data.isMuted;
+            participants[data.fromSocketId].isVideoOff = data.isVideoOff;
+            participants[data.fromSocketId].isScreenSharing = data.isScreenSharing;
+            participants[data.fromSocketId].isSpeaking = data.isSpeaking;
+            renderParticipantsList();
+            updateRemoteVideoBadges(data.fromSocketId, participants[data.fromSocketId]);
+        }
+    });
+
+    socket.on('disconnect', (reason) => {
+        console.log('Disconnected from signal server:', reason);
         updateConnectionStatus(false);
+        
+        if (reason === 'io server disconnect') {
+            // Le serveur a déconnecté le client
+            console.log('Server disconnected client, attempting to reconnect...');
+            socket.connect();
+        }
     });
 
     socket.on('connect_error', (error) => {
         console.error('Connection error:', error);
         updateConnectionStatus(false);
+        
+        // Afficher un message d'erreur plus informatif
+        const errorMessage = document.getElementById('connection-error');
+        if (errorMessage) {
+            errorMessage.textContent = `Connection error: ${error.message}`;
+            errorMessage.classList.remove('hidden');
+        }
+    });
+
+    socket.on('reconnect', (attemptNumber) => {
+        console.log('Reconnected to signal server after', attemptNumber, 'attempts');
+        updateConnectionStatus(true);
+        
+        // Masquer le message d'erreur
+        const errorMessage = document.getElementById('connection-error');
+        if (errorMessage) {
+            errorMessage.classList.add('hidden');
+        }
+        
+        // Rejoindre la salle après reconnexion
+        socket.emit('join-room', config.roomId);
+    });
+
+    socket.on('reconnect_error', (error) => {
+        console.error('Reconnection error:', error);
+        updateConnectionStatus(false);
+    });
+
+    socket.on('reconnect_failed', () => {
+        console.error('Failed to reconnect to signal server');
+        updateConnectionStatus(false);
+        alert('Impossible de se reconnecter au serveur. Veuillez rafraîchir la page.');
     });
 }
 
@@ -369,13 +501,18 @@ function toggleMute() {
                 muteBtn.innerHTML = `<i class="fas fa-microphone"></i>`;
             }
             
-            // Update local video badge
+            // Envoyer la mise à jour de statut au serveur
+            socket.emit('update-status', {
+                roomId: window.videoCallConfig.roomId,
+                isMuted: isMuted,
+                isVideoOff: isVideoOff,
+                isScreenSharing: isScreenSharing
+            });
+            
+            // Mettre à jour les badges locaux
             updateLocalVideoBadges();
             
-            // Send status update to server
-            socket.emit('update-status', window.videoCallConfig.roomId, { isMuted: isMuted });
-            
-            // Record activity
+            // Enregistrer l'activité
             recordActivity(isMuted ? 'muted' : 'unmuted');
         }
     }
@@ -386,34 +523,30 @@ function updateLocalVideoBadges() {
     const localContainer = document.getElementById('video-container-local');
     if (!localContainer) return;
     
-    // Remove existing badge container
-    const existingBadgeContainer = localContainer.querySelector('.absolute.top-2.left-2');
-    if (existingBadgeContainer) {
-        existingBadgeContainer.remove();
+    // Supprimer les anciens badges
+    const existingBadges = localContainer.querySelector('.badge-container');
+    if (existingBadges) {
+        existingBadges.remove();
     }
     
-    // Create new badge container
+    // Créer les nouveaux badges
     const badgeContainer = document.createElement('div');
-    badgeContainer.className = 'absolute top-2 left-2 flex space-x-2 z-10';
+    badgeContainer.className = 'absolute top-2 left-2 flex space-x-2 z-10 badge-container';
     
-    // Get current stream status
-    const videoActive = localStream && localStream.getVideoTracks().length > 0 && localStream.getVideoTracks()[0].enabled;
-    const audioActive = localStream && localStream.getAudioTracks().length > 0 && localStream.getAudioTracks()[0].enabled;
-    
-    // Mic badge
+    // Badge microphone
     const micBadge = document.createElement('span');
     micBadge.className = 'inline-flex items-center justify-center rounded-full bg-black bg-opacity-60 text-white px-2 py-1 text-xs';
-    if (audioActive && !isMuted) {
-        micBadge.innerHTML = `<i class="fas fa-microphone"></i>`;
-        micBadge.title = 'Microphone on';
-    } else {
+    if (isMuted) {
         micBadge.innerHTML = `<i class="fas fa-microphone-slash text-red-500"></i>`;
         micBadge.title = 'Microphone off';
+    } else {
+        micBadge.innerHTML = `<i class="fas fa-microphone"></i>`;
+        micBadge.title = 'Microphone on';
     }
     badgeContainer.appendChild(micBadge);
     
-    // Camera badge
-    if (!videoActive || isVideoOff) {
+    // Badge caméra
+    if (isVideoOff) {
         const camBadge = document.createElement('span');
         camBadge.className = 'inline-flex items-center justify-center rounded-full bg-black bg-opacity-60 text-white px-2 py-1 text-xs ml-1';
         camBadge.innerHTML = `<i class="fas fa-video-slash text-yellow-400"></i>`;
@@ -421,7 +554,7 @@ function updateLocalVideoBadges() {
         badgeContainer.appendChild(camBadge);
     }
     
-    // Screen share badge (if sharing)
+    // Badge partage d'écran
     if (isScreenSharing) {
         const screenBadge = document.createElement('span');
         screenBadge.className = 'inline-flex items-center justify-center rounded-full bg-blue-600 text-white px-2 py-1 text-xs';
@@ -430,7 +563,7 @@ function updateLocalVideoBadges() {
         badgeContainer.appendChild(screenBadge);
     }
     
-    // Pin/focus button for local video
+    // Bouton pin/focus
     const pinBtn = document.createElement('button');
     pinBtn.className = 'ml-2 bg-gray-800 bg-opacity-80 hover:bg-blue-600 text-white rounded-full p-1 focus:outline-none focus:ring-2 focus:ring-blue-400';
     pinBtn.title = manualFocusSocketId === 'local' ? 'Unpin' : 'Pin';
@@ -464,13 +597,18 @@ function toggleVideo() {
                 videoBtn.innerHTML = `<i class="fas fa-video"></i>`;
             }
             
-            // Update local video badge
+            // Envoyer la mise à jour de statut au serveur
+            socket.emit('update-status', {
+                roomId: window.videoCallConfig.roomId,
+                isMuted: isMuted,
+                isVideoOff: isVideoOff,
+                isScreenSharing: isScreenSharing
+            });
+            
+            // Mettre à jour les badges locaux
             updateLocalVideoBadges();
             
-            // Send status update to server
-            socket.emit('update-status', window.videoCallConfig.roomId, { isVideoOff: isVideoOff });
-            
-            // Record activity
+            // Enregistrer l'activité
             recordActivity(isVideoOff ? 'video_off' : 'video_on');
         }
     }
@@ -497,7 +635,9 @@ async function startScreenSharing() {
         });
         
         // Notify server about screen sharing start
-        socket.emit('screen-share-start', window.videoCallConfig.roomId);
+        socket.emit('screen-share-start', {
+            roomId: window.videoCallConfig.roomId
+        });
 
         // Replace video track in all peer connections
         const videoTrack = screenStream.getVideoTracks()[0];
@@ -517,6 +657,17 @@ async function startScreenSharing() {
         screenShareBtn.classList.add('bg-red-600');
         screenShareBtn.classList.remove('bg-gray-600');
         screenShareBtn.innerHTML = '<i class="fas fa-stop"></i>';
+
+        // Mettre à jour les badges locaux
+        updateLocalVideoBadges();
+
+        // Envoyer la mise à jour de statut au serveur
+        socket.emit('update-status', {
+            roomId: window.videoCallConfig.roomId,
+            isMuted: isMuted,
+            isVideoOff: isVideoOff,
+            isScreenSharing: isScreenSharing
+        });
 
         // Handle screen share stop
         videoTrack.onended = () => {
@@ -538,7 +689,9 @@ function stopScreenSharing() {
     }
 
     // Notify server about screen sharing stop
-    socket.emit('screen-share-stop', window.videoCallConfig.roomId);
+    socket.emit('screen-share-stop', {
+        roomId: window.videoCallConfig.roomId
+    });
 
     // Restore original video track
     if (localStream) {
@@ -558,6 +711,17 @@ function stopScreenSharing() {
     screenShareBtn.classList.remove('bg-red-600');
     screenShareBtn.classList.add('bg-gray-600');
     screenShareBtn.innerHTML = '<i class="fas fa-desktop"></i>';
+
+    // Mettre à jour les badges locaux
+    updateLocalVideoBadges();
+
+    // Envoyer la mise à jour de statut au serveur
+    socket.emit('update-status', {
+        roomId: window.videoCallConfig.roomId,
+        isMuted: isMuted,
+        isVideoOff: isVideoOff,
+        isScreenSharing: isScreenSharing
+    });
 
     recordActivity('screen_share_stopped');
 }
@@ -614,11 +778,11 @@ function updateConnectionStatus(connected) {
     if (connected) {
             indicator.classList.remove('bg-red-500');
             indicator.classList.add('bg-green-500');
-        text.textContent = 'Connecté';
+        text.textContent = 'Connected';
     } else {
             indicator.classList.remove('bg-green-500');
             indicator.classList.add('bg-red-500');
-        text.textContent = 'Déconnecté';
+        text.textContent = 'Disconnected';
         }
     }
 }
@@ -629,35 +793,44 @@ async function loadMessages() {
         console.error('videoCallConfig.callId is undefined!');
         addMessage({
             user: { name: window.videoCallConfig.userName },
-            message: 'Erreur: ID de l\'appel vidéo manquant.',
+            message: 'Error: Video call ID missing.',
             timestamp: new Date().toISOString()
         });
         return;
     }
     try {
         const response = await fetch(`/video-calls/${window.videoCallConfig.callId}/messages`);
-        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+        }
         const messages = await response.json();
         const chatMessages = document.getElementById('chat-messages');
-        if (chatMessages) chatMessages.innerHTML = '';
-        if (messages.length === 0) {
-            addMessage({
-                user: { name: 'Système' },
-                message: 'Bienvenue dans le chat ! Tapez votre message ci-dessous.',
-                timestamp: new Date().toISOString()
-            });
-        } else {
-            messages.forEach(msg => addMessage({
-                user: { name: msg.user?.name || 'Utilisateur' },
-                message: msg.message,
-                timestamp: msg.created_at
-            }));
+        if (chatMessages) {
+            chatMessages.innerHTML = '';
+            if (messages.length === 0) {
+                addMessage({
+                    user: { name: 'System' },
+                    message: 'Welcome to the chat! Type your message below.',
+                    timestamp: new Date().toISOString()
+                });
+            } else {
+                messages.forEach(msg => {
+                    const userName = msg.user ? 
+                        [msg.user.first_name, msg.user.last_name].filter(Boolean).join(' ').trim() || 'User' : 
+                        'User';
+                    addMessage({
+                        user: { name: userName },
+                        message: msg.message,
+                        timestamp: msg.created_at
+                    });
+                });
+            }
         }
     } catch (error) {
         console.error('Error loading messages:', error);
         addMessage({
-            user: { name: window.videoCallConfig.userName },
-            message: 'Erreur lors du chargement des messages.',
+            user: { name: 'System' },
+            message: `Error loading messages: ${error.message}`,
             timestamp: new Date().toISOString()
         });
     }
@@ -671,13 +844,34 @@ async function loadActivities() {
     }
     try {
         const response = await fetch(`/video-calls/${window.videoCallConfig.callId}/activities`);
-        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+        }
         const activities = await response.json();
         const activitiesContainer = document.getElementById('activities-list');
-        if (activitiesContainer) activitiesContainer.innerHTML = '';
-        activities.forEach(activity => addActivity(activity));
+        if (activitiesContainer) {
+            activitiesContainer.innerHTML = '';
+            
+            if (activities.length === 0) {
+                const noActivityElement = document.createElement('div');
+                noActivityElement.className = 'text-gray-400 text-center py-4';
+                noActivityElement.textContent = 'No activities yet';
+                activitiesContainer.appendChild(noActivityElement);
+            } else {
+                activities.forEach(activity => addActivity(activity));
+            }
+        }
     } catch (error) {
         console.error('Error loading activities:', error);
+        const activitiesContainer = document.getElementById('activities-list');
+        if (activitiesContainer) {
+            activitiesContainer.innerHTML = `
+                <div class="text-red-400 text-center py-4">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Error loading history: ${error.message}
+                </div>
+            `;
+        }
     }
 }
 
@@ -695,10 +889,39 @@ async function sendMessage() {
     });
 
     // Envoyer au serveur de signalisation (WebRTC)
-    socket.emit('chat-message', {
-        roomId: window.videoCallConfig.roomId,
-        message
-    });
+    if (socket) {
+        socket.emit('chat-message', {
+            roomId: window.videoCallConfig.roomId,
+            message
+        });
+    }
+
+    // Sauvegarder le message côté serveur Laravel
+    try {
+        const response = await fetch(`/video-calls/${window.videoCallConfig.callId}/messages`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': window.videoCallConfig.csrfToken
+            },
+            body: JSON.stringify({ message })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+        }
+        
+        const savedMessage = await response.json();
+        console.log('Message saved successfully:', savedMessage);
+    } catch (error) {
+        console.error('Error saving message:', error);
+        // Afficher l'erreur dans le chat
+        addMessage({
+            user: { name: 'System' },
+            message: `Error saving message: ${error.message}`,
+            timestamp: new Date().toISOString()
+        });
+    }
 
     input.value = '';
 }
@@ -709,7 +932,7 @@ function addMessage(message) {
     const messageElement = document.createElement('div');
     messageElement.className = 'bg-gray-700 rounded px-3 py-2 text-sm text-white break-words max-w-full mb-1';
     // Si message est un objet, on affiche le texte, le nom et l'heure
-    let userName = message.user && message.user.name ? message.user.name : 'Utilisateur';
+    let userName = message.user && message.user.name ? message.user.name : 'User';
     let text = typeof message === 'string' ? message : message.message;
     let time = message.timestamp ? new Date(message.timestamp).toLocaleTimeString() : '';
     messageElement.innerHTML = `<span class="font-semibold text-blue-300 mr-2">${userName}</span> <span>${text}</span> <span class="text-xs text-gray-400 float-right ml-2">${time}</span>`;
@@ -725,7 +948,7 @@ async function recordActivity(action, metadata = {}) {
         return;
     }
     try {
-        await fetch(`/video-calls/${window.videoCallConfig.callId}/activities`, {
+        const response = await fetch(`/video-calls/${window.videoCallConfig.callId}/activities`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -733,27 +956,80 @@ async function recordActivity(action, metadata = {}) {
             },
             body: JSON.stringify({ action, metadata })
         });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+        }
+        
+        const activity = await response.json();
+        addActivity(activity);
     } catch (error) {
         console.error('Error recording activity:', error);
+        // Display error in history
+        const activitiesContainer = document.getElementById('activities-list');
+        if (activitiesContainer) {
+            const errorElement = document.createElement('div');
+            errorElement.className = 'text-red-400 text-sm p-2 bg-red-900 bg-opacity-20 rounded mb-2';
+            errorElement.innerHTML = `
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                Error recording activity: ${error.message}
+            `;
+            activitiesContainer.insertBefore(errorElement, activitiesContainer.firstChild);
+        }
     }
 }
 
 // Add activity to list
 function addActivity(activity) {
     const activitiesContainer = document.getElementById('activities-list');
+    if (!activitiesContainer) return;
+    
     const activityElement = document.createElement('div');
-    activityElement.className = 'flex items-center space-x-2 p-2 bg-gray-700 rounded text-sm';
+    activityElement.className = 'flex items-center space-x-2 p-2 bg-gray-700 rounded text-sm mb-2';
     
     const icon = document.createElement('i');
-    icon.className = 'fas fa-circle text-blue-400 text-xs';
+    icon.className = 'fas fa-circle text-blue-400 text-xs flex-shrink-0';
     
     const text = document.createElement('span');
-    text.className = 'text-gray-300';
-    text.textContent = activity.description || activity.action;
+    text.className = 'text-gray-300 flex-1 min-w-0';
+    
+    // Build text with user name
+    let userName = 'User';
+    if (activity.user && activity.user.first_name) {
+        userName = activity.user.first_name;
+        if (activity.user.last_name) {
+            userName += ' ' + activity.user.last_name;
+        }
+    }
+    
+    // Action translations in English
+    const actionTranslations = {
+        'joined': 'joined the call',
+        'left': 'left the call',
+        'muted': 'muted their microphone',
+        'unmuted': 'unmuted their microphone',
+        'video_off': 'turned off their camera',
+        'video_on': 'turned on their camera',
+        'screen_share_started': 'started screen sharing',
+        'screen_share_stopped': 'stopped screen sharing',
+        'call_ended': 'ended the call'
+    };
+    
+    const actionText = actionTranslations[activity.action] || activity.action;
+    text.textContent = `${userName} ${actionText}`;
+    
+    // Add time if available
+    if (activity.created_at) {
+        const timeElement = document.createElement('span');
+        timeElement.className = 'text-xs text-gray-500 flex-shrink-0';
+        timeElement.textContent = new Date(activity.created_at).toLocaleTimeString();
+        activityElement.appendChild(timeElement);
+    }
     
     activityElement.appendChild(icon);
     activityElement.appendChild(text);
     
+    // Add to beginning of list (most recent at top)
     activitiesContainer.insertBefore(activityElement, activitiesContainer.firstChild);
 }
 
@@ -821,8 +1097,7 @@ function createPeerConnection(socketId) {
     
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-            socket.emit('signal', {
-                type: 'ice-candidate',
+            socket.emit('ice-candidate', {
                 roomId: window.videoCallConfig.roomId,
                 candidate: event.candidate
             });
@@ -839,8 +1114,7 @@ function createPeerConnection(socketId) {
     peerConnection.createOffer()
         .then(offer => peerConnection.setLocalDescription(offer))
         .then(() => {
-            socket.emit('signal', {
-                type: 'offer',
+            socket.emit('offer', {
                 roomId: window.videoCallConfig.roomId,
                 offer: peerConnection.localDescription
             });
@@ -861,8 +1135,7 @@ async function handleOffer(data) {
     
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-            socket.emit('signal', {
-                type: 'ice-candidate',
+            socket.emit('ice-candidate', {
                 roomId: window.videoCallConfig.roomId,
                 candidate: event.candidate
             });
@@ -880,8 +1153,7 @@ async function handleOffer(data) {
     const answer = await peerConnection.createAnswer();
     await peerConnection.setLocalDescription(answer);
     
-    socket.emit('signal', {
-        type: 'answer',
+    socket.emit('answer', {
         roomId: window.videoCallConfig.roomId,
         answer: answer
     });
@@ -907,7 +1179,7 @@ async function handleIceCandidate(data) {
 function addRemoteVideo(socketId, stream, participant) {
     const videoGrid = document.getElementById('video-grid');
     const videoContainer = document.createElement('div');
-    videoContainer.className = 'relative bg-gray-700 rounded-lg overflow-hidden aspect-video';
+    videoContainer.className = 'relative bg-gray-700 rounded-lg overflow-hidden aspect-video video-container';
     videoContainer.id = `video-container-${socketId}`;
 
     // Show video if active
@@ -980,7 +1252,7 @@ function addRemoteVideo(socketId, stream, participant) {
     if (isLocallyMuted) {
         micBadge.innerHTML = `<i class="fas fa-volume-mute text-red-500"></i>`;
         micBadge.title = 'Audio muted (click to unmute)';
-    } else if (audioActive && !participant.isMuted) {
+    } else if (!participant.isMuted) {
         micBadge.innerHTML = `<i class="fas fa-microphone"></i>`;
         micBadge.title = 'Microphone on (click to mute)';
     } else {
@@ -990,16 +1262,16 @@ function addRemoteVideo(socketId, stream, participant) {
     badgeContainer.appendChild(micBadge);
 
     // Camera badge
-    if (!videoActive || participant.isVideoOff) {
+    if (participant.isVideoOff) {
         const camBadge = document.createElement('span');
-        camBadge.className = 'inline-flex items-center justify-center rounded-full bg-black bg-opacity-60 text-white px-2 py-1 text-xs ml-1';
+        camBadge.className = 'inline-flex items-center justify-center rounded-full bg-black bg-opacity-60 text-white px-2 py-1 text-xs';
         camBadge.innerHTML = `<i class="fas fa-video-slash text-yellow-400"></i>`;
         camBadge.title = 'Camera off';
         badgeContainer.appendChild(camBadge);
     }
 
-    // Screen share badge (if user is sharing screen)
-    if (participant && participant.isScreenSharing) {
+    // Screen share badge
+    if (participant.isScreenSharing) {
         const screenBadge = document.createElement('span');
         screenBadge.className = 'inline-flex items-center justify-center rounded-full bg-blue-600 text-white px-2 py-1 text-xs';
         screenBadge.innerHTML = `<i class="fas fa-desktop"></i>`;
@@ -1008,17 +1280,25 @@ function addRemoteVideo(socketId, stream, participant) {
     }
 
     // Host badge
-    if (participant && participant.isHost) {
+    if (participant.isHost) {
         const hostBadge = document.createElement('span');
-        hostBadge.className = 'inline-flex items-center justify-center rounded-full bg-yellow-600 text-white px-2 py-1 text-xs';
+        hostBadge.className = 'inline-flex items-center justify-center rounded-full bg-green-600 text-white px-2 py-1 text-xs';
         hostBadge.innerHTML = `<i class="fas fa-crown"></i>`;
         hostBadge.title = 'Host';
         badgeContainer.appendChild(hostBadge);
     }
 
+    // Speaking indicator
+    if (participant.isSpeaking) {
+        videoContainer.classList.add('speaking');
+    } else {
+        videoContainer.classList.remove('speaking');
+    }
+
     // Pin/focus button
     const pinBtn = document.createElement('button');
-    pinBtn.className = 'ml-2 bg-gray-800 bg-opacity-80 hover:bg-blue-600 text-white rounded-full p-1 focus:outline-none focus:ring-2 focus:ring-blue-400';
+    pinBtn.className = 'ml-2 bg-gray-800 bg-opacity-80 hover:bg-blue-600 text-white rounded-full p-1 focus:outline-none focus:ring-2 focus:ring-blue-400 pin-button';
+    pinBtn.setAttribute('data-socket-id', socketId);
     pinBtn.title = manualFocusSocketId === socketId ? 'Unpin' : 'Pin';
     pinBtn.innerHTML = `<i class="fas fa-thumbtack"></i>`;
     pinBtn.onclick = (e) => {
@@ -1029,15 +1309,22 @@ function addRemoteVideo(socketId, stream, participant) {
 
     videoContainer.appendChild(badgeContainer);
 
-    // User name label
+    // Add participant name
     const nameDiv = document.createElement('div');
-    nameDiv.className = 'absolute bottom-2 left-2 bg-black bg-opacity-60 px-3 py-1 rounded text-base font-semibold flex items-center space-x-2';
-    nameDiv.innerHTML = `<span>${participant && participant.userName ? participant.userName : 'Unknown'}</span>`;
+    nameDiv.className = 'absolute bottom-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-sm';
+    nameDiv.textContent = participant ? participant.userName : 'Unknown';
     videoContainer.appendChild(nameDiv);
 
+    // Add to grid
     videoGrid.appendChild(videoContainer);
-    // Setup voice detection for remote stream (focus mode)
-    setupVoiceDetection(`video-container-${socketId}`, stream, socketId);
+
+    // Setup voice detection for this remote stream
+    if (stream && stream.getAudioTracks().length > 0) {
+        setupVoiceDetection(`video-container-${socketId}`, stream, socketId);
+    }
+
+    // Update badges based on current participant status
+    updateRemoteVideoBadges(socketId, participant);
 }
 
 // Remove remote video
@@ -1060,117 +1347,170 @@ function showMediaError(error) {
     alert(errorMessage);
 }
 
-// Voice activity detection and animation
+// Setup voice detection for a video container
 function setupVoiceDetection(containerId, stream, socketId) {
-    if (!stream) return;
+    if (!stream || !stream.getAudioTracks().length) return;
     
-    try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const analyser = audioContext.createAnalyser();
-        const source = audioContext.createMediaStreamSource(stream);
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const analyser = audioContext.createAnalyser();
+    const microphone = audioContext.createMediaStreamSource(stream);
+    
+    analyser.smoothingTimeConstant = 0.8;
+    analyser.fftSize = 1024;
+    
+    microphone.connect(analyser);
+    
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    
+    let isSpeaking = false;
+    let speakingStartTime = 0;
+    const SPEAKING_THRESHOLD = 30;
+    const SPEAKING_DURATION = 1000; // 1 second
+    
+    function checkVolume() {
+        analyser.getByteFrequencyData(dataArray);
         
-        // Configuration améliorée de l'analyseur
-        analyser.fftSize = 256; // Augmenté pour plus de précision
-        analyser.smoothingTimeConstant = 0.8; // Lissage pour éviter les saccades
-        analyser.minDecibels = -90;
-        analyser.maxDecibels = -10;
-        
-        source.connect(analyser);
-        
-        const bufferLength = analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
-        const videoContainer = document.getElementById(containerId);
-        
-        if (!videoContainer) return;
-        
-        // Récupérer les barres d'onde
-        const waveDiv = videoContainer.querySelector('.voice-wave');
-        if (!waveDiv) return;
-        
-        const bars = waveDiv.querySelectorAll('.voice-bar');
-        
-        let lastFocus = 0;
-        function checkVolume() {
-            analyser.getByteFrequencyData(dataArray);
-            
-            // Calculer le volume moyen sur différentes fréquences
-            let sum = 0;
-            let count = 0;
-            
-            // Analyser les fréquences vocales (85Hz - 255Hz)
-            const lowFreqStart = Math.floor(85 * bufferLength / audioContext.sampleRate);
-            const lowFreqEnd = Math.floor(255 * bufferLength / audioContext.sampleRate);
-            
-            for (let i = lowFreqStart; i < lowFreqEnd && i < dataArray.length; i++) {
-                sum += dataArray[i];
-                count++;
-            }
-            
-            const averageVolume = count > 0 ? sum / count : 0;
-            const normalizedVolume = averageVolume / 255; // Normaliser entre 0 et 1
-            
-            // Seuil de détection ajusté
-            const speakingThreshold = 0.15; // Réduit pour plus de sensibilité
-            const isSpeaking = normalizedVolume > speakingThreshold;
-            
-            if (videoContainer) {
-                if (isSpeaking) {
-                    videoContainer.classList.add('speaking');
-                    // Mode focus automatique : si ce participant parle, on le met en focus
-                    const now = Date.now();
-                    if (typeof handlePin === 'function' && (manualFocusSocketId !== socketId || now - lastFocus > 2000)) {
-                        handlePin(socketId);
-                        lastFocus = now;
-                    }
-                    // Animation des barres basée sur le volume réel
-                    bars.forEach((bar, index) => {
-                        const barVolume = Math.min(normalizedVolume * (1 + index * 0.2), 1);
-                        const height = Math.max(20, barVolume * 60); // Hauteur entre 20px et 80px
-                        bar.style.height = `${height}px`;
-                        bar.style.opacity = barVolume;
-                    });
-                } else {
-                    videoContainer.classList.remove('speaking');
-                    // Réduire progressivement les barres
-                    bars.forEach((bar, index) => {
-                        const currentHeight = parseFloat(bar.style.height) || 20;
-                        const newHeight = Math.max(20, currentHeight * 0.8);
-                        bar.style.height = `${newHeight}px`;
-                        bar.style.opacity = Math.max(0.3, newHeight / 60);
-                    });
-                }
-            }
-            requestAnimationFrame(checkVolume);
+        // Calculate average volume
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i++) {
+            sum += dataArray[i];
         }
-        checkVolume();
-    } catch (e) {
-        console.error('Voice detection error:', e);
+        const average = sum / bufferLength;
+        
+        // Check if speaking
+        const wasSpeaking = isSpeaking;
+        if (average > SPEAKING_THRESHOLD) {
+            if (!isSpeaking) {
+                isSpeaking = true;
+                speakingStartTime = Date.now();
+            }
+        } else {
+            if (isSpeaking && (Date.now() - speakingStartTime) > SPEAKING_DURATION) {
+                isSpeaking = false;
+            }
+        }
+        
+        // Update voice wave animation
+        const container = document.getElementById(containerId);
+        if (container) {
+            const waveDiv = container.querySelector('.voice-wave');
+            if (waveDiv) {
+                const bars = waveDiv.querySelectorAll('.voice-bar');
+                bars.forEach((bar, index) => {
+                    const barHeight = isSpeaking ? Math.min(100, average * (index + 1) / 10) : 0;
+                    bar.style.height = `${barHeight}%`;
+                    bar.style.backgroundColor = isSpeaking ? '#3B82F6' : '#6B7280';
+                });
+            }
+        }
+        
+        // Auto-focus on speaker (if not manually pinned)
+        if (isSpeaking && !wasSpeaking && manualFocusSocketId === null) {
+            setFocusMode(socketId);
+            
+            // Envoyer la mise à jour de statut au serveur
+            if (socketId !== 'local' && socket) {
+                socket.emit('update-status', {
+                    roomId: window.videoCallConfig.roomId,
+                    isMuted: isMuted,
+                    isVideoOff: isVideoOff,
+                    isScreenSharing: isScreenSharing,
+                    isSpeaking: true
+                });
+            }
+        } else if (!isSpeaking && wasSpeaking) {
+            // Envoyer la mise à jour de statut au serveur
+            if (socketId !== 'local' && socket) {
+                socket.emit('update-status', {
+                    roomId: window.videoCallConfig.roomId,
+                    isMuted: isMuted,
+                    isVideoOff: isVideoOff,
+                    isScreenSharing: isScreenSharing,
+                    isSpeaking: false
+                });
+            }
+        }
+        
+        requestAnimationFrame(checkVolume);
     }
+    
+    checkVolume();
+    
+    // Cleanup function
+    return () => {
+        analyser.disconnect();
+        microphone.disconnect();
+        audioContext.close();
+    };
 }
 
-// Only manual focus (pin) moves/enlarges a video
+// Set focus mode for a specific video
 function setFocusMode(socketId) {
-    const videoGrid = document.getElementById('video-grid');
-    Array.from(videoGrid.children).forEach(child => {
-        child.classList.remove('focused');
+    if (focusedSocketId === socketId) return;
+    
+    focusedSocketId = socketId;
+    
+    // Remove focus from all videos
+    const allVideos = document.querySelectorAll('.video-container');
+    allVideos.forEach(container => {
+        container.classList.remove('focused');
+        container.classList.add('unfocused');
     });
-    if (socketId) {
-        const focusContainer = document.getElementById(`video-container-${socketId}`) || document.getElementById('video-container-local');
-        if (focusContainer) {
-            focusContainer.classList.add('focused');
-            videoGrid.prepend(focusContainer);
-        }
+    
+    // Add focus to selected video
+    const targetContainer = socketId === 'local' 
+        ? document.getElementById('video-container-local')
+        : document.getElementById(`video-container-${socketId}`);
+    
+    if (targetContainer) {
+        targetContainer.classList.remove('unfocused');
+        targetContainer.classList.add('focused');
+        
+        // Scroll to focused video if needed
+        targetContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
+    
+    // Update pin buttons
+    updatePinButtons();
 }
 
+// Handle pin/unpin video
 function handlePin(socketId) {
     if (manualFocusSocketId === socketId) {
+        // Unpin
         manualFocusSocketId = null;
-        setFocusMode(null);
+        focusedSocketId = null;
+        
+        // Remove focus from all videos
+        const allVideos = document.querySelectorAll('.video-container');
+        allVideos.forEach(container => {
+            container.classList.remove('focused', 'unfocused');
+        });
     } else {
+        // Pin
         manualFocusSocketId = socketId;
         setFocusMode(socketId);
     }
+    
+    updatePinButtons();
+}
+
+// Update pin buttons
+function updatePinButtons() {
+    const allPinButtons = document.querySelectorAll('.pin-button');
+    allPinButtons.forEach(btn => {
+        const btnSocketId = btn.getAttribute('data-socket-id');
+        if (btnSocketId === manualFocusSocketId) {
+            btn.classList.add('bg-blue-600');
+            btn.classList.remove('bg-gray-800');
+            btn.title = 'Unpin';
+        } else {
+            btn.classList.remove('bg-blue-600');
+            btn.classList.add('bg-gray-800');
+            btn.title = 'Pin';
+        }
+    });
 }
 
 // Helper to re-render all remote videos
@@ -1195,26 +1535,13 @@ function updateRemoteVideoBadges(socketId, participant) {
     const videoContainer = document.getElementById(`video-container-${socketId}`);
     if (!videoContainer) return;
     
-    // Remove existing badge container
-    const existingBadgeContainer = videoContainer.querySelector('.absolute.top-2.left-2');
-    if (existingBadgeContainer) {
-        existingBadgeContainer.remove();
-    }
+    const badgeContainer = videoContainer.querySelector('.absolute.top-2.left-2');
+    if (!badgeContainer) return;
     
-    // Create new badge container
-    const badgeContainer = document.createElement('div');
-    badgeContainer.className = 'absolute top-2 left-2 flex space-x-2 z-10';
-    
-    // Get current stream status
-    const stream = remoteStreams[socketId];
-    let videoActive = false;
-    let audioActive = false;
-    if (stream) {
-        const videoTracks = stream.getVideoTracks();
-        const audioTracks = stream.getAudioTracks();
-        videoActive = videoTracks.length > 0 && videoTracks[0].enabled;
-        audioActive = audioTracks.length > 0 && audioTracks[0].enabled;
-    }
+    // Clear existing badges (except pin button)
+    const pinButton = badgeContainer.querySelector('.pin-button');
+    badgeContainer.innerHTML = '';
+    if (pinButton) badgeContainer.appendChild(pinButton);
     
     // Mic badge
     const micBadge = document.createElement('span');
@@ -1224,14 +1551,13 @@ function updateRemoteVideoBadges(socketId, participant) {
         toggleRemoteAudio(socketId);
     };
     
-    // Check if local user has muted this participant
     const videoElement = document.getElementById(`remote-video-${socketId}`);
     const isLocallyMuted = videoElement && videoElement.muted;
     
     if (isLocallyMuted) {
         micBadge.innerHTML = `<i class="fas fa-volume-mute text-red-500"></i>`;
         micBadge.title = 'Audio muted (click to unmute)';
-    } else if (audioActive && !participant.isMuted) {
+    } else if (!participant.isMuted) {
         micBadge.innerHTML = `<i class="fas fa-microphone"></i>`;
         micBadge.title = 'Microphone on (click to mute)';
     } else {
@@ -1241,16 +1567,16 @@ function updateRemoteVideoBadges(socketId, participant) {
     badgeContainer.appendChild(micBadge);
     
     // Camera badge
-    if (!videoActive || participant.isVideoOff) {
+    if (participant.isVideoOff) {
         const camBadge = document.createElement('span');
-        camBadge.className = 'inline-flex items-center justify-center rounded-full bg-black bg-opacity-60 text-white px-2 py-1 text-xs ml-1';
+        camBadge.className = 'inline-flex items-center justify-center rounded-full bg-black bg-opacity-60 text-white px-2 py-1 text-xs';
         camBadge.innerHTML = `<i class="fas fa-video-slash text-yellow-400"></i>`;
         camBadge.title = 'Camera off';
         badgeContainer.appendChild(camBadge);
     }
     
-    // Screen share badge (if user is sharing screen)
-    if (participant && participant.isScreenSharing) {
+    // Screen share badge
+    if (participant.isScreenSharing) {
         const screenBadge = document.createElement('span');
         screenBadge.className = 'inline-flex items-center justify-center rounded-full bg-blue-600 text-white px-2 py-1 text-xs';
         screenBadge.innerHTML = `<i class="fas fa-desktop"></i>`;
@@ -1259,56 +1585,30 @@ function updateRemoteVideoBadges(socketId, participant) {
     }
     
     // Host badge
-    if (participant && participant.isHost) {
+    if (participant.isHost) {
         const hostBadge = document.createElement('span');
-        hostBadge.className = 'inline-flex items-center justify-center rounded-full bg-yellow-600 text-white px-2 py-1 text-xs';
+        hostBadge.className = 'inline-flex items-center justify-center rounded-full bg-green-600 text-white px-2 py-1 text-xs';
         hostBadge.innerHTML = `<i class="fas fa-crown"></i>`;
         hostBadge.title = 'Host';
         badgeContainer.appendChild(hostBadge);
     }
     
-    // Pin/focus button
-    const pinBtn = document.createElement('button');
-    pinBtn.className = 'ml-2 bg-gray-800 bg-opacity-80 hover:bg-blue-600 text-white rounded-full p-1 focus:outline-none focus:ring-2 focus:ring-blue-400';
-    pinBtn.title = manualFocusSocketId === socketId ? 'Unpin' : 'Pin';
-    pinBtn.innerHTML = `<i class="fas fa-thumbtack"></i>`;
-    pinBtn.onclick = (e) => {
-        e.stopPropagation();
-        handlePin(socketId);
-    };
-    badgeContainer.appendChild(pinBtn);
-    
-    videoContainer.appendChild(badgeContainer);
+    // Speaking indicator
+    if (participant.isSpeaking) {
+        videoContainer.classList.add('speaking');
+    } else {
+        videoContainer.classList.remove('speaking');
+    }
 }
 
-// Toggle remote audio
+// Toggle remote audio mute/unmute
 function toggleRemoteAudio(socketId) {
     const videoElement = document.getElementById(`remote-video-${socketId}`);
     if (videoElement) {
         videoElement.muted = !videoElement.muted;
-        
-        // Update badge to show audio state
-        const videoContainer = document.getElementById(`video-container-${socketId}`);
-        if (videoContainer) {
-            const micBadge = videoContainer.querySelector('.absolute.top-2.left-2 .inline-flex:first-child');
-            if (micBadge) {
-                if (videoElement.muted) {
-                    micBadge.innerHTML = `<i class="fas fa-volume-mute text-red-500"></i>`;
-                    micBadge.title = 'Audio muted';
-                } else {
-                    const participant = participants[socketId];
-                    if (participant && participant.isMuted) {
-                        micBadge.innerHTML = `<i class="fas fa-microphone-slash text-red-500"></i>`;
-                        micBadge.title = 'Microphone off';
-                    } else {
-                        micBadge.innerHTML = `<i class="fas fa-microphone"></i>`;
-                        micBadge.title = 'Microphone on';
-                    }
-                }
-            }
-        }
+        updateRemoteVideoBadges(socketId, participants[socketId]);
     }
 }
 
 // Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', init); 
+document.addEventListener('DOMContentLoaded', init);
