@@ -406,7 +406,7 @@ class VideoCallController extends Controller
                                              'id' => $participant->user->id,
                                              'first_name' => $participant->user->first_name,
                                              'last_name' => $participant->user->last_name,
-                                             'profile_photo' => $participant->user->profile_photo,
+                                             'profile_photo' => $participant->user->profile_photo ? asset('storage/' . $participant->user->profile_photo) : null,
                                          ],
                                          'role' => $participant->role,
                                          'status' => $participant->status,
@@ -440,7 +440,7 @@ class VideoCallController extends Controller
                                          'user' => [
                                              'id' => $participant->user->id,
                                              'name' => $participant->user->name,
-                                             'profile_photo' => $participant->user->profile_photo,
+                                             'profile_photo' => $participant->user->profile_photo ? asset('storage/' . $participant->user->profile_photo) : null,
                                          ],
                                          'role' => $participant->role,
                                          'is_muted' => $participant->is_muted,

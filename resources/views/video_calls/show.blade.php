@@ -47,7 +47,7 @@
                             <div class="relative bg-gray-700 rounded-lg overflow-hidden aspect-video shadow-lg flex items-center justify-center">
                                 <video id="local-video" autoplay muted playsinline class="w-full h-full object-cover rounded-lg"></video>
                                 <div class="absolute bottom-2 left-2 bg-black bg-opacity-60 px-3 py-1 rounded text-base font-semibold flex items-center space-x-2">
-                                    <img src="{{ Auth::user()->profile_photo ? asset(Auth::user()->profile_photo) : asset('default-avatar.png') }}" class="w-7 h-7 rounded-full object-cover border-2 border-blue-500" alt="Votre photo">
+                                    <img src="{{ Auth::user()->profile_photo ? asset('storage/' . Auth::user()->profile_photo) : asset('default-avatar.png') }}" class="w-7 h-7 rounded-full object-cover border-2 border-blue-500" alt="Votre photo">
                                     <span>Vous ({{ Auth::user()->name }})</span>
                                 </div>
                                 <div id="local-mute-indicator" class="absolute top-2 right-2 bg-red-500 rounded-full p-1 hidden">
