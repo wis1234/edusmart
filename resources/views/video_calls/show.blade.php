@@ -156,7 +156,7 @@
     <!-- Configuration data for JavaScript -->
     <script>
         window.videoCallConfig = {
-            signalServerUrl: 'https://node-whatsapp-1.onrender.com',
+            signalServerUrl: 'http://localhost:3001',
             roomId: '{{ $videoCall->room_id }}',
             userId: {{ Auth::id() }},
             userName: '{{ Auth::user()->name }}',
@@ -198,101 +198,122 @@
             border-radius: 3px;
         }
         
-        #chat-messages::-webkit-scrollbar-thumb:hover {
-            background: #6B7280;
-        }
-        
-        #activities-list {
-            scrollbar-width: thin;
-            scrollbar-color: #4B5563 #1F2937;
-        }
-        
-        #activities-list::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        #activities-list::-webkit-scrollbar-track {
-            background: #1F2937;
-        }
-        
-        #activities-list::-webkit-scrollbar-thumb {
-            background: #4B5563;
-            border-radius: 3px;
-        }
-        
-        #activities-list::-webkit-scrollbar-thumb:hover {
-            background: #6B7280;
-        }
-
-        #video-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 1.5rem;
-            align-items: stretch;
-        }
-        .aspect-video {
-            aspect-ratio: 16/9;
-        }
-        #participants-list img {
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
-        /* Animation for active speaker */
-        .speaking {
-            box-shadow: 0 0 0 4px #3b82f6, 0 0 16px 4px #3b82f6;
-            border: 2px solid #3b82f6 !important;
-            transition: box-shadow 0.2s, border 0.2s;
-            z-index: 2;
-        }
-        /* Focus mode: enlarge the focused video */
-        .focused {
-            grid-column: 1 / -1 !important;
-            grid-row: 1 !important;
-            z-index: 10;
-            transform: scale(1.08);
-            box-shadow: 0 0 0 6px #2563eb, 0 0 32px 8px #2563eb;
-            border: 3px solid #2563eb !important;
-            transition: all 0.2s;
-        }
-        /* Voice wave animation for active speaker */
+        /* Voice wave animation */
         .voice-wave {
             position: absolute;
-            top: 8px;
+            bottom: 60px;
             left: 50%;
             transform: translateX(-50%);
-            height: 18px;
             display: flex;
             align-items: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s;
+            gap: 3px;
             z-index: 20;
+            height: 60px;
         }
-        .speaking .voice-wave {
-            opacity: 1;
-        }
+        
         .voice-bar {
             width: 4px;
-            height: 100%;
-            margin: 0 1px;
-            background: #3b82f6;
+            height: 20px;
+            background: linear-gradient(to top, #3B82F6, #60A5FA);
             border-radius: 2px;
-            animation: voice-bar-osc 1s infinite linear;
+            transition: height 0.1s ease, opacity 0.1s ease;
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
         }
+        
+        .speaking .voice-bar {
+            animation: none; /* Désactiver l'animation CSS, utiliser JavaScript */
+        }
+        
+        /* Animation de base pour les barres inactives */
+        .voice-bar:nth-child(1) { animation-delay: 0s; }
         .voice-bar:nth-child(2) { animation-delay: 0.1s; }
         .voice-bar:nth-child(3) { animation-delay: 0.2s; }
         .voice-bar:nth-child(4) { animation-delay: 0.3s; }
-        @keyframes voice-bar-osc {
-            0%, 100% { height: 30%; }
-            20% { height: 80%; }
-            40% { height: 50%; }
-            60% { height: 90%; }
-            80% { height: 40%; }
+        .voice-bar:nth-child(5) { animation-delay: 0.4s; }
+        
+        /* Amélioration de l'effet speaking */
+        .speaking {
+            box-shadow: 0 0 0 3px #3b82f6, 0 0 20px 5px rgba(59, 130, 246, 0.3);
+            border: 2px solid #3b82f6 !important;
+            transition: all 0.3s ease;
+            z-index: 2;
         }
-        /* Pin/focus button style */
-        .fa-thumbtack { transform: rotate(-30deg); }
-        button:focus { outline: none; }
-        button:hover .fa-thumbtack { color: #2563eb; }
-        /* Camera badge style */
-        .fa-video-slash { filter: drop-shadow(0 0 2px #000); }
+        
+        /* Animation de pulsation pour les barres actives */
+        @keyframes voicePulse {
+            0%, 100% { 
+                transform: scaleY(1);
+                opacity: 0.8;
+            }
+            50% { 
+                transform: scaleY(1.1);
+                opacity: 1;
+            }
+        }
+        
+        .speaking .voice-bar {
+            animation: voicePulse 0.6s ease-in-out infinite;
+        }
+        
+        /* Amélioration de la qualité vidéo */
+        video {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            perspective: 1000px;
+        }
+        
+        /* Optimisation pour les vidéos haute qualité */
+        .aspect-video video {
+            object-fit: cover;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Focus mode */
+        .focused {
+            grid-column: span 2;
+            grid-row: span 2;
+        }
+        
+        /* Tab styles */
+        .tab-btn.active {
+            color: white;
+            border-bottom-color: #3B82F6;
+        }
+        
+        .tab-btn:not(.active) {
+            color: #9CA3AF;
+            border-bottom-color: transparent;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Video grid responsive */
+        @media (max-width: 640px) {
+            #video-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (min-width: 641px) and (max-width: 1024px) {
+            #video-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (min-width: 1025px) {
+            #video-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
     </style>
 </x-app-layout> 

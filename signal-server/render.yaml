@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: edusmart-signal-server
+    env: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SIGNAL_PORT
+        value: 10000
+      - key: FRONTEND_URL
+        value: https://edusmart.erequest.net
+      - key: LARAVEL_URL
+        value: https://edusmart.erequest.net
+      - key: JWT_SECRET
+        generateValue: true
+    healthCheckPath: /health
+    autoDeploy: true 

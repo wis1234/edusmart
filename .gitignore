@@ -1,7 +1,7 @@
 /.phpunit.cache
 /node_modules
 /electron/
-/signal-server/
+# /signal-server/  # Retiré pour permettre le déploiement du signal server
 /public/build
 /public/hot
 /public/storage
@@ -24,3 +24,30 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Fichiers de déploiement
+/deploy.sh
+/DEPLOYMENT_CHECKLIST.md
+/migration_plan.md
+/troubleshoot_composer_install.md
+/troubleshoot_composer_manual_steps.md
+/TROUBLESHOOTING_REDIRECTION.md
+/VIDEO_CALL_SETUP.md
+
+# Fichiers de test
+/test-*.html
+/exclude.txt
+
+# Logs
+*.log
+/logs/
+
+# Cache
+/cache/
+/tmp/
+
+# Fichiers temporaires
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
