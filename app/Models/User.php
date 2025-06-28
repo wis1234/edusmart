@@ -47,7 +47,7 @@ class User extends Authenticatable
         'validated' => 'boolean',
     ];
 
-    protected $appends = ['name'];
+    protected $appends = ['name', 'profile_photo_url'];
 
     /**
      * Get the user's full name.

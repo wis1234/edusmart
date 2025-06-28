@@ -62,7 +62,7 @@ function getUserDisplay(socket) {
     const name = [user.first_name, user.last_name].filter(Boolean).join(' ').trim();
     return {
         name: name || 'Unknown',
-        profile_photo: user.profile_photo || null
+        profile_photo: user.profile_photo_url || null
     };
 }
 

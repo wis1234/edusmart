@@ -27,7 +27,13 @@ class VideoCallMessageController extends Controller
             ->latest()
             ->take(50)
             ->get()
-            ->reverse();
+            ->reverse()
+            ->map(function ($message) {
+                if ($message->user) {
+                    $message->user->profile_photo = $message->user->profile_photo_url;
+                }
+                return $message;
+            });
 
         return response()->json($messages);
     }
@@ -58,6 +64,11 @@ class VideoCallMessageController extends Controller
             ]);
 
             $message->load('user:id,first_name,last_name,profile_photo');
+            
+            // Ajouter l'URL complète de la photo de profil
+            if ($message->user) {
+                $message->user->profile_photo = $message->user->profile_photo_url;
+            }
 
             // Broadcast to other participants if the event exists
             if (class_exists('\App\Events\VideoCallMessageSent')) {
@@ -94,7 +105,13 @@ class VideoCallMessageController extends Controller
             ->with('user:id,first_name,last_name,profile_photo')
             ->latest()
             ->take(100)
-            ->get();
+            ->get()
+            ->map(function ($activity) {
+                if ($activity->user) {
+                    $activity->user->profile_photo = $activity->user->profile_photo_url;
+                }
+                return $activity;
+            });
 
         return response()->json($activities);
     }
@@ -122,6 +139,11 @@ class VideoCallMessageController extends Controller
         ]);
 
         $activity->load('user:id,first_name,last_name,profile_photo');
+        
+        // Ajouter l'URL complète de la photo de profil
+        if ($activity->user) {
+            $activity->user->profile_photo = $activity->user->profile_photo_url;
+        }
 
         // Broadcast to other participants
         broadcast(new \App\Events\VideoCallActivityRecorded($videoCall, $activity))->toOthers();
