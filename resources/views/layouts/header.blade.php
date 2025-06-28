@@ -1,59 +1,67 @@
-<header class="fixed top-0 left-0 right-0 z-30 w-full" style="background: whitesmoke; box-shadow: 0 8px 32px 0 rgba(31,38,135,0.07);">
+<header class="fixed top-0 left-0 right-0 z-30 w-full main-header" style="background: whitesmoke; box-shadow: 0 8px 32px 0 rgba(31,38,135,0.07);">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
         <!-- Left: Logo & Menu -->
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 sm:gap-4">
             <button id="sidebarToggle" class="p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition">
-                <i class="fas fa-bars text-indigo-600 dark:text-indigo-300 text-xl"></i>
+                <i class="fas fa-bars text-indigo-600 dark:text-indigo-300 text-lg sm:text-xl"></i>
             </button>
-            <!-- <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 shadow-lg">
-                <i class="fas fa-graduation-cap text-white text-xl"></i>
-            </span> -->
-            <span class="ml-2 text-3xl font-extrabold tracking-tight select-none" style="font-family: 'Inter', 'Segoe UI', Arial, sans-serif;">
+            <span class="ml-1 sm:ml-2 text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight select-none" style="font-family: 'Inter', 'Segoe UI', Arial, sans-serif;">
                 <span class="bg-gradient-to-tr from-indigo-600 to-purple-600 bg-clip-text text-transparent">Edu</span><span class="text-black dark:text-white">Smart</span>
             </span>
         </div>
-        <!-- Center: Search -->
-        <div class="hidden md:flex flex-1 justify-center">
-            <form method="GET" action="{{ route('search.global') }}" class="relative w-full max-w-xs">
-                <input type="text" name="q" value="{{ request('q') }}" placeholder="Search the entire platform..." class="w-full pl-10 pr-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" />
+        
+        <!-- Center: Search - Hidden on mobile, visible on tablet+ -->
+        <div class="hidden sm:flex flex-1 justify-center max-w-md lg:max-w-lg xl:max-w-xl">
+            <form method="GET" action="{{ route('search.global') }}" class="relative w-full">
+                <input type="text" name="q" value="{{ request('q') }}" placeholder="Search the entire platform..." class="w-full pl-10 pr-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition text-sm sm:text-base" />
                 <span class="absolute left-3 top-2.5 text-gray-400 dark:text-gray-500">
                     <i class="fas fa-search"></i>
                 </span>
             </form>
         </div>
-        <!-- Right: Actions -->
-        <div class="flex items-center gap-4">
-            <!-- Toggle Dark/Light -->
-            <button class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition theme-toggle-btn" id="themeToggleBtn" title="Basculer le thème">
-                <span class="hidden dark:inline"><i class="fas fa-sun text-yellow-400"></i></span>
-                <span class="inline dark:hidden"><i class="fas fa-moon text-gray-700"></i></span>
+        
+        <!-- Mobile Search Button - Visible only on mobile -->
+        <div class="sm:hidden">
+            <button id="mobileSearchBtn" class="p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition">
+                <i class="fas fa-search text-indigo-600 dark:text-indigo-300"></i>
             </button>
+        </div>
+        
+        <!-- Right: Actions -->
+        <div class="flex items-center gap-2 sm:gap-3 lg:gap-4">
+            <!-- Toggle Dark/Light -->
+            <button class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition theme-toggle-btn" id="themeToggleBtn" title="Toggle theme">
+                <span class="hidden dark:inline"><i class="fas fa-sun text-yellow-400 text-sm sm:text-base"></i></span>
+                <span class="inline dark:hidden"><i class="fas fa-moon text-gray-700 text-sm sm:text-base"></i></span>
+            </button>
+            
             <!-- Language Dropdown -->
             <div class="relative">
                 <button class="p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition" id="langDropdownBtn" title="Change language">
-                    <i class="fas fa-globe text-indigo-600 dark:text-indigo-300 text-xl"></i>
+                    <i class="fas fa-globe text-indigo-600 dark:text-indigo-300 text-sm sm:text-xl"></i>
                 </button>
                 <div id="langDropdown" class="hidden absolute right-0 mt-2 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 z-50 border border-gray-200 dark:border-gray-700">
                     <a href="{{ route('lang.switch', 'en') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-900 transition">English</a>
                     <a href="{{ route('lang.switch', 'fr') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-900 transition">Français</a>
                 </div>
             </div>
+            
             <!-- Notifications Dropdown -->
             @auth
             <div class="relative">
                 <button class="p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition relative" id="notificationsDropdownBtn">
-                    <i class="fas fa-bell text-indigo-600 dark:text-indigo-300 text-xl"></i>
+                    <i class="fas fa-bell text-indigo-600 dark:text-indigo-300 text-sm sm:text-xl"></i>
                     @php $unread = auth()->user()->notifications()->whereNull('read_at')->count(); @endphp
                     @if($unread > 0)
-                        <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold flex items-center justify-center rounded-full border-2 border-white dark:border-gray-900 animate-pulse">{{ $unread }}</span>
+                        <span class="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-red-500 text-white text-xs font-bold flex items-center justify-center rounded-full border-2 border-white dark:border-gray-900 animate-pulse">{{ $unread }}</span>
                     @endif
                 </button>
-                <div id="notificationsDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 z-50 border border-gray-200 dark:border-gray-700">
+                <div id="notificationsDropdown" class="hidden absolute right-0 mt-2 w-72 sm:w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 z-50 border border-gray-200 dark:border-gray-700">
                     <div class="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                        <span class="font-semibold text-gray-900 dark:text-white">Notifications</span>
+                        <span class="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">Notifications</span>
                         @if($unread > 0)
                             <button type="button" id="markAllAsReadBtn" class="text-xs text-indigo-600 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 hover:underline transition">
-                                Tout marquer comme lu
+                                Mark all as read
                             </button>
                         @endif
                     </div>
@@ -93,31 +101,32 @@
                         @empty
                             <div class="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
                                 <i class="fas fa-bell-slash text-2xl mb-2"></i>
-                                <p>Aucune notification</p>
+                                <p class="text-sm">No notifications</p>
                             </div>
                         @endforelse
                     </div>
                     <div class="px-4 py-2 border-t border-gray-200 dark:border-gray-700 text-center">
                         <a href="{{ route('notifications.index') }}" class="text-indigo-600 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 hover:underline text-sm font-semibold transition">
-                            Voir toutes les notifications
+                            View all notifications
                         </a>
                     </div>
                 </div>
             </div>
             @endauth
+            
             <!-- User Dropdown (Vanilla JS) -->
             @auth
             <div class="relative" id="userDropdownWrapper">
-                <button id="userDropdownBtn" class="flex items-center gap-3 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
+                <button id="userDropdownBtn" class="flex items-center gap-2 sm:gap-3 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
                     <div class="relative">
                         <img 
                             src="{{ Auth::user()->profile_photo ? asset('storage/' . Auth::user()->profile_photo) : 'https://ui-avatars.com/api/?name='.urlencode(Auth::user()->first_name . ' ' . Auth::user()->last_name).'&background=4f46e5&color=fff' }}" 
                             alt="{{ Auth::user()->first_name }}" 
-                            class="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-md"
+                            class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-md"
                         />
-                        <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-700 rounded-full"></div>
+                        <div class="absolute bottom-0 right-0 w-2 h-2 sm:w-3 sm:h-3 bg-green-500 border-2 border-white dark:border-gray-700 rounded-full"></div>
                     </div>
-                    <div class="hidden md:block text-left">
+                    <div class="hidden sm:block text-left">
                         <div class="text-sm font-semibold text-gray-900 dark:text-white">
                             {{ Auth::user()->first_name }} {{ Auth::user()->last_name }}
                         </div>
@@ -149,9 +158,9 @@
                             {{ $roleLabel }}
                         </div>
                     </div>
-                    <i class="fas fa-chevron-down text-gray-400 dark:text-gray-500 transition-transform duration-200"></i>
+                    <i class="fas fa-chevron-down text-gray-400 dark:text-gray-500 transition-transform duration-200 text-sm sm:text-base"></i>
                 </button>
-                <div id="userDropdownMenu" class="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-lg py-2 border border-gray-200 dark:border-gray-700 z-50 hidden">
+                <div id="userDropdownMenu" class="absolute right-0 mt-2 w-56 sm:w-64 bg-white dark:bg-gray-800 rounded-xl shadow-lg py-2 border border-gray-200 dark:border-gray-700 z-50 hidden">
                     <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                         <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
                             {{ Auth::user()->email }}
@@ -181,20 +190,38 @@
             @else
             <!-- Login Button for non-authenticated users -->
             <div class="flex items-center gap-2">
-                <a href="{{ route('login') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition duration-200">
-                    <i class="fas fa-sign-in-alt mr-2"></i>
-                    Login
+                <a href="{{ route('login') }}" class="inline-flex items-center px-3 sm:px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition duration-200">
+                    <i class="fas fa-sign-in-alt mr-1 sm:mr-2"></i>
+                    <span class="hidden sm:inline">Login</span>
+                    <span class="sm:hidden">Sign In</span>
                 </a>
             </div>
             @endauth
+            
             <!-- Bouton création appel vidéo/audio -->
             @auth
-            <a href="{{ route('video-calls.create') }}" title="Nouvel appel vidéo/audio" class="p-2 rounded-full bg-green-100 dark:bg-green-900 hover:bg-green-200 dark:hover:bg-green-800 transition flex items-center justify-center">
-                <i class="fas fa-video text-green-600 dark:text-green-300 text-xl"></i>
+            <a href="{{ route('video-calls.create') }}" title="New video/audio call" class="p-2 rounded-full bg-green-100 dark:bg-green-900 hover:bg-green-200 dark:hover:bg-green-800 transition flex items-center justify-center">
+                <i class="fas fa-video text-green-600 dark:text-green-300 text-sm sm:text-xl"></i>
             </a>
             @endauth
         </div>
     </div>
+    
+    <!-- Mobile Search Overlay -->
+    <div id="mobileSearchOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden">
+        <div class="absolute top-16 left-0 right-0 bg-white dark:bg-gray-800 p-4 shadow-lg">
+            <form method="GET" action="{{ route('search.global') }}" class="relative">
+                <input type="text" name="q" value="{{ request('q') }}" placeholder="Search the entire platform..." class="w-full pl-10 pr-12 py-3 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" />
+                <span class="absolute left-3 top-3.5 text-gray-400 dark:text-gray-500">
+                    <i class="fas fa-search"></i>
+                </span>
+                <button type="button" id="closeMobileSearch" class="absolute right-3 top-3.5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
+                    <i class="fas fa-times"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+    
     <script>
         // Theme toggle button event listener
         document.addEventListener('DOMContentLoaded', function() {
@@ -205,6 +232,40 @@
                         window.toggleTheme();
         } else {
                         console.error('toggleTheme function not available');
+                    }
+                });
+            }
+        });
+
+        // Mobile search functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileSearchBtn = document.getElementById('mobileSearchBtn');
+            const mobileSearchOverlay = document.getElementById('mobileSearchOverlay');
+            const closeMobileSearch = document.getElementById('closeMobileSearch');
+            
+            if (mobileSearchBtn && mobileSearchOverlay) {
+                mobileSearchBtn.addEventListener('click', function() {
+                    mobileSearchOverlay.classList.remove('hidden');
+                    mobileSearchOverlay.querySelector('input').focus();
+                });
+                
+                if (closeMobileSearch) {
+                    closeMobileSearch.addEventListener('click', function() {
+                        mobileSearchOverlay.classList.add('hidden');
+                    });
+                }
+                
+                // Close on overlay click
+                mobileSearchOverlay.addEventListener('click', function(e) {
+                    if (e.target === mobileSearchOverlay) {
+                        mobileSearchOverlay.classList.add('hidden');
+                    }
+                });
+                
+                // Close on escape key
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && !mobileSearchOverlay.classList.contains('hidden')) {
+                        mobileSearchOverlay.classList.add('hidden');
                     }
                 });
             }
@@ -257,7 +318,7 @@
                     
                     // Afficher l'état de chargement
                     this.disabled = true;
-                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traitement...';
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
                     
                     fetch('/notifications/mark-all-as-read', {
                         method: 'POST',
@@ -287,19 +348,19 @@
                             }
                             
                             // Afficher un message de succès
-                            showToast('Toutes les notifications ont été marquées comme lues', 'success');
+                            showToast('All notifications marked as read', 'success');
                         } else {
-                            showToast('Erreur lors du marquage des notifications', 'error');
+                            showToast('Error marking notifications as read', 'error');
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        showToast('Erreur lors du marquage des notifications', 'error');
+                        showToast('Error marking notifications as read', 'error');
                     })
                     .finally(() => {
                         // Restaurer le bouton
                         this.disabled = false;
-                        this.innerHTML = 'Tout marquer comme lu';
+                        this.innerHTML = 'Mark all as read';
                     });
                 });
             }
@@ -447,7 +508,7 @@
                 popup.innerHTML = `
                     <div class="flex items-center">
                         <i class="fas fa-exclamation-triangle mr-2"></i>
-                        <span>${error.message || error || 'Une erreur est survenue'}</span>
+                        <span>${error.message || error || 'An error occurred'}</span>
                         <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
                             <i class="fas fa-times"></i>
                         </button>

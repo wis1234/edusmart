@@ -22,7 +22,7 @@
                     
                     <!-- Right side - Connection Status -->
                     <div class="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-                    <!-- Connection Status -->
+                        <!-- Connection Status -->
                         <div id="connection-status" class="flex items-center space-x-1 sm:space-x-2">
                             <div class="w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full"></div>
                             <span class="text-xs sm:text-sm text-gray-300 hidden sm:inline">Déconnecté</span>
@@ -213,9 +213,6 @@
 
     <!-- FontAwesome for user icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-papm6Q+..." crossorigin="anonymous" referrerpolicy="no-referrer" />
-    
-    <!-- Responsive CSS -->
-    <link rel="stylesheet" href="{{ asset('css/video-call-responsive.css') }}">
 
     <style>
         /* Responsive Design Improvements */
@@ -251,16 +248,6 @@
             /* Compact sidebar */
             .h-64 {
                 height: 16rem;
-            }
-            
-            /* Hide some text on mobile */
-            .mobile-hidden {
-                display: none;
-            }
-            
-            /* Show mobile-specific text */
-            .mobile-only {
-                display: inline;
             }
         }
         
@@ -340,7 +327,7 @@
             .voice-wave {
                 bottom: 60px;
                 gap: 3px;
-            height: 60px;
+                height: 60px;
             }
         }
         
@@ -413,7 +400,7 @@
                 padding: 0.75rem;
             }
         }
-
+        
         /* Input responsive */
         #chat-input {
             font-size: 0.75rem;
@@ -450,39 +437,6 @@
         .success {
             border-color: #10B981;
             background-color: rgba(16, 185, 129, 0.1);
-        }
-        
-        /* Responsive touch targets */
-        @media (max-width: 640px) {
-            button, a, input, select, textarea {
-                min-height: 44px;
-                min-width: 44px;
-            }
-            
-            .video-controls button {
-                min-height: 48px;
-                min-width: 48px;
-        }
-        
-            #end-call-btn {
-                min-height: 52px;
-                min-width: 52px;
-            }
-        }
-        
-        /* Landscape mode for mobile */
-        @media (max-width: 640px) and (orientation: landscape) {
-            .h-12 {
-                height: 2.5rem;
-            }
-            
-            .h-64 {
-                height: 12rem;
-            }
-            
-            #video-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
         }
     </style>
 </x-app-layout> 
