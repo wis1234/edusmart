@@ -42,6 +42,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-as-read');
     Route::get('/notifications/unread-count', [NotificationController::class, 'getUnreadCount'])->name('notifications.unread-count');
     Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+    
+    // Test route for debugging
+    Route::get('/test-auth', function () {
+        return response()->json([
+            'authenticated' => auth()->check(),
+            'user_id' => auth()->id(),
+            'user_name' => auth()->user()->name ?? 'No user'
+        ]);
+    })->name('test.auth');
 });
 
 require __DIR__.'/auth.php';

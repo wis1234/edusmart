@@ -156,7 +156,7 @@
     <!-- Configuration data for JavaScript -->
     <script>
         window.videoCallConfig = {
-            signalServerUrl: 'https://edusmart-signal-server.onrender.com',
+            signalServerUrl: 'https://node-whatsapp-1.onrender.com',
             roomId: '{{ $videoCall->room_id }}',
             userId: {{ Auth::id() }},
             userName: '{{ Auth::user()->name }}',
