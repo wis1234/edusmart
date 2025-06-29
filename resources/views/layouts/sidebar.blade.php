@@ -113,7 +113,7 @@
         background: rgba(167, 139, 250, 0.3);
         border-radius: 8px;
     }
-    
+
     .sidebar::-webkit-scrollbar-thumb:hover {
         background: rgba(167, 139, 250, 0.5);
     }

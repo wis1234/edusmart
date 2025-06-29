@@ -49,7 +49,7 @@
                 width: 100%;
                 height: 100%;
                 background: rgba(0, 0, 0, 0.5);
-                display: none;
+                display: flex;
                 justify-content: center;
                 align-items: center;
                 z-index: 9999;
@@ -118,98 +118,6 @@
         <!-- Bootstrap JS -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 
-        <!-- Custom Scripts -->
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const sidebar = document.getElementById('sidebar');
-                const mainContent = document.querySelector('.main-content');
-                const sidebarToggle = document.getElementById('sidebarToggle');
-                const sidebarOverlay = document.getElementById('sidebarOverlay');
-                const loadingSpinner = document.getElementById('loadingSpinner');
-                const mainContentWrapper = document.getElementById('mainContent');
-                let isSidebarCollapsed = false;
-
-                // Show loading spinner
-                function showLoading() {
-                    loadingSpinner.classList.add('show');
-                    mainContentWrapper.classList.remove('show');
-                }
-
-                // Hide loading spinner
-                function hideLoading() {
-                    loadingSpinner.classList.remove('show');
-                    mainContentWrapper.classList.add('show');
-                }
-
-                // Toggle sidebar
-                function toggleSidebar() {
-                    isSidebarCollapsed = !isSidebarCollapsed;
-                    sidebar.classList.toggle('collapsed');
-                    mainContent.classList.toggle('expanded');
-                    
-                    // Save state
-                    localStorage.setItem('sidebarCollapsed', isSidebarCollapsed);
-                }
-
-                // Initialize sidebar state
-                if (localStorage.getItem('sidebarCollapsed') === 'true') {
-                    isSidebarCollapsed = true;
-                    sidebar.classList.add('collapsed');
-                    mainContent.classList.add('expanded');
-                }
-
-                // Event listeners
-                if (sidebarToggle) {
-                    sidebarToggle.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        toggleSidebar();
-                    });
-                }
-
-                // Mobile overlay
-                if (sidebarOverlay) {
-                    sidebarOverlay.addEventListener('click', function() {
-                        if (window.innerWidth <= 768) {
-                            sidebar.classList.remove('show');
-                            sidebarOverlay.classList.remove('show');
-                        }
-                    });
-                }
-
-                // Handle navigation links
-                document.querySelectorAll('a[href]').forEach(link => {
-                    link.addEventListener('click', function(e) {
-                        // Don't show loading for external links or links with target="_blank"
-                        if (this.hostname !== window.location.hostname || this.target === '_blank') {
-                            return;
-                        }
-
-                        // Don't show loading for links with data-no-loading attribute
-                        if (this.hasAttribute('data-no-loading')) {
-                            return;
-                        }
-
-                        showLoading();
-                    });
-                });
-
-                // Show content when page is loaded
-                hideLoading();
-
-                // Handle browser back/forward buttons
-                window.addEventListener('popstate', function() {
-                    showLoading();
-                });
-
-                // Handle form submissions
-                document.querySelectorAll('form').forEach(form => {
-                    form.addEventListener('submit', function() {
-                        if (!this.hasAttribute('data-no-loading')) {
-                            showLoading();
-                        }
-                    });
-                });
-            });
-        </script>
+        
     </body>
 </html>

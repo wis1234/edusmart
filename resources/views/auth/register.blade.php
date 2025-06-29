@@ -60,6 +60,24 @@
             from { opacity: 0; transform: translateX(20px); }
             to { opacity: 1; transform: translateX(0); }
         }
+        /* Parent Search Dropdown Styles */
+        .parent-option {
+            transition: background-color 0.2s ease;
+        }
+        .parent-option:hover {
+            background-color: #f3f4f6;
+        }
+        .parent-display-name {
+            font-weight: 500;
+            color: #374151;
+        }
+        .parent-full-name {
+            font-weight: 500;
+            color: #1f2937;
+        }
+        #parent_dropdown {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-screen">
@@ -78,9 +96,10 @@
                         <div class="step-indicator w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold bg-gray-200 text-gray-600" data-step="4">4</div>
                         <div class="step-indicator w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold bg-gray-200 text-gray-600" data-step="5">5</div>
                         <div class="step-indicator w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold bg-gray-200 text-gray-600" data-step="6">6</div>
+                        <div class="step-indicator w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold bg-gray-200 text-gray-600" data-step="7">7</div>
                     </div>
                     <div class="text-sm text-gray-500">
-                        Step <span id="current-step">1</span> of 6
+                        Step <span id="current-step">1</span> of 7
         </div>
                 </div>
                 @if ($errors->any())
@@ -130,14 +149,32 @@
                             <div>
                                 <label for="first_name" class="block text-sm font-medium text-gray-700 mb-2">First Name <span class="text-red-500">*</span></label>
                                 <input id="first_name" name="first_name" type="text" value="{{ old('first_name') }}" data-must-required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <div class="client-error">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12A9 9 0 11 3 12a9 9 0 0118 0z"/>
+                                    </svg>
+                                    <span></span>
+                                </div>
                             </div>
                             <div>
                                 <label for="last_name" class="block text-sm font-medium text-gray-700 mb-2">Last Name <span class="text-red-500">*</span></label>
                                 <input id="last_name" name="last_name" type="text" value="{{ old('last_name') }}" data-must-required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <div class="client-error">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12A9 9 0 11 3 12a9 9 0 0118 0z"/>
+                                    </svg>
+                                    <span></span>
+                                </div>
                             </div>
                             <div>
                                 <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address <span class="text-red-500">*</span></label>
                                 <input id="email" name="email" type="email" value="{{ old('email') }}" data-must-required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <div class="client-error">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12A9 9 0 11 3 12a9 9 0 0118 0z"/>
+                                    </svg>
+                                    <span></span>
+                                </div>
                             </div>
                             <div>
                                 <label for="school_id" class="block text-sm font-medium text-gray-700 mb-2">School <span class="text-red-500">*</span></label>
@@ -147,11 +184,57 @@
                                         <option value="{{ $school->id }}" @if(old('school_id')==$school->id) selected @endif>{{ $school->name }}</option>
                                     @endforeach
                                 </select>
+                                <div class="client-error">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12A9 9 0 11 3 12a9 9 0 0118 0z"/>
+                                    </svg>
+                                    <span></span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <!-- Step 3: Role-Specific Information -->
+                    <!-- Step 3: Classroom Selection (for students) -->
                     <div class="form-step" id="step-3">
+                        <h3 class="text-2xl font-semibold text-gray-900 mb-6">Classroom Selection</h3>
+                        <div id="classroom-selection" style="display: none;">
+                            <div class="mb-6">
+                                <p class="text-gray-600 mb-4">Please select your classroom for the academic year.</p>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="class_room_id" class="block text-sm font-medium text-gray-700 mb-2">Classroom <span class="text-red-500">*</span></label>
+                                    <select id="class_room_id" name="class_room_id" data-must-required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option value="">Select a classroom</option>
+                                        @foreach($classrooms as $classroom)
+                                            <option value="{{ $classroom->id }}" 
+                                                    data-school="{{ $classroom->school_id }}"
+                                                    data-academic-year="{{ $classroom->academic_year }}"
+                                                    @if(old('class_room_id')==$classroom->id) selected @endif>
+                                                {{ $classroom->name }} - {{ $classroom->school->name }} ({{ $classroom->academic_year }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <div class="client-error">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12A9 9 0 11 3 12a9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="non-student-message" style="display: none;">
+                            <div class="text-center py-8">
+                                <div class="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-check text-white text-2xl"></i>
+                                </div>
+                                <h4 class="text-lg font-semibold text-gray-900 mb-2">Basic Information Complete</h4>
+                                <p class="text-gray-600">You can proceed to the next step.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Step 4: Role-Specific Information -->
+                    <div class="form-step" id="step-4">
                         <h3 class="text-2xl font-semibold text-gray-900 mb-6">Additional Information</h3>
                         <!-- Student Fields -->
                         <div id="student-fields" style="display: none;">
@@ -159,6 +242,12 @@
                                 <div>
                                     <label for="date_of_birth" class="block text-sm font-medium text-gray-700 mb-2">Date of Birth <span class="text-red-500">*</span></label>
                                     <input id="date_of_birth" name="date_of_birth" type="date" value="{{ old('date_of_birth') }}" data-must-required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <div class="client-error">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12A9 9 0 11 3 12a9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span></span>
+                                    </div>
                                 </div>
                                 <div>
                                     <label for="gender" class="block text-sm font-medium text-gray-700 mb-2">Gender <span class="text-red-500">*</span></label>
@@ -168,14 +257,52 @@
                                         <option value="female" @if(old('gender')=='female') selected @endif>Female</option>
                                         <option value="other" @if(old('gender')=='other') selected @endif>Other</option>
                                     </select>
+                                    <div class="client-error">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12A9 9 0 11 3 12a9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span></span>
+                                    </div>
                                 </div>
                                 <div>
                                     <label for="admission_date" class="block text-sm font-medium text-gray-700 mb-2">Admission Date <span class="text-red-500">*</span></label>
                                     <input id="admission_date" name="admission_date" type="date" value="{{ old('admission_date') }}" data-must-required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <div class="client-error">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12A9 9 0 11 3 12a9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span></span>
+                                    </div>
                                 </div>
                                 <div>
                                     <label for="academic_year" class="block text-sm font-medium text-gray-700 mb-2">Academic Year <span class="text-red-500">*</span></label>
                                     <input id="academic_year" name="academic_year" type="text" value="{{ old('academic_year') }}" placeholder="e.g. 2023-2024" data-must-required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <div class="client-error">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12A9 9 0 11 3 12a9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span></span>
+                                    </div>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label for="parent_search" class="block text-sm font-medium text-gray-700 mb-2">Parent (Optional)</label>
+                                    <div class="relative">
+                                        <input type="text" id="parent_search" placeholder="Type parent's last name to search..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <input type="hidden" id="selected_parent_id" name="selected_parent_id" value="{{ old('selected_parent_id') }}">
+                                        <div id="parent_dropdown" class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto">
+                                            @foreach($parents as $parent)
+                                                <div class="parent-option px-4 py-2 hover:bg-gray-100 cursor-pointer" 
+                                                     data-id="{{ $parent->id }}" 
+                                                     data-first-name="{{ $parent->first_name }}" 
+                                                     data-last-name="{{ $parent->last_name }}"
+                                                     data-email="{{ $parent->email }}">
+                                                    <div class="parent-display-name">{{ $parent->first_name }} {{ substr($parent->last_name, 0, 1) }}***</div>
+                                                    <div class="parent-full-name hidden">{{ $parent->first_name }} {{ $parent->last_name }}</div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-1">Start typing the parent's last name to search and select</p>
                                 </div>
                             </div>
                         </div>
@@ -185,31 +312,116 @@
                                 <div>
                                     <label for="speciality" class="block text-sm font-medium text-gray-700 mb-2">Speciality <span class="text-red-500">*</span></label>
                                     <input id="speciality" name="speciality" type="text" value="{{ old('speciality') }}" data-must-required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <div class="client-error">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12A9 9 0 11 3 12a9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span></span>
+                                    </div>
                                 </div>
                                 <div>
                                     <label for="teacher_phone" class="block text-sm font-medium text-gray-700 mb-2">Phone <span class="text-red-500">*</span></label>
                                     <input id="teacher_phone" name="teacher_phone" type="text" value="{{ old('teacher_phone') }}" data-must-required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <div class="client-error">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12A9 9 0 11 3 12a9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span></span>
+                                    </div>
                                 </div>
                                 <div>
                                     <label for="date_of_birth_teacher" class="block text-sm font-medium text-gray-700 mb-2">Date of Birth <span class="text-red-500">*</span></label>
-                                    <input id="date_of_birth_teacher" name="date_of_birth" type="date" value="{{ old('date_of_birth') }}" data-must-required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <input id="date_of_birth_teacher" name="teacher_date_of_birth" type="date" value="{{ old('teacher_date_of_birth') }}" data-must-required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <div class="client-error">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12A9 9 0 11 3 12a9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span></span>
+                                    </div>
                                 </div>
                                 <div>
                                     <label for="gender_teacher" class="block text-sm font-medium text-gray-700 mb-2">Gender <span class="text-red-500">*</span></label>
-                                    <select id="gender_teacher" name="gender" data-must-required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <select id="gender_teacher" name="teacher_gender" data-must-required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                         <option value="">Select Gender</option>
-                                        <option value="male" @if(old('gender')=='male') selected @endif>Male</option>
-                                        <option value="female" @if(old('gender')=='female') selected @endif>Female</option>
-                                        <option value="other" @if(old('gender')=='other') selected @endif>Other</option>
+                                        <option value="male" @if(old('teacher_gender')=='male') selected @endif>Male</option>
+                                        <option value="female" @if(old('teacher_gender')=='female') selected @endif>Female</option>
+                                        <option value="other" @if(old('teacher_gender')=='other') selected @endif>Other</option>
                                     </select>
+                                    <div class="client-error">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12A9 9 0 11 3 12a9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span></span>
+                                    </div>
                                 </div>
                                 <div>
                                     <label for="address" class="block text-sm font-medium text-gray-700 mb-2">Address <span class="text-red-500">*</span></label>
                                     <input id="address" name="address" type="text" value="{{ old('address') }}" data-must-required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <div class="client-error">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12A9 9 0 11 3 12a9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span></span>
+                                    </div>
                                 </div>
                                 <div>
                                     <label for="grade" class="block text-sm font-medium text-gray-700 mb-2">Grade <span class="text-red-500">*</span></label>
                                     <input id="grade" name="grade" type="text" value="{{ old('grade') }}" data-must-required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <div class="client-error">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12A9 9 0 11 3 12a9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span></span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="teacher_subject" class="block text-sm font-medium text-gray-700 mb-2">Subject <span class="text-red-500">*</span></label>
+                                    <select id="teacher_subject" name="teacher_subject" data-must-required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option value="">Select Subject</option>
+                                        @foreach($subjects as $subject)
+                                            <option value="{{ $subject->id }}" @if(old('teacher_subject') == $subject->id) selected @endif>{{ $subject->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <div class="client-error">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12A9 9 0 11 3 12a9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span></span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="teacher_classroom" class="block text-sm font-medium text-gray-700 mb-2">Classroom <span class="text-red-500">*</span></label>
+                                    <select id="teacher_classroom" name="teacher_classroom" data-must-required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option value="">Select Classroom</option>
+                                        @foreach($classrooms as $classroom)
+                                            <option value="{{ $classroom->id }}" @if(old('teacher_classroom') == $classroom->id) selected @endif>{{ $classroom->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <div class="client-error">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12A9 9 0 11 3 12a9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span></span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="teacher_academic_year" class="block text-sm font-medium text-gray-700 mb-2">Academic Year <span class="text-red-500">*</span></label>
+                                    <select id="teacher_academic_year" name="teacher_academic_year" data-must-required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option value="">Select Academic Year</option>
+                                        @php
+                                            $currentYear = date('Y');
+                                            $nextYear = $currentYear + 1;
+                                        @endphp
+                                        <option value="{{ $currentYear }}-{{ $nextYear }}" @if(old('teacher_academic_year') == $currentYear.'-'.$nextYear) selected @endif>{{ $currentYear }}-{{ $nextYear }}</option>
+                                        <option value="{{ $currentYear-1 }}-{{ $currentYear }}" @if(old('teacher_academic_year') == ($currentYear-1).'-'.$currentYear) selected @endif>{{ $currentYear-1 }}-{{ $currentYear }}</option>
+                                        <option value="{{ $currentYear+1 }}-{{ $currentYear+2 }}" @if(old('teacher_academic_year') == ($currentYear+1).'-'.($currentYear+2)) selected @endif>{{ $currentYear+1 }}-{{ $currentYear+2 }}</option>
+                                    </select>
+                                    <div class="client-error">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12A9 9 0 11 3 12a9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span></span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -227,8 +439,8 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Step 4: Optional Information -->
-                    <div class="form-step" id="step-4">
+                    <!-- Step 5: Optional Information -->
+                    <div class="form-step" id="step-5">
                         <h3 class="text-2xl font-semibold text-gray-900 mb-6">Optional Information</h3>
                         <!-- Student Optional Fields -->
                         <div id="student-optional" style="display: none;">
@@ -244,7 +456,7 @@
                             </div>
                             <div class="mt-6">
                                 <label for="address_student" class="block text-sm font-medium text-gray-700 mb-2">Address</label>
-                                <textarea id="address_student" name="address" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">{{ old('address') }}</textarea>
+                                <textarea id="address_student" name="student_address" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">{{ old('student_address') }}</textarea>
                             </div>
                             <div class="mt-6">
                                 <label for="medical_conditions" class="block text-sm font-medium text-gray-700 mb-2">Medical Conditions</label>
@@ -256,7 +468,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label for="profile_photo_teacher" class="block text-sm font-medium text-gray-700 mb-2">Profile Photo</label>
-                                    <input id="profile_photo_teacher" name="profile_photo" type="file" accept="image/*" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <input id="profile_photo_teacher" name="teacher_profile_photo" type="file" accept="image/*" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                 </div>
                             </div>
                 </div>
@@ -265,35 +477,47 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label for="date_of_birth_parent" class="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
-                                    <input id="date_of_birth_parent" name="date_of_birth" type="date" value="{{ old('date_of_birth') }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <input id="date_of_birth_parent" name="parent_date_of_birth" type="date" value="{{ old('parent_date_of_birth') }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             </div>
             <div>
                                     <label for="profile_photo_parent" class="block text-sm font-medium text-gray-700 mb-2">Profile Photo</label>
-                                    <input id="profile_photo_parent" name="profile_photo" type="file" accept="image/*" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <input id="profile_photo_parent" name="parent_profile_photo" type="file" accept="image/*" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                 </div>
                             </div>
                             <div class="mt-6">
                                 <label for="address_parent" class="block text-sm font-medium text-gray-700 mb-2">Address</label>
-                                <textarea id="address_parent" name="address" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">{{ old('address') }}</textarea>
+                                <textarea id="address_parent" name="parent_address" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">{{ old('parent_address') }}</textarea>
                             </div>
                         </div>
                 </div>
-                    <!-- Step 5: Security -->
-                    <div class="form-step" id="step-5">
+                    <!-- Step 6: Security -->
+                    <div class="form-step" id="step-6">
                         <h3 class="text-2xl font-semibold text-gray-900 mb-6">Create Your Password</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password <span class="text-red-500">*</span></label>
                                 <input id="password" name="password" type="password" data-must-required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <div class="client-error">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12A9 9 0 11 3 12a9 9 0 0118 0z"/>
+                                    </svg>
+                                    <span></span>
+                                </div>
             </div>
             <div>
                                 <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-2">Confirm Password <span class="text-red-500">*</span></label>
                                 <input id="password_confirmation" name="password_confirmation" type="password" data-must-required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <div class="client-error">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12A9 9 0 11 3 12a9 9 0 0118 0z"/>
+                                    </svg>
+                                    <span></span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <!-- Step 6: Preview -->
-                    <div class="form-step" id="step-6">
+                    <!-- Step 7: Preview -->
+                    <div class="form-step" id="step-7">
                         <h3 class="text-2xl font-semibold text-gray-900 mb-6">Preview Your Information</h3>
                         <div class="bg-gray-50 rounded-lg p-6">
                             <div id="preview-content">
@@ -328,7 +552,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             let currentStep = 1;
-            const totalSteps = 6;
+            const totalSteps = 7;
             let selectedRole = document.getElementById('selected-role').value || '';
 
             const form = document.getElementById('register-form');
@@ -348,29 +572,154 @@
                     this.classList.add('selected');
                     selectedRole = this.dataset.role;
                     document.getElementById('selected-role').value = selectedRole;
+                    console.log('Role selected:', selectedRole); // Debug
                 });
             });
+
+            // --- SCHOOL SELECTION ---
+            const schoolSelect = document.getElementById('school_id');
+            const classRoomSelect = document.getElementById('class_room_id');
+            
+            if (schoolSelect && classRoomSelect) {
+                schoolSelect.addEventListener('change', function() {
+                    const selectedSchoolId = this.value;
+                    const classRoomOptions = classRoomSelect.querySelectorAll('option');
+                    
+                    classRoomOptions.forEach(option => {
+                        if (option.value === '') {
+                            // Keep the "Select a classroom" option
+                            option.style.display = 'block';
+                        } else {
+                            const schoolId = option.dataset.school;
+                            if (schoolId === selectedSchoolId) {
+                                option.style.display = 'block';
+                            } else {
+                                option.style.display = 'none';
+                            }
+                        }
+                    });
+                    
+                    // Reset classroom selection when school changes
+                    classRoomSelect.value = '';
+                });
+            }
+
+            // --- CLASSROOM SELECTION ---
+            if (classRoomSelect) {
+                classRoomSelect.addEventListener('change', function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    if (selectedOption && selectedOption.value !== '') {
+                        const academicYear = selectedOption.dataset.academicYear;
+                        const academicYearInput = document.getElementById('academic_year');
+                        if (academicYearInput) {
+                            academicYearInput.value = academicYear;
+                        }
+                    }
+                });
+            }
+
+            // --- PARENT SEARCH ---
+            const parentSearch = document.getElementById('parent_search');
+            const parentDropdown = document.getElementById('parent_dropdown');
+            const selectedParentId = document.getElementById('selected_parent_id');
+            const parentOptions = document.querySelectorAll('.parent-option');
+
+            if (parentSearch && parentDropdown) {
+                parentSearch.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase().trim();
+                    
+                    if (searchTerm.length === 0) {
+                        // Show all parents with hidden names
+                        parentOptions.forEach(option => {
+                            option.style.display = 'block';
+                            option.querySelector('.parent-display-name').style.display = 'block';
+                            option.querySelector('.parent-full-name').style.display = 'none';
+                        });
+                        parentDropdown.classList.add('hidden');
+                        return;
+                    }
+
+                    let hasMatches = false;
+                    parentOptions.forEach(option => {
+                        const firstName = option.dataset.firstName.toLowerCase();
+                        const lastName = option.dataset.lastName.toLowerCase();
+                        const fullName = `${firstName} ${lastName}`;
+                        
+                        if (lastName.includes(searchTerm) || fullName.includes(searchTerm)) {
+                            option.style.display = 'block';
+                            option.querySelector('.parent-display-name').style.display = 'none';
+                            option.querySelector('.parent-full-name').style.display = 'block';
+                            hasMatches = true;
+                        } else {
+                            option.style.display = 'none';
+                        }
+                    });
+
+                    if (hasMatches) {
+                        parentDropdown.classList.remove('hidden');
+                    } else {
+                        parentDropdown.classList.add('hidden');
+                    }
+                });
+
+                // Handle parent selection
+                parentOptions.forEach(option => {
+                    option.addEventListener('click', function() {
+                        const parentId = this.dataset.id;
+                        const firstName = this.dataset.firstName;
+                        const lastName = this.dataset.lastName;
+                        
+                        selectedParentId.value = parentId;
+                        parentSearch.value = `${firstName} ${lastName}`;
+                        parentDropdown.classList.add('hidden');
+                        
+                        // Add visual feedback
+                        parentSearch.classList.add('border-green-500');
+                        setTimeout(() => {
+                            parentSearch.classList.remove('border-green-500');
+                        }, 2000);
+                    });
+                });
+
+                // Hide dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!parentSearch.contains(e.target) && !parentDropdown.contains(e.target)) {
+                        parentDropdown.classList.add('hidden');
+                    }
+                });
+
+                // Clear selection when search is cleared
+                parentSearch.addEventListener('blur', function() {
+                    if (this.value.trim() === '') {
+                        selectedParentId.value = '';
+                    }
+                });
+            }
 
             // --- NAVIGATION ---
             function updateButtons() {
                 prevBtn.style.display = currentStep > 1 ? 'inline-flex' : 'none';
-                nextBtn.style.display = currentStep < 5 ? 'inline-flex' : 'none';
-                previewBtn.style.display = currentStep === 5 ? 'inline-flex' : 'none';
+                nextBtn.style.display = currentStep < 6 ? 'inline-flex' : 'none';
+                previewBtn.style.display = currentStep === 6 ? 'inline-flex' : 'none';
                 submitBtn.style.display = currentStep === totalSteps ? 'inline-flex' : 'none';
                 
-                // Ensure preview button leads to preview step
-                if(currentStep === 5) {
+                // Set up button click handlers
+                if (currentStep === 6) {
                     previewBtn.onclick = () => {
-                        if (validateStep(5)) {
+                        if (validateStep(6)) {
                             currentStep++;
                             updateView();
                         }
                     };
                 } else {
                      nextBtn.onclick = () => {
+                        console.log('Next button clicked for step:', currentStep, 'selectedRole:', selectedRole);
                         if (validateStep(currentStep)) {
+                            console.log('Validation passed, moving to step:', currentStep + 1);
                            currentStep++;
                            updateView();
+                        } else {
+                            console.log('Validation failed');
                         }
                     };
                 }
@@ -395,7 +744,8 @@
 
                 // Show current step form
                 formSteps.forEach((step, index) => {
-                    step.classList.toggle('active', (index + 1) === currentStep);
+                    const shouldBeActive = (index + 1) === currentStep;
+                    step.classList.toggle('active', shouldBeActive);
                 });
                 
                 // Show role-specific fields within steps
@@ -418,15 +768,27 @@
                     if (el) el.style.display = 'none';
                 });
                 
+                // Show/hide classroom selection based on role
+                const classroomSelection = document.getElementById('classroom-selection');
+                const nonStudentMessage = document.getElementById('non-student-message');
+                
                 if (currentStep === 3) {
-                    if (selectedRole) {
-                        const step3Fields = document.getElementById(`${selectedRole}-fields`);
-                        if(step3Fields) step3Fields.style.display = 'block';
+                    if (selectedRole === 'student') {
+                        if (classroomSelection) classroomSelection.style.display = 'block';
+                        if (nonStudentMessage) nonStudentMessage.style.display = 'none';
+                    } else {
+                        if (classroomSelection) classroomSelection.style.display = 'none';
+                        if (nonStudentMessage) nonStudentMessage.style.display = 'block';
                     }
                 } else if (currentStep === 4) {
                      if (selectedRole) {
-                        const step4Fields = document.getElementById(`${selectedRole}-optional`);
+                        const step4Fields = document.getElementById(`${selectedRole}-fields`);
                         if(step4Fields) step4Fields.style.display = 'block';
+                    }
+                } else if (currentStep === 5) {
+                     if (selectedRole) {
+                        const step5Fields = document.getElementById(`${selectedRole}-optional`);
+                        if(step5Fields) step5Fields.style.display = 'block';
                     }
                 }
             }
@@ -435,7 +797,6 @@
             function validateStep(step) {
                 clearAllErrors();
                 let isValid = true;
-                let fieldsToValidate = [];
 
                 if (step === 1) {
                     if (!selectedRole) {
@@ -443,26 +804,64 @@
                         alert('Please select a role to continue.');
                     }
                 } else if (step === 2) {
-                    fieldsToValidate = ['first_name', 'last_name', 'email', 'school_id'];
-                } else if (step === 3 && selectedRole === 'student') {
-                    fieldsToValidate = ['date_of_birth', 'gender', 'admission_date', 'academic_year'];
-                } else if (step === 3 && selectedRole === 'teacher') {
-                    fieldsToValidate = ['speciality', 'teacher_phone', 'date_of_birth_teacher', 'gender_teacher', 'address', 'grade'];
-                } else if (step === 5) {
-                    fieldsToValidate = ['password', 'password_confirmation'];
-                }
-
-                fieldsToValidate.forEach(name => {
-                    const input = form.querySelector(`[name="${name}"]`);
-                    if (input && !input.value) {
-                        isValid = false;
-                        showError(input, `${input.labels[0].innerText.replace('*','').trim()} is required.`);
+                    const fields = ['first_name', 'last_name', 'email', 'school_id'];
+                    fields.forEach(field => {
+                        const input = form.querySelector(`[name="${field}"]`);
+                        if (input && !input.value.trim()) {
+                            isValid = false;
+                            const label = input.labels[0];
+                            const fieldName = label ? label.innerText.replace('*','').trim() : field;
+                            showError(input, `${fieldName} is required.`);
+                        }
+                    });
+                } else if (step === 3) {
+                    if (selectedRole === 'student') {
+                        const classRoomInput = form.querySelector('[name="class_room_id"]');
+                        if (classRoomInput && !classRoomInput.value.trim()) {
+                            isValid = false;
+                            showError(classRoomInput, 'Classroom is required.');
+                        }
                     }
-                });
-                
-                if (step === 5 && form.querySelector('[name="password"]').value !== form.querySelector('[name="password_confirmation"]').value) {
+                } else if (step === 4) {
+                    if (selectedRole === 'student') {
+                        const fields = ['date_of_birth', 'gender', 'admission_date', 'academic_year'];
+                        fields.forEach(field => {
+                            const input = form.querySelector(`[name="${field}"]`);
+                            if (input && !input.value.trim()) {
+                                isValid = false;
+                                const label = input.labels[0];
+                                const fieldName = label ? label.innerText.replace('*','').trim() : field;
+                                showError(input, `${fieldName} is required.`);
+                            }
+                        });
+                    } else if (selectedRole === 'teacher') {
+                        const teacherFields = ['speciality', 'teacher_phone', 'teacher_date_of_birth', 'teacher_gender', 'address', 'grade', 'teacher_subject', 'teacher_classroom', 'teacher_academic_year'];
+                        teacherFields.forEach(field => {
+                            const input = form.querySelector(`[name="${field}"]`);
+                            if (input && !input.value.trim()) {
+                                isValid = false;
+                                const label = input.labels[0];
+                                const fieldName = label ? label.innerText.replace('*','').trim() : field;
+                                showError(input, `${fieldName} is required.`);
+                            }
+                        });
+                    }
+                } else if (step === 6) {
+                    const password = form.querySelector('[name="password"]');
+                    const passwordConfirmation = form.querySelector('[name="password_confirmation"]');
+                    
+                    if (password && !password.value.trim()) {
+                        isValid = false;
+                        showError(password, 'Password is required.');
+                    }
+                    if (passwordConfirmation && !passwordConfirmation.value.trim()) {
+                        isValid = false;
+                        showError(passwordConfirmation, 'Password confirmation is required.');
+                    }
+                    if (password && passwordConfirmation && password.value !== passwordConfirmation.value) {
                     isValid = false;
-                    showError(form.querySelector('[name="password_confirmation"]'), 'Passwords do not match.');
+                        showError(passwordConfirmation, 'Passwords do not match.');
+                    }
                 }
                 
                 return isValid;
@@ -484,19 +883,115 @@
             
             // --- FORM SUBMISSION ---
             form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Validate all steps before submission
+                let allValid = true;
+                
+                // Validate step 1 (role selection)
+                if (!selectedRole) {
+                    allValid = false;
+                    alert('Please select a role to continue.');
+                    return;
+                }
+                
+                // Validate step 2 (basic info)
+                const basicFields = ['first_name', 'last_name', 'email', 'school_id'];
+                basicFields.forEach(field => {
+                    const input = form.querySelector(`[name="${field}"]`);
+                    if (input && !input.value.trim()) {
+                        allValid = false;
+                        const label = input.labels[0];
+                        const fieldName = label ? label.innerText.replace('*','').trim() : field;
+                        showError(input, `${fieldName} is required.`);
+                    }
+                });
+                
+                // Validate step 3 (classroom selection for students)
+                if (selectedRole === 'student') {
+                    const classRoomId = form.querySelector('[name="class_room_id"]');
+                    if (classRoomId && !classRoomId.value.trim()) {
+                        allValid = false;
+                        showError(classRoomId, 'Classroom is required.');
+                    }
+                }
+                
+                // Validate step 4 (role-specific fields)
+                if (selectedRole === 'student') {
+                    const studentFields = ['date_of_birth', 'gender', 'admission_date', 'academic_year'];
+                    studentFields.forEach(field => {
+                        const input = form.querySelector(`[name="${field}"]`);
+                        if (input && !input.value.trim()) {
+                            allValid = false;
+                            const label = input.labels[0];
+                            const fieldName = label ? label.innerText.replace('*','').trim() : field;
+                            showError(input, `${fieldName} is required.`);
+                        }
+                    });
+                } else if (selectedRole === 'teacher') {
+                    const teacherFields = ['speciality', 'teacher_phone', 'teacher_date_of_birth', 'teacher_gender', 'address', 'grade', 'teacher_subject', 'teacher_classroom', 'teacher_academic_year'];
+                    teacherFields.forEach(field => {
+                        const input = form.querySelector(`[name="${field}"]`);
+                        if (input && !input.value.trim()) {
+                            allValid = false;
+                            const label = input.labels[0];
+                            const fieldName = label ? label.innerText.replace('*','').trim() : field;
+                            showError(input, `${fieldName} is required.`);
+                        }
+                    });
+                }
+                
+                // Validate step 5 (password)
+                const password = form.querySelector('[name="password"]');
+                const passwordConfirmation = form.querySelector('[name="password_confirmation"]');
+                if (password && !password.value.trim()) {
+                    allValid = false;
+                    showError(password, 'Password is required.');
+                }
+                if (passwordConfirmation && !passwordConfirmation.value.trim()) {
+                    allValid = false;
+                    showError(passwordConfirmation, 'Password confirmation is required.');
+                }
+                if (password && passwordConfirmation && password.value !== passwordConfirmation.value) {
+                    allValid = false;
+                    showError(passwordConfirmation, 'Passwords do not match.');
+                }
+                
+                if (allValid) {
                 // Temporarily remove 'required' from all elements to bypass browser validation on hidden fields
-                const form = document.getElementById('register-form');
                 form.querySelectorAll('[required]').forEach(el => {
                     el.removeAttribute('required');
                 });
-                // Server-side validation will handle the rest.
+                    
+                    // Submit the form
+                    form.submit();
+                } else {
+                    // Show error message at the top
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6';
+                    errorDiv.innerHTML = `
+                        <div class="font-medium">Please fix the following errors:</div>
+                        <ul class="list-disc list-inside mt-2 space-y-1">
+                            <li>Please fill in all required fields marked with *</li>
+                        </ul>
+                    `;
+                    
+                    // Remove any existing error messages
+                    const existingError = form.querySelector('.bg-red-50');
+                    if (existingError) {
+                        existingError.remove();
+                    }
+                    
+                    // Insert error message at the top of the form
+                    form.insertBefore(errorDiv, form.firstChild);
+                    
+                    // Scroll to the first error
+                    const firstError = form.querySelector('.input-error');
+                    if (firstError) {
+                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
             });
-
-            function validateForm() {
-                // Client-side validation is now handled per step, so this function is less critical on final submit.
-                // We can keep the detailed error display logic here if we want to run it one last time.
-                return true; 
-            }
             
             // --- PREVIEW ---
             function generatePreview() {
@@ -525,12 +1020,13 @@
                     html += `<div><span class="font-medium">Gender:</span> ${formData.get('gender') || 'Not selected'}</div>`;
                     html += `<div><span class="font-medium">Admission Date:</span> ${formData.get('admission_date') || 'Not provided'}</div>`;
                     html += `<div><span class="font-medium">Academic Year:</span> ${formData.get('academic_year') || 'Not provided'}</div>`;
+                    html += `<div><span class="font-medium">Classroom:</span> ${document.getElementById('class_room_id').options[document.getElementById('class_room_id').selectedIndex]?.text || 'Not selected'}</div>`;
                     html += '</div></div>';
                     
                     // Optional student fields
                     const bloodGroup = formData.get('blood_group');
                     const emergencyContact = formData.get('emergency_contact');
-                    const address = formData.get('address');
+                    const address = formData.get('student_address');
                     const medicalConditions = formData.get('medical_conditions');
                     if (bloodGroup || emergencyContact || address || medicalConditions) {
                         html += '<div class="border-b pb-4">';
@@ -549,10 +1045,13 @@
                     html += '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
                     html += `<div><span class="font-medium">Speciality:</span> ${formData.get('speciality') || 'Not provided'}</div>`;
                     html += `<div><span class="font-medium">Phone:</span> ${formData.get('teacher_phone') || 'Not provided'}</div>`;
-                    html += `<div><span class="font-medium">Date of Birth:</span> ${formData.get('date_of_birth') || 'Not provided'}</div>`;
-                    html += `<div><span class="font-medium">Gender:</span> ${formData.get('gender') || 'Not selected'}</div>`;
+                    html += `<div><span class="font-medium">Date of Birth:</span> ${formData.get('teacher_date_of_birth') || 'Not provided'}</div>`;
+                    html += `<div><span class="font-medium">Gender:</span> ${formData.get('teacher_gender') || 'Not selected'}</div>`;
                     html += `<div><span class="font-medium">Address:</span> ${formData.get('address') || 'Not provided'}</div>`;
                     html += `<div><span class="font-medium">Grade:</span> ${formData.get('grade') || 'Not provided'}</div>`;
+                    html += `<div><span class="font-medium">Subject:</span> ${document.getElementById('teacher_subject').options[document.getElementById('teacher_subject').selectedIndex]?.text || 'Not selected'}</div>`;
+                    html += `<div><span class="font-medium">Classroom:</span> ${document.getElementById('teacher_classroom').options[document.getElementById('teacher_classroom').selectedIndex]?.text || 'Not selected'}</div>`;
+                    html += `<div><span class="font-medium">Academic Year:</span> ${document.getElementById('teacher_academic_year').options[document.getElementById('teacher_academic_year').selectedIndex]?.text || 'Not selected'}</div>`;
                     html += '</div></div>';
                 } else if (role === 'parent') {
                     html += '<div class="border-b pb-4">';
@@ -563,8 +1062,8 @@
                     html += '</div></div>';
                     
                     // Optional parent fields
-                    const dateOfBirth = formData.get('date_of_birth');
-                    const address = formData.get('address');
+                    const dateOfBirth = formData.get('parent_date_of_birth');
+                    const address = formData.get('parent_address');
                     if (dateOfBirth || address) {
                         html += '<div class="border-b pb-4">';
                         html += '<h4 class="text-lg font-semibold text-gray-900 mb-3">Additional Information</h4>';
@@ -590,9 +1089,9 @@
         });
 
         function updateRequiredAttributes() {
-            // Retire 'required' partout
+            // Remove 'required' from all fields
             document.querySelectorAll('#register-form [required]').forEach(el => el.removeAttribute('required'));
-            // Ajoute 'required' seulement sur les champs visibles de l'étape active
+            // Add 'required' only to visible fields in the active step
             document.querySelectorAll('.form-step.active [data-must-required]').forEach(el => {
                 el.setAttribute('required', 'required');
             });

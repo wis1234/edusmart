@@ -2,359 +2,410 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
-import jwt from 'jsonwebtoken';
-import axios from 'axios';
+import dotenv from 'dotenv';
+
+// Charger les variables d'environnement
+dotenv.config();
 
 const app = express();
-const server = createServer(app);
-const io = new Server(server, {
-    cors: {
-        origin: process.env.FRONTEND_URL || "https://edusmart.erequest.net",
-        methods: ["GET", "POST"],
-        credentials: true
+const httpServer = createServer(app);
+
+// Configuration CORS améliorée
+const allowedOrigins = [
+  'https://edusmart.erequest.net',
+  'http://localhost:3000',
+  'http://localhost:8000'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Permettre les requêtes sans origin (comme les apps mobiles)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
     }
+  },
+  credentials: true
+}));
+
+// Configuration Socket.IO
+const io = new Server(httpServer, {
+  path: '/socket.io',
+  cors: {
+    origin: allowedOrigins,
+    methods: ['GET', 'POST'],
+    credentials: true
+  },
+  transports: ['websocket', 'polling'],
+  pingInterval: 25000,
+  pingTimeout: 20000,
+  maxHttpBufferSize: 1e8, // 100MB pour les gros fichiers
+  allowEIO3: true // Compatibilité avec les anciennes versions
 });
 
-// Middleware
-app.use(cors({
-    origin: process.env.FRONTEND_URL || "https://edusmart.erequest.net",
-    credentials: true
-}));
-app.use(express.json());
+// Gestion des participants par salle
+// Chaque participant : { socketId, userName, profilePhoto, isMuted, isVideoOff, isScreenSharing, joinedAt, lastActivity }
+const participants = {}; // { roomId: { socketId: { userName, profilePhoto, isMuted, isVideoOff, isScreenSharing, joinedAt, lastActivity } } }
 
-// Configuration
-const PORT = process.env.PORT || process.env.SIGNAL_PORT || 3001;
-const LARAVEL_URL = process.env.LARAVEL_URL || 'https://edusmart.erequest.net';
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+// Limites de sécurité
+const MAX_PARTICIPANTS_PER_ROOM = 50;
+const MAX_ROOM_NAME_LENGTH = 100;
+const MAX_USER_NAME_LENGTH = 50;
 
-// Store active rooms and participants
-// Each participant: { userId, socketId, name, profile_photo, isMuted, isVideoOff, isScreenSharing, isHost, isSpeaking }
-const rooms = new Map();
-const userSockets = new Map();
-
-// Middleware pour vérifier l'authentification
-const authenticateToken = async (socket, next) => {
-    try {
-        const token = socket.handshake.auth.token;
-        if (!token) {
-            return next(new Error('Authentication error'));
-        }
-
-        // Vérifier le token avec Laravel
-        const response = await axios.get(`${LARAVEL_URL}/api/user`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        socket.user = response.data;
-        next();
-    } catch (error) {
-        console.error('Authentication error:', error.message);
-        next(new Error('Authentication error'));
+// Fonction utilitaire pour nettoyer les salles vides
+const cleanupEmptyRooms = () => {
+  Object.keys(participants).forEach(roomId => {
+    if (Object.keys(participants[roomId]).length === 0) {
+      delete participants[roomId];
+      console.log(`🗑️ Salle ${roomId} supprimée (vide)`);
     }
+  });
 };
 
-io.use(authenticateToken);
+// Fonction utilitaire pour obtenir la liste des participants
+const getParticipantsList = (roomId) => {
+  if (!participants[roomId]) return [];
+  
+  return Object.entries(participants[roomId]).map(([socketId, user]) => ({
+    socketId,
+    ...user
+  }));
+};
 
-// Helper to build user display name and photo
-function getUserDisplay(socket) {
-    if (!socket || !socket.user) return { name: 'Unknown', profile_photo: null };
-    const user = socket.user;
-    const name = [user.first_name, user.last_name].filter(Boolean).join(' ').trim();
-    return {
-        name: name || 'Unknown',
-        profile_photo: user.profile_photo_url || null
-    };
-}
+// Fonction pour nettoyer les participants inactifs
+const cleanupInactiveParticipants = () => {
+  const now = new Date();
+  const inactiveThreshold = 5 * 60 * 1000; // 5 minutes
+  
+  Object.keys(participants).forEach(roomId => {
+    Object.keys(participants[roomId]).forEach(socketId => {
+      const participant = participants[roomId][socketId];
+      const lastActivity = new Date(participant.lastActivity || participant.joinedAt);
+      
+      if (now - lastActivity > inactiveThreshold) {
+        console.log(`⏰ Participant inactif supprimé: ${participant.userName} (${socketId})`);
+        delete participants[roomId][socketId];
+      }
+    });
+  });
+  
+  cleanupEmptyRooms();
+};
 
-// Gestion des connexions Socket.IO
+// Middleware d'authentification amélioré
+io.use(async (socket, next) => {
+  try {
+    const token = socket.handshake.auth.token;
+    const roomId = socket.handshake.auth.roomId;
+    
+    // Validation basique du token
+    if (!token) {
+      return next(new Error('Token manquant'));
+    }
+    
+    // Validation basique de la roomId
+    if (!roomId || typeof roomId !== 'string') {
+      return next(new Error('RoomId invalide'));
+    }
+    
+    // Ici vous pouvez ajouter une validation plus poussée avec Laravel
+    // const user = await validateTokenWithLaravel(token);
+    // if (!user) return next(new Error('Token invalide'));
+    
+    // Stocker les infos dans le socket pour usage ultérieur
+    socket.userData = { token, roomId };
+    
+    next();
+  } catch (err) {
+    console.error('Erreur d\'authentification:', err.message);
+    next(new Error('Authentification échouée'));
+  }
+});
+
+// Gestion des connexions
 io.on('connection', (socket) => {
-    console.log(`User ${socket.user.id} connected: ${socket.id}`);
+  console.log('Nouvelle connexion:', socket.id, 'pour la salle:', socket.userData?.roomId);
 
-    // Store the user's socket
-    userSockets.set(socket.user.id, socket.id);
+  // Quand un utilisateur rejoint une salle
+  socket.on('join-room', (roomId, userName, profilePhoto = null) => {
+    try {
+      // Validation des données
+      if (!roomId || !userName) {
+        socket.emit('error', { message: 'RoomId et userName requis' });
+        return;
+      }
 
-    // Helper to get or create participant object
-    function getOrCreateParticipant(room, socket) {
-        let participant = room.participants.get(socket.user.id);
-        if (!participant) {
-            const display = getUserDisplay(socket);
-            participant = {
-                userId: socket.user.id,
-                socketId: socket.id,
-                name: display.name,
-                profile_photo: display.profile_photo,
-                isMuted: false,
-                isVideoOff: false,
-                isScreenSharing: false,
-                isHost: false,
-                isSpeaking: false
-            };
-            room.participants.set(socket.user.id, participant);
-        } else {
-            participant.socketId = socket.id;
-        }
-        return participant;
+      socket.join(roomId);
+
+      // Initialise la salle si besoin
+      if (!participants[roomId]) {
+        participants[roomId] = {};
+        console.log(`Nouvelle salle créée: ${roomId}`);
+      }
+
+      // Ajoute le participant avec ses infos de base
+      participants[roomId][socket.id] = {
+        userName: userName.trim(),
+        profilePhoto,
+        isMuted: false,
+        isVideoOff: false,
+        isScreenSharing: false,
+        joinedAt: new Date().toISOString(),
+        lastActivity: new Date().toISOString()
+      };
+
+      // Envoie la liste à tous les clients de la salle
+      const participantsList = getParticipantsList(roomId);
+      io.to(roomId).emit('participants-list', participantsList);
+
+      // Notifie les autres participants
+      socket.to(roomId).emit('user-joined', { 
+        socketId: socket.id, 
+        userName: userName.trim(), 
+        profilePhoto 
+      });
+
+      // Confirmation au participant qui vient de rejoindre
+      socket.emit('room-joined', {
+        roomId,
+        participants: participantsList,
+        yourSocketId: socket.id
+      });
+
+      console.log(`Socket ${socket.id} (${userName}) a rejoint la salle ${roomId}`);
+      console.log(`Participants dans ${roomId}:`, participantsList.length);
+      
+    } catch (error) {
+      console.error('Erreur lors de la jointure de salle:', error);
+      socket.emit('error', { message: 'Erreur lors de la jointure de salle' });
     }
+  });
 
-    // Join a video call room
-    socket.on('join-room', async (roomId) => {
-        try {
-            // Verify access with Laravel
-            const response = await axios.get(`${LARAVEL_URL}/api/video-calls/${roomId}/verify-access`, {
-                headers: { 'Authorization': `Bearer ${socket.handshake.auth.token}` }
+  // Mise à jour du statut (mute/unmute, vidéo on/off)
+  socket.on('update-status', (roomId, status) => {
+    try {
+      if (!participants[roomId] || !participants[roomId][socket.id]) {
+        socket.emit('error', { message: 'Participant non trouvé dans cette salle' });
+        return;
+      }
+
+      const participant = participants[roomId][socket.id];
+      
+      // Mise à jour des statuts
+      if ('isMuted' in status) participant.isMuted = status.isMuted;
+      if ('isVideoOff' in status) participant.isVideoOff = status.isVideoOff;
+      
+      // Envoie la liste mise à jour
+      const participantsList = getParticipantsList(roomId);
+      io.to(roomId).emit('participants-list', participantsList);
+      
+      // Notifie les autres du changement de statut
+      socket.to(roomId).emit('user-status-updated', {
+        socketId: socket.id,
+        status: {
+          isMuted: participant.isMuted,
+          isVideoOff: participant.isVideoOff
+        }
+      });
+
+      console.log(`Statut mis à jour pour ${socket.id} dans ${roomId}:`, status);
+      
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du statut:', error);
+      socket.emit('error', { message: 'Erreur lors de la mise à jour du statut' });
+    }
+  });
+
+  // Partage d'écran
+  socket.on('screen-share-start', (roomId) => {
+    try {
+      if (!participants[roomId] || !participants[roomId][socket.id]) {
+        socket.emit('error', { message: 'Participant non trouvé dans cette salle' });
+        return;
+      }
+
+      participants[roomId][socket.id].isScreenSharing = true;
+      
+      const participantsList = getParticipantsList(roomId);
+      io.to(roomId).emit('participants-list', participantsList);
+      
+      socket.to(roomId).emit('screen-share-started', { 
+        socketId: socket.id,
+        userName: participants[roomId][socket.id].userName
+      });
+
+      console.log(`Partage d'écran démarré par ${socket.id} dans ${roomId}`);
+      
+    } catch (error) {
+      console.error('Erreur lors du démarrage du partage d\'écran:', error);
+      socket.emit('error', { message: 'Erreur lors du démarrage du partage d\'écran' });
+    }
+  });
+
+  socket.on('screen-share-stop', (roomId) => {
+    try {
+      if (!participants[roomId] || !participants[roomId][socket.id]) {
+        socket.emit('error', { message: 'Participant non trouvé dans cette salle' });
+        return;
+      }
+
+      participants[roomId][socket.id].isScreenSharing = false;
+      
+      const participantsList = getParticipantsList(roomId);
+      io.to(roomId).emit('participants-list', participantsList);
+      
+      socket.to(roomId).emit('screen-share-stopped', { 
+        socketId: socket.id,
+        userName: participants[roomId][socket.id].userName
+      });
+
+      console.log(`Partage d'écran arrêté par ${socket.id} dans ${roomId}`);
+      
+    } catch (error) {
+      console.error('Erreur lors de l\'arrêt du partage d\'écran:', error);
+      socket.emit('error', { message: 'Erreur lors de l\'arrêt du partage d\'écran' });
+    }
+  });
+
+  // Signalisation WebRTC
+  socket.on('signal', (data) => {
+    try {
+      if (!data.roomId || !data.to) {
+        socket.emit('error', { message: 'Données de signalisation invalides' });
+        return;
+      }
+
+      socket.to(data.roomId).emit('signal', {
+        ...data,
+        from: socket.id
+      });
+
+      console.log(`Signal envoyé de ${socket.id} vers ${data.to} dans ${data.roomId}`);
+      
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi du signal:', error);
+      socket.emit('error', { message: 'Erreur lors de l\'envoi du signal' });
+    }
+  });
+
+  // Message de chat
+  socket.on('chat-message', (roomId, message) => {
+    try {
+      if (!participants[roomId] || !participants[roomId][socket.id]) {
+        socket.emit('error', { message: 'Participant non trouvé dans cette salle' });
+        return;
+      }
+
+      const participant = participants[roomId][socket.id];
+      
+      io.to(roomId).emit('chat-message', {
+        socketId: socket.id,
+        userName: participant.userName,
+        message: message.trim(),
+        timestamp: new Date().toISOString()
+      });
+
+      console.log(`Message de ${participant.userName} dans ${roomId}: ${message}`);
+      
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi du message:', error);
+      socket.emit('error', { message: 'Erreur lors de l\'envoi du message' });
+    }
+  });
+
+  // Quand un utilisateur quitte (déconnexion)
+  socket.on('disconnecting', () => {
+    try {
+      for (const roomId of socket.rooms) {
+        if (roomId !== socket.id && participants[roomId]) {
+          const participant = participants[roomId][socket.id];
+          
+          if (participant) {
+            delete participants[roomId][socket.id];
+            
+            // Met à jour la liste pour tous
+            const participantsList = getParticipantsList(roomId);
+            io.to(roomId).emit('participants-list', participantsList);
+            
+            // Notifie les autres de la déconnexion
+            socket.to(roomId).emit('user-left', { 
+              socketId: socket.id,
+              userName: participant.userName
             });
 
-            if (!response.data.canAccess) {
-                socket.emit('error', { message: 'Access denied to this room' });
-                return;
-            }
-
-            socket.join(roomId);
-
-            // Initialize the room if it doesn't exist
-            if (!rooms.has(roomId)) {
-                rooms.set(roomId, {
-                    participants: new Map(), // userId -> participant object
-                    host: null
-                });
-            }
-
-            const room = rooms.get(roomId);
-            const participant = getOrCreateParticipant(room, socket);
-            
-            // Set as host if first participant
-            if (room.participants.size === 0) {
-                participant.isHost = true;
-                room.host = socket.user.id;
-            }
-            
-            room.participants.set(socket.user.id, participant);
-
-            // Notify others in the room
-            socket.to(roomId).emit('user-joined', participant);
-
-            // Build the full participants list
-            const participants = Array.from(room.participants.values());
-
-            // Send the full list to everyone in the room
-            io.to(roomId).emit('participants-list', participants);
-
-            socket.emit('room-joined', {
-                roomId,
-                participants,
-                isHost: participant.isHost
-            });
-
-            console.log(`User ${socket.user.id} joined room ${roomId}`);
-
-        } catch (error) {
-            console.error('Error joining room:', error);
-            socket.emit('error', { message: 'Failed to join room' });
+            console.log(`Socket ${socket.id} (${participant.userName}) a quitté la salle ${roomId}`);
+          }
         }
-    });
-
-    // Signalisation WebRTC - Offre
-    socket.on('offer', (data) => {
-        socket.to(data.roomId).emit('offer', {
-            offer: data.offer,
-            from: socket.user.id,
-            fromSocketId: socket.id
-        });
-    });
-
-    // Signalisation WebRTC - Réponse
-    socket.on('answer', (data) => {
-        socket.to(data.roomId).emit('answer', {
-            answer: data.answer,
-            from: socket.user.id,
-            fromSocketId: socket.id
-        });
-    });
-
-    // Signalisation WebRTC - ICE Candidate
-    socket.on('ice-candidate', (data) => {
-        socket.to(data.roomId).emit('ice-candidate', {
-            candidate: data.candidate,
-            from: socket.user.id,
-            fromSocketId: socket.id
-        });
-    });
-
-    // Real-time status update (mute/unmute, video on/off, speaking)
-    socket.on('update-status', (data) => {
-        for (const [roomId, room] of rooms.entries()) {
-            if (room.participants.has(socket.user.id)) {
-                const participant = room.participants.get(socket.user.id);
-                if ('isMuted' in data) participant.isMuted = data.isMuted;
-                if ('isVideoOff' in data) participant.isVideoOff = data.isVideoOff;
-                if ('isSpeaking' in data) participant.isSpeaking = data.isSpeaking;
-                // Broadcast updated participants list
-                io.to(roomId).emit('participants-list', Array.from(room.participants.values()));
-            }
-        }
-    });
-
-    // Message de chat
-    socket.on('chat-message', (data) => {
-        const display = getUserDisplay(socket);
-        socket.to(data.roomId).emit('chat-message', {
-            message: data.message,
-            from: socket.user.id,
-            fromName: display.name,
-            timestamp: new Date().toISOString()
-        });
-    });
-
-    // Partager l'écran
-    socket.on('screen-share-start', (data) => {
-        for (const [roomId, room] of rooms.entries()) {
-            if (room.participants.has(socket.user.id)) {
-                const participant = room.participants.get(socket.user.id);
-                participant.isScreenSharing = true;
-                // Broadcast updated participants list
-                io.to(roomId).emit('participants-list', Array.from(room.participants.values()));
-                socket.to(roomId).emit('screen-share-started', {
-                    socketId: socket.id,
-                    userId: socket.user.id
-                });
-            }
-        }
-    });
-    
-    socket.on('screen-share-stop', (data) => {
-        for (const [roomId, room] of rooms.entries()) {
-            if (room.participants.has(socket.user.id)) {
-                const participant = room.participants.get(socket.user.id);
-                participant.isScreenSharing = false;
-                // Broadcast updated participants list
-                io.to(roomId).emit('participants-list', Array.from(room.participants.values()));
-                socket.to(roomId).emit('screen-share-stopped', {
-                    socketId: socket.id,
-                    userId: socket.user.id
-                });
-            }
-        }
-    });
-
-    // Focus/Pin participant
-    socket.on('focus-participant', (data) => {
-        socket.to(data.roomId).emit('focus-participant', {
-            userId: data.userId,
-            focusedBy: socket.user.id
-        });
-    });
-
-    // Leave room
-    socket.on('leave-room', (roomId) => {
-        socket.leave(roomId);
-        if (rooms.has(roomId)) {
-            const room = rooms.get(roomId);
-            const wasHost = room.participants.get(socket.user.id)?.isHost;
-            room.participants.delete(socket.user.id);
-            
-            // If host left, assign new host
-            if (wasHost && room.participants.size > 0) {
-                const newHost = Array.from(room.participants.values())[0];
-                newHost.isHost = true;
-                room.host = newHost.userId;
-            }
-            
-            // Clean up room if empty
-            if (room.participants.size === 0) {
-                rooms.delete(roomId);
-            } else {
-                // Broadcast updated participants list
-                io.to(roomId).emit('participants-list', Array.from(room.participants.values()));
-            }
-        }
-        // Notify others
-        const display = getUserDisplay(socket);
-        socket.to(roomId).emit('user-left', {
-            userId: socket.user.id,
-            name: display.name,
-            profile_photo: display.profile_photo
-        });
-        console.log(`User ${socket.user.id} left room ${roomId}`);
-    });
-
-    // Déconnexion
-    socket.on('disconnect', () => {
-        console.log(`User ${socket.user.id} disconnected: ${socket.id}`);
-        for (const [roomId, room] of rooms.entries()) {
-            if (room.participants.has(socket.user.id)) {
-                const wasHost = room.participants.get(socket.user.id)?.isHost;
-                room.participants.delete(socket.user.id);
-                
-                // If host disconnected, assign new host
-                if (wasHost && room.participants.size > 0) {
-                    const newHost = Array.from(room.participants.values())[0];
-                    newHost.isHost = true;
-                    room.host = newHost.userId;
-                }
-                
-                if (room.participants.size === 0) {
-                    rooms.delete(roomId);
-                } else {
-                    // Broadcast updated participants list
-                    io.to(roomId).emit('participants-list', Array.from(room.participants.values()));
-                }
-            }
-        }
-        userSockets.delete(socket.user.id);
-    });
-});
-
-// Routes API pour Laravel
-app.get('/api/rooms/:roomId/participants', (req, res) => {
-    const { roomId } = req.params;
-    const room = rooms.get(roomId);
-    
-    if (!room) {
-        return res.json({ participants: [] });
+      }
+      
+      // Nettoyer les salles vides
+      cleanupEmptyRooms();
+      
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
     }
+  });
 
-    const participants = Array.from(room.participants.values()).map(participant => ({
-        userId: participant.userId,
-        socketId: participant.socketId,
-        name: participant.name,
-        profile_photo: participant.profile_photo,
-        isMuted: participant.isMuted,
-        isVideoOff: participant.isVideoOff,
-        isScreenSharing: participant.isScreenSharing,
-        isHost: participant.isHost,
-        isSpeaking: participant.isSpeaking
-    }));
-
-    res.json({ participants });
+  // Gestion des erreurs de socket
+  socket.on('error', (error) => {
+    console.error('Erreur de socket:', error);
+  });
 });
 
-app.get('/api/rooms/:roomId/exists', (req, res) => {
-    const { roomId } = req.params;
-    res.json({ exists: rooms.has(roomId) });
-});
-
-// Health check endpoint
+// Routes API
 app.get('/health', (req, res) => {
-    res.json({ 
-        status: 'ok', 
-        timestamp: new Date().toISOString(),
-        activeRooms: rooms.size,
-        activeConnections: io.engine.clientsCount
-    });
+  const roomsCount = Object.keys(participants).length;
+  const totalParticipants = Object.values(participants).reduce((acc, room) => acc + Object.keys(room).length, 0);
+  
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    socketConnections: io.engine.clientsCount,
+    roomsCount,
+    totalParticipants,
+    uptime: process.uptime()
+  });
 });
 
-// Démarrage du serveur
-server.listen(PORT, () => {
-    console.log(`Signal server running on port ${PORT}`);
-    console.log(`CORS enabled for: ${process.env.FRONTEND_URL || "https://edusmart.erequest.net"}`);
-    console.log(`Laravel URL: ${LARAVEL_URL}`);
+app.get('/rooms', (req, res) => {
+  const roomsInfo = Object.entries(participants).map(([roomId, participantsInRoom]) => ({
+    roomId,
+    participantsCount: Object.keys(participantsInRoom).length,
+    participants: Object.values(participantsInRoom).map(p => ({
+      userName: p.userName,
+      isMuted: p.isMuted,
+      isVideoOff: p.isVideoOff,
+      isScreenSharing: p.isScreenSharing
+    }))
+  }));
+  
+  res.json({
+    rooms: roomsInfo,
+    totalRooms: roomsInfo.length
+  });
 });
 
-// Gestion des erreurs
+// Gestion des erreurs globales
 process.on('uncaughtException', (error) => {
-    console.error('Uncaught Exception:', error);
+  console.error('Exception non capturée:', error);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-}); 
+  console.error('Promesse rejetée non gérée:', reason);
+});
+
+// Démarrer le serveur
+const PORT = process.env.PORT || 3001;
+const HOST = process.env.HOST || '0.0.0.0';
+
+httpServer.listen(PORT, HOST, () => {
+  console.log(`🚀 Serveur Socket.IO démarré sur ${HOST}:${PORT}`);
+  console.log(`📡 Chemin d'accès: /socket.io`);
+  console.log(`🔧 Mode: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`⏰ Démarrage: ${new Date().toISOString()}`);
+});
+
+export default app; 
