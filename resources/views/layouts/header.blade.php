@@ -2,7 +2,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
         <!-- Left: Logo & Menu -->
         <div class="flex items-center gap-2 sm:gap-4">
-            <button id="sidebarToggle" class="p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition">
+            <button id="sidebarToggle" class="sidebar-toggle p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition">
                 <i class="fas fa-bars text-indigo-600 dark:text-indigo-300 text-lg sm:text-xl"></i>
             </button>
             <span class="ml-1 sm:ml-2 text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight select-none" style="font-family: 'Inter', 'Segoe UI', Arial, sans-serif;">

@@ -431,13 +431,16 @@
 .main-content {
     margin-left: var(--sidebar-width);
     margin-top: var(--header-height);
-    transition: margin-left var(--transition-duration) ease;
+    transition: all var(--transition-duration) ease;
     min-height: calc(100vh - var(--header-height));
-    padding: 1.5rem;
+    padding: 2rem;
+    background: #f8fafc;
 }
 
 .main-content.expanded {
     margin-left: 0;
+    padding-left: 2rem;
+    padding-right: 2rem;
 }
 
 /* ===== RESPONSIVE BREAKPOINTS ===== */

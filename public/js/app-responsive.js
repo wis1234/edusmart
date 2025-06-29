@@ -30,7 +30,10 @@ class ResponsiveApp {
     }
     
     setupSidebar() {
-        if (!this.sidebarToggle) return;
+        if (!this.sidebarToggle) {
+            console.error('Sidebar toggle button not found!');
+            return;
+        }
         
         this.sidebarToggle.addEventListener('click', (e) => {
             e.preventDefault();
@@ -195,35 +198,29 @@ class ResponsiveApp {
         if (isMobile) {
             // Mode mobile
             if (this.isSidebarOpen) {
-                this.sidebar.classList.add('open', 'mobile');
-                this.header.classList.add('sidebar-open');
-                this.content.classList.add('sidebar-open');
+                this.sidebar.classList.add('show');
+                this.content.classList.add('expanded');
             } else {
-                this.sidebar.classList.remove('open', 'mobile');
-                this.header.classList.remove('sidebar-open');
-                this.content.classList.remove('sidebar-open');
+                this.sidebar.classList.remove('show');
+                this.content.classList.remove('expanded');
             }
         } else if (isTablet) {
             // Mode tablet
             if (this.isSidebarOpen) {
-                this.sidebar.classList.add('open', 'tablet');
-                this.header.classList.add('sidebar-open');
-                this.content.classList.add('sidebar-open');
+                this.sidebar.classList.remove('collapsed');
+                this.content.classList.remove('expanded');
             } else {
-                this.sidebar.classList.remove('open', 'tablet');
-                this.header.classList.remove('sidebar-open');
-                this.content.classList.remove('sidebar-open');
+                this.sidebar.classList.add('collapsed');
+                this.content.classList.add('expanded');
             }
         } else {
             // Mode desktop
             if (this.isSidebarOpen) {
-                this.sidebar.classList.add('open', 'desktop');
-                this.header.classList.add('sidebar-open');
-                this.content.classList.add('sidebar-open');
+                this.sidebar.classList.remove('collapsed');
+                this.content.classList.remove('expanded');
             } else {
-                this.sidebar.classList.remove('open', 'desktop');
-                this.header.classList.remove('sidebar-open');
-                this.content.classList.remove('sidebar-open');
+                this.sidebar.classList.add('collapsed');
+                this.content.classList.add('expanded');
             }
         }
     }
@@ -234,6 +231,7 @@ class ResponsiveApp {
             return JSON.parse(saved);
         }
         // Par défaut, fermé sur mobile, ouvert sur desktop
+        // Sur desktop, la sidebar est ouverte par défaut (pas de classe collapsed)
         return window.innerWidth > 768;
     }
     
