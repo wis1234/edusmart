@@ -187,7 +187,7 @@ class Teacher extends Model
      */
     public function getNameAttribute(): string
     {
-        return $this->user->name;
+        return $this->user?->name ?? '';
     }
 
     /**
@@ -195,7 +195,7 @@ class Teacher extends Model
      */
     public function getEmailAttribute(): string
     {
-        return $this->user->email;
+        return $this->user?->email ?? '';
     }
 
     /**
@@ -203,7 +203,7 @@ class Teacher extends Model
      */
     public function getPhoneAttribute(): string
     {
-        return $this->user->phone;
+        return $this->user?->phone ?? '';
     }
 
     /**
@@ -211,7 +211,7 @@ class Teacher extends Model
      */
     public function getAddressAttribute(): string
     {
-        return $this->user->address;
+        return $this->user?->address ?? '';
     }
 
     /**
@@ -230,7 +230,7 @@ class Teacher extends Model
      */
     public function getGenderAttribute(): string
     {
-        return $this->user->gender;
+        return $this->user?->gender ?? '';
     }
 
     /**
@@ -246,6 +246,6 @@ class Teacher extends Model
      */
     public function getStatusAttribute(): string
     {
-        return $this->user->status;
+        return $this->user?->status ?? '';
     }
 }
