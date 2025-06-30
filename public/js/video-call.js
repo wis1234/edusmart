@@ -1025,7 +1025,8 @@ function createPeerConnection(socketId) {
             socket.emit('signal', {
                 roomId: window.videoCallConfig.roomId,
                 type: 'ice-candidate',
-                candidate: event.candidate
+                candidate: event.candidate,
+                to: socketId
             });
         }
     };
@@ -1043,7 +1044,8 @@ function createPeerConnection(socketId) {
             socket.emit('signal', {
                 roomId: window.videoCallConfig.roomId,
                 type: 'offer',
-                offer: peerConnection.localDescription
+                offer: peerConnection.localDescription,
+                to: socketId
             });
         })
         .catch(error => console.error('Error creating offer:', error));
@@ -1065,7 +1067,8 @@ async function handleOffer(data) {
             socket.emit('signal', {
                 roomId: window.videoCallConfig.roomId,
                 type: 'ice-candidate',
-                candidate: event.candidate
+                candidate: event.candidate,
+                to: data.from
             });
         }
     };
@@ -1084,7 +1087,8 @@ async function handleOffer(data) {
     socket.emit('signal', {
         roomId: window.videoCallConfig.roomId,
         type: 'answer',
-        answer: answer
+        answer: answer,
+        to: data.from
     });
 }
 
