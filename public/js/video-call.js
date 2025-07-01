@@ -280,7 +280,7 @@ async function connectToSignalServer() {
     });
 
         socket.on('signal', async (data) => {
-            console.log('Signal received:', data);
+            console.log('[WebRTC] Signal received:', data);
             
             switch (data.type) {
                 case 'offer':
@@ -293,7 +293,7 @@ async function connectToSignalServer() {
         await handleIceCandidate(data);
                     break;
                 default:
-                    console.warn('Unknown signal type:', data.type);
+                    console.warn('[WebRTC] Unknown signal type:', data.type);
             }
     });
 
@@ -1026,6 +1026,7 @@ function updateParticipantsCount() {
 
 // Create peer connection
 function createPeerConnection(socketId) {
+    console.log('[WebRTC] Creating peer connection with', socketId);
     const peerConnection = new RTCPeerConnection(rtcConfig);
     peerConnections[socketId] = peerConnection;
     
@@ -1034,9 +1035,10 @@ function createPeerConnection(socketId) {
             peerConnection.addTrack(track, localStream);
         });
     }
-    
+
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
+            console.log('[WebRTC] ICE candidate generated for', socketId, event.candidate);
             socket.emit('signal', {
                 roomId: window.videoCallConfig.roomId,
                 type: 'ice-candidate',
@@ -1045,17 +1047,26 @@ function createPeerConnection(socketId) {
             });
         }
     };
-    
+
+    peerConnection.oniceconnectionstatechange = () => {
+        console.log('[WebRTC] ICE state for', socketId, ':', peerConnection.iceConnectionState);
+    };
+    peerConnection.onconnectionstatechange = () => {
+        console.log('[WebRTC] Connection state for', socketId, ':', peerConnection.connectionState);
+    };
+
     peerConnection.ontrack = (event) => {
+        console.log('[WebRTC] Remote track received from', socketId, event.streams[0]);
         const remoteStream = event.streams[0];
         remoteStreams[socketId] = remoteStream;
         const participant = participants[socketId];
         addRemoteVideo(socketId, remoteStream, participant);
     };
-    
+
     peerConnection.createOffer()
         .then(offer => peerConnection.setLocalDescription(offer))
         .then(() => {
+            console.log('[WebRTC] Sending offer to', socketId);
             socket.emit('signal', {
                 roomId: window.videoCallConfig.roomId,
                 type: 'offer',
@@ -1063,11 +1074,12 @@ function createPeerConnection(socketId) {
                 to: socketId
             });
         })
-        .catch(error => console.error('Error creating offer:', error));
+        .catch(error => console.error('[WebRTC] Error creating offer for', socketId, error));
 }
 
 // Handle incoming offer
 async function handleOffer(data) {
+    console.log('[WebRTC] Handling offer from', data.from);
     const peerConnection = new RTCPeerConnection(rtcConfig);
     peerConnections[data.from] = peerConnection;
     
@@ -1076,9 +1088,10 @@ async function handleOffer(data) {
             peerConnection.addTrack(track, localStream);
         });
     }
-    
+
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
+            console.log('[WebRTC] ICE candidate generated for', data.from, event.candidate);
             socket.emit('signal', {
                 roomId: window.videoCallConfig.roomId,
                 type: 'ice-candidate',
@@ -1087,18 +1100,23 @@ async function handleOffer(data) {
             });
         }
     };
-    
+    peerConnection.oniceconnectionstatechange = () => {
+        console.log('[WebRTC] ICE state for', data.from, ':', peerConnection.iceConnectionState);
+    };
+    peerConnection.onconnectionstatechange = () => {
+        console.log('[WebRTC] Connection state for', data.from, ':', peerConnection.connectionState);
+    };
     peerConnection.ontrack = (event) => {
+        console.log('[WebRTC] Remote track received from', data.from, event.streams[0]);
         const remoteStream = event.streams[0];
         remoteStreams[data.from] = remoteStream;
         const participant = participants[data.from];
         addRemoteVideo(data.from, remoteStream, participant);
     };
-    
     await peerConnection.setRemoteDescription(data.offer);
     const answer = await peerConnection.createAnswer();
     await peerConnection.setLocalDescription(answer);
-    
+    console.log('[WebRTC] Sending answer to', data.from);
     socket.emit('signal', {
         roomId: window.videoCallConfig.roomId,
         type: 'answer',
@@ -1109,6 +1127,7 @@ async function handleOffer(data) {
 
 // Handle incoming answer
 async function handleAnswer(data) {
+    console.log('[WebRTC] Handling answer from', data.from);
     const peerConnection = peerConnections[data.from];
     if (peerConnection) {
         await peerConnection.setRemoteDescription(data.answer);
@@ -1117,6 +1136,7 @@ async function handleAnswer(data) {
 
 // Handle ICE candidate
 async function handleIceCandidate(data) {
+    console.log('[WebRTC] Handling ICE candidate from', data.from, data.candidate);
     const peerConnection = peerConnections[data.from];
     if (peerConnection) {
         await peerConnection.addIceCandidate(data.candidate);
