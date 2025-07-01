@@ -11,6 +11,7 @@ use App\Http\Controllers\DashboardController;
 use App\Models\Activity;
 use App\Http\Controllers\ActivityController;
 use Spatie\Permission\Middlewares\RoleMiddleware;
+use App\Http\Controllers\TwilioIceController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -178,3 +179,5 @@ Route::middleware(['auth'])->group(function () {
     Route::get('video-calls/{videoCall}/activities', [VideoCallMessageController::class, 'activities'])->name('video-calls.activities.index');
     Route::post('video-calls/{videoCall}/activities', [VideoCallMessageController::class, 'recordActivity'])->name('video-calls.activities.store');
 });
+
+Route::get('/api/twilio-ice', [TwilioIceController::class, 'getIceServers']);
