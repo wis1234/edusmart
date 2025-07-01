@@ -196,9 +196,9 @@ async function connectToSignalServer() {
 
         socket.on('participants-list', (data) => {
             console.log('Participants list received:', data);
-        participants = {};
+            participants = {};
             data.forEach(p => {
-            participants[p.socketId] = {
+                participants[p.socketId] = {
                     userName: p.userName,
                     profilePhoto: p.profilePhoto,
                     isMuted: p.isMuted || false,
@@ -206,11 +206,15 @@ async function connectToSignalServer() {
                     isScreenSharing: p.isScreenSharing || false,
                     isHost: false, // Le serveur ne gère pas les rôles
                     isSpeaking: false
-            };
+                };
+                // Correction : Créer une connexion WebRTC avec chaque autre participant
+                if (p.socketId !== socket.id && !peerConnections[p.socketId]) {
+                    createPeerConnection(p.socketId);
+                }
+            });
+            renderParticipantsList();
+            updateParticipantsCount();
         });
-        renderParticipantsList();
-        updateParticipantsCount();
-    });
 
     socket.on('user-joined', (data) => {
         console.log('User joined:', data);
