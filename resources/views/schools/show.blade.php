@@ -16,15 +16,18 @@
                         </div>
                     </div>
             <div class="flex gap-2">
-                        @can('update', $school)
-                <a href="{{ route('schools.edit', $school) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700 transition">
-                    <i class="fas fa-edit"></i> Edit
-                        </a>
-                        @endcan
+                <x-action-icons
+                    :viewRoute="null"
+                    :editRoute="(auth()->user()->hasRole('admin') || auth()->user()->role === 'admin') ? route('schools.edit', $school) : null"
+                    :deleteRoute="(auth()->user()->hasRole('admin') || auth()->user()->role === 'admin') ? route('schools.destroy', $school) : null"
+                    :canEdit="auth()->user()->hasRole('admin') || auth()->user()->role === 'admin'"
+                    :canDelete="auth()->user()->hasRole('admin') || auth()->user()->role === 'admin'"
+                    deleteConfirmMessage="Are you sure you want to delete this institution?"
+                />
                 <a href="{{ route('schools.index') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition">
                     <i class="fas fa-arrow-left"></i> Back to List
-                        </a>
-                    </div>
+                </a>
+            </div>
                 </div>
 
         <!-- Infos principales -->

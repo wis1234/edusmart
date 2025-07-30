@@ -66,14 +66,14 @@
 
             <!-- System Menu -->
             <li class="nav-item">
-                <button type="button" class="nav-link dropdown-btn">
+                <!-- <a href="#" class="nav-link nav-link-dropdown" id="system-menu-toggle">
                     <div class="flex items-center">
                         <i class="fas fa-cog"></i>
                         <span>{{ __('messages.system') }}</span>
                     </div>
-                    <i class="fas fa-chevron-down"></i>
-                </button>
-                <ul class="dropdown-content">
+                    <i class="fas fa-chevron-down transition-transform duration-200"></i>
+                </a> -->
+                <ul class="sub-menu" id="system-menu">
                     <li>
                         <a href="{{ route('activities.index') }}" 
                            class="nav-link {{ request()->routeIs('activities.*') ? 'active' : '' }}">
@@ -100,6 +100,26 @@
 
 @push('styles')
 <style>
+    .nav-link-dropdown {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+
+    .sub-menu {
+        display: none;
+    }
+
+    .sub-menu.open {
+        display: block;
+    }
+
+    .sub-menu .nav-link {
+        font-size: 0.9rem;
+        padding-left: 3rem; /* Indent sub-menu items */
+    }
+
     /* Scrollbar personnalisée pour le sidebar */
     .sidebar::-webkit-scrollbar {
         width: 4px;
@@ -118,4 +138,26 @@
         background: rgba(167, 139, 250, 0.5);
     }
 </style>
+@endpush
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleButton = document.getElementById('system-menu-toggle');
+        const menu = document.getElementById('system-menu');
+        const chevron = toggleButton.querySelector('.fa-chevron-down');
+
+        // Check if the current page is under the system menu
+        if ({{ request()->routeIs('activities.*') || request()->routeIs('users.*') ? 'true' : 'false' }}) {
+            menu.classList.add('open');
+            chevron.classList.add('rotate-180');
+        }
+
+        toggleButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            menu.classList.toggle('open');
+            chevron.classList.toggle('rotate-180');
+        });
+    });
+</script>
 @endpush 

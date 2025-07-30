@@ -74,12 +74,11 @@
                             <th class="px-4 py-3 text-left">Phone</th>
                             <th class="px-4 py-3 text-left">Email</th>
                             <th class="px-4 py-3 text-left">Status</th>
-                            <th class="px-4 py-3 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($schools as $school)
-                            <tr class="hover:bg-indigo-50 dark:hover:bg-indigo-900 transition">
+                            <tr class="clickable-row" data-href="{{ route('schools.show', $school) }}">
                                 <td class="px-4 py-3">
                                     <div>
                                         <span class="font-semibold text-lg">{{ $school->name }}</span>
@@ -104,20 +103,10 @@
                                  {{ ucfirst($school->status) }}
                                 </span>
                                 </td>
-                                <td class="px-4 py-3 text-right">
-                                    <x-action-icons
-                                        :viewRoute="route('schools.show', $school)"
-                                        :editRoute="(auth()->user()->hasRole('admin') || auth()->user()->role === 'admin') ? route('schools.edit', $school) : null"
-                                        :deleteRoute="(auth()->user()->hasRole('admin') || auth()->user()->role === 'admin') ? route('schools.destroy', $school) : null"
-                                        :canEdit="auth()->user()->hasRole('admin') || auth()->user()->role === 'admin'"
-                                        :canDelete="auth()->user()->hasRole('admin') || auth()->user()->role === 'admin'"
-                                        deleteConfirmMessage="Are you sure you want to delete this institution?"
-                                    />
-                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-4 py-3 text-center">
+                                <td colspan="5" class="px-4 py-3 text-center">
                                     <div class="text-center py-4">
                                         <i class="fas fa-university fa-3x text-gray-300 dark:text-gray-600 mb-3"></i>
                                         <h5 class="text-gray-400 dark:text-gray-500">No institutions found</h5>
@@ -205,7 +194,27 @@
             @endif
         </div>
 
+        <style>
+            .clickable-row {
+                cursor: pointer;
+                transition: all 0.2s ease-in-out;
+            }
+            .clickable-row:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            }
+        </style>
+
         <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const rows = document.querySelectorAll('.clickable-row');
+                rows.forEach(row => {
+                    row.addEventListener('click', () => {
+                        window.location.href = row.dataset.href;
+                    });
+                });
+            });
+
             // Bascule Table/Grid
             const tableViewBtn = document.getElementById('tableViewBtn');
             const gridViewBtn = document.getElementById('gridViewBtn');

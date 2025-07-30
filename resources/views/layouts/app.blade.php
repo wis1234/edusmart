@@ -104,6 +104,8 @@
             @endif
             <!-- End Flash Message Popup -->
 
+            @include('layouts.sidebar')
+
             <!-- Page Content -->
             <main class="pt-16">
                 {{ $slot }}
